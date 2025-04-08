@@ -28,7 +28,12 @@ function onClick() {
         >
           <v-row>
             <v-col cols="12" md="6" class="mx-auto">
-              <v-card class="mx-auto rounded-xl pb-5" width="500" style="font-size: 85%" elevation="20 ">
+              <v-card
+                class="mx-auto rounded-xl pb-5"
+                width="500"
+                elevation="20"
+                style="font-size: 85%; font-weight: 200"
+              >
                 <v-card-title class="text-h5">Login</v-card-title>
 
                 <template v-slot:title>
