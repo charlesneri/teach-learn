@@ -22,14 +22,11 @@ function onClick() {
       </v-app-bar>
 
       <v-main>
-        <v-container
-          fluid
-          style="min-height: 100vh; background: linear-gradient(140deg, #3b939a, #68cad5)"
-        >
+        <v-container fluid style="min-height: 100vh; background: #1565c0">
           <v-row>
             <v-col cols="12" md="6" class="mx-auto">
               <v-card
-                class="mx-auto rounded-xl pb-5"
+                class="mx-auto rounded-xl pb-5 login-card"
                 width="500"
                 elevation="20"
                 style="font-size: 85%; font-weight: 200"
@@ -39,12 +36,11 @@ function onClick() {
                 <template v-slot:title>
                   <v-img
                     src="/image/Teach&Learn.png"
-                    :width="100"
+                    :width="200"
                     class="mx-auto"
-                    aspect-ratio="16/9"
+                    aspect-ratio="13/6"
                     cover
                   ></v-img>
-                  <span class="font-weight-black d-flex justify-center pt-3">Teach & Learn</span>
                 </template>
 
                 <v-card-text class="p-4">

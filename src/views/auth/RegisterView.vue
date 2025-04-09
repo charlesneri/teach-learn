@@ -16,10 +16,7 @@ import { ref } from 'vue'
       </v-app-bar>
 
       <v-main>
-        <v-container
-          fluid
-          style="min-height: 100vh; background: linear-gradient(140deg, #3b939a, #68cad5)"
-        >
+        <v-container fluid style="min-height: 100vh; background: #1565c0">
           <v-hover>
             <v-row>
               <v-col cols="12" md="6" class="mx-auto">
@@ -32,13 +29,12 @@ import { ref } from 'vue'
                   <template v-slot:title>
                     <v-img
                       src="/image/Teach&Learn.png"
-                      :width="100"
+                      :width="200"
                       class="mx-auto"
                       aspect-ratio="16/9"
                       cover
                     ></v-img>
-                    <span class="font-weight-black d-flex justify-center pt-3">Teach & Learn</span>
-                    <v-divider my-4 class="mt-5 mb-5" thickness="3" color="black"></v-divider>
+                    <v-divider my-4 class="mb-5" thickness="3" color="black"></v-divider>
                     <span class="font-weight-black d-flex justify-center">Register Now!</span>
                   </template>
 
@@ -73,7 +69,7 @@ import { ref } from 'vue'
 
                         <v-divider class="my-5"></v-divider>
                         <p class="text-center text-primary">
-                          Already have account? <RouterLink to="/login">Login now!</RouterLink>
+                          Already have account? <RouterLink to="/">Login now!</RouterLink>
                         </p>
                       </v-form>
                     </v-sheet>
