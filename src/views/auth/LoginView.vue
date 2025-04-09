@@ -38,7 +38,7 @@ function onClick() {
 
                 <template v-slot:title>
                   <v-img
-                    src="/nb_logo.png"
+                    src="/image/Teach&Learn.png"
                     :width="100"
                     class="mx-auto"
                     aspect-ratio="16/9"
