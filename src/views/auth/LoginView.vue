@@ -22,7 +22,11 @@ function onClick() {
       </v-app-bar>
 
       <v-main>
-        <v-container fluid style="min-height: 100vh; background: #1565c0">
+        <v-container
+          fluid
+          style="min-height: 100vh; background: #1565c0"
+          class="wrapper overflow-hidden"
+        >
           <v-row>
             <v-col cols="12" md="6" class="mx-auto">
               <v-card
@@ -65,7 +69,7 @@ function onClick() {
 
                     <v-divider class="my-5"></v-divider>
                     <p class="text-center text-primary">
-                      Don't account yet? <RouterLink to="/register">Register now</RouterLink>
+                      Don't have account yet? <RouterLink to="/register">Register now!</RouterLink>
                     </p>
                   </v-form>
                 </v-card-text>
@@ -77,3 +81,8 @@ function onClick() {
     </v-app>
   </v-responsive>
 </template>
+<style lang="css" scoped>
+* {
+  overflow: hidden;
+}
+</style>
