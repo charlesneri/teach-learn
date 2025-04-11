@@ -71,11 +71,11 @@ onMounted(() => {
                   <template v-slot:title>
                     <v-img
                       src="/image/Teach&Learn.png"
-                      :width="200"
+                      :width="150"
                       class="mx-auto"
                       aspect-ratio="16/9"
                       cover
-                    />
+                    ></v-img>
                     <v-divider class="mb-5 mt-4" thickness="3" color="black" />
                     <span class="font-weight-black d-flex justify-center">Register Now!</span>
                   </template>
