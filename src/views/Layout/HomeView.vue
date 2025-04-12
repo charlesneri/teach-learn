@@ -23,10 +23,10 @@ const links = ['Mentor', 'About us', 'Contact']
             </template>
 
             <v-list>
-              <v-list-item link title="My Profile"></v-list-item>
+              <v-list-item link title="My attict Profile"></v-list-item>
               <v-list-item link title="My Appointment"></v-list-item>
               <v-divider></v-divider>
-              <v-list-item link title="Logout"></v-list-item>
+              <v-list-item link> <router-link to="/">Logout</router-link></v-list-item>
             </v-list>
           </v-menu>
         </div>
