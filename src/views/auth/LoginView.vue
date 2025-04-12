@@ -98,6 +98,7 @@ onMounted(() => {
                         type="submit"
                         prepend-icon="mdi-login"
                         block
+                        to="/home"
                       >
                         Login
                       </v-btn>
