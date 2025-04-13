@@ -1,5 +1,6 @@
 <script setup>
-const links = ['Mentor', 'About us', 'Contact']
+// Future dynamic navigation example:
+// const links = ['Home', 'About us', 'Contact']
 </script>
 
 <template>
@@ -7,43 +8,59 @@ const links = ['Mentor', 'About us', 'Contact']
     <!-- App Bar -->
     <v-app-bar flat color="#1565c0">
       <v-container class="d-flex align-center justify-space-between">
-        <!-- Left: Logo + Menu -->
-        <div class="d-flex align-center gap-5">
-          <!-- Logo Avatar -->
-          <v-avatar style="border-width: 1px" color="#fff" size="50">
+        <!-- Left: Logo -->
+        <div class="d-flex align-center gap-4">
+          <v-avatar color="#fff" size="50" style="border-width: 1px">
             <v-img src="image/Teach&Learn.png" alt="Logo" />
           </v-avatar>
 
-          <!-- Menu Dropdown -->
+          <!-- Mobile Menu -->
           <v-menu transition="scale-transition" offset-y>
             <template #activator="{ props }">
-              <v-btn icon v-bind="props">
-                <v-icon>mdi-menu</v-icon>
-              </v-btn>
+              <v-app-bar-nav-icon v-bind="props" class="d-md-none" />
             </template>
-
             <v-list>
+              <v-list-item link
+                ><router-link to="/" class="text-decoration-none">Home</router-link></v-list-item
+              >
+              <v-list-item link
+                ><router-link to="/about" class="text-decoration-none"
+                  >About us</router-link
+                ></v-list-item
+              >
+              <v-list-item link
+                ><router-link to="/contact" class="text-decoration-none"
+                  >Contact us</router-link
+                ></v-list-item
+              >
+              <v-divider></v-divider>
               <v-list-item link title="My Profile"></v-list-item>
               <v-list-item link title="My Appointment"></v-list-item>
               <v-divider></v-divider>
-              <v-list-item link> <router-link to="/">Logout</router-link></v-list-item>
+              <v-list-item link
+                ><router-link to="/" class="text-decoration-none">Logout</router-link></v-list-item
+              >
             </v-list>
           </v-menu>
         </div>
 
-        <!-- Center: Page Links -->
-        <div class="profile-container d-flex align-center gap-2">
-          <v-btn
-            v-for="link in links"
-            :key="link"
-            :text="link"
-            variant="text"
-            class="text-none"
-          ></v-btn>
+        <!-- Center: Desktop Navigation -->
+        <div class="d-none d-md-flex align-center" style="gap: 24px">
+          <router-link to="/" class="text-white text-decoration-none font-weight-medium">
+            Home
+          </router-link>
+
+          <router-link to="/about" class="text-white text-decoration-none font-weight-medium">
+            About us
+          </router-link>
+
+          <router-link to="/contact" class="text-white text-decoration-none font-weight-medium">
+            Contact us
+          </router-link>
         </div>
 
-        <!-- Right: Search -->
-        <v-responsive max-width="220">
+        <!-- Right: Search Bar -->
+        <v-responsive max-width="240">
           <div class="d-flex align-center gap-2">
             <v-text-field
               density="compact"
@@ -54,8 +71,8 @@ const links = ['Mentor', 'About us', 'Contact']
               hide-details
               single-line
               class="flex-grow-1"
-            ></v-text-field>
-            <v-btn color="#fff" icon rounded="lg" class="elevation-1" style="border: 10px">
+            />
+            <v-btn color="#fff" icon rounded="lg" class="elevation-1">
               <v-icon>mdi-magnify</v-icon>
             </v-btn>
           </div>
@@ -67,28 +84,45 @@ const links = ['Mentor', 'About us', 'Contact']
     <v-main class="bg-grey-lighten-3">
       <v-container fluid class="pa-0" style="max-width: 1400px; margin: auto">
         <v-row>
-          <!-- Wider Left Column -->
-          <v-col cols="3">
-            <v-sheet rounded="lg" class="pa-4 text-center" style="width: 100%; height: 100%">
-              <v-avatar class="mb-3" style="border-width: 1px; color: #000" size="100">
+          <!-- Sidebar -->
+          <v-col cols="12" md="3">
+            <v-sheet rounded="lg" class="pa-4 text-center" style="height: 100%">
+              <v-avatar class="mb-3" color="#fff" size="100" style="border-width: 1px">
                 <v-img src="image/Teach&Learn.png" alt="User" />
               </v-avatar>
-              <span class="d-block font-weight-medium mx-auto">My Name</span>
-              <!-- Full-width Divider -->
-              <v-divider class="ma-0 pa-0" style="width: 100%; display: block"></v-divider>
-              <span class="text-left d-block"><b>My Appointments</b></span>
+              <span class="d-block font-weight-medium mb-3">My Name</span>
+              <v-divider class="mb-3"></v-divider>
+
+              <v-list density="compact" nav>
+                <v-list-item link>
+                  <v-list-item-title>My Profile</v-list-item-title>
+                </v-list-item>
+
+                <v-list-item link>
+                  <v-list-item-title>My Appointment</v-list-item-title>
+                </v-list-item>
+
+                <v-divider class="my-2" />
+
+                <v-list-item link>
+                  <router-link to="/" class="text-decoration-none">
+                    <v-list-item-title>Logout</v-list-item-title>
+                  </router-link>
+                </v-list-item>
+              </v-list>
             </v-sheet>
           </v-col>
 
-          <!-- Main Content Column -->
-          <v-col cols="9">
-            <v-sheet min-height="70vh" rounded="lg" class="pa-4" style="width: 100%">
+          <!-- Main Area -->
+          <v-col cols="12" md="9">
+            <v-sheet min-height="70vh" rounded="lg" class="pa-4">
               <!-- Your content goes here -->
             </v-sheet>
           </v-col>
         </v-row>
       </v-container>
     </v-main>
-    <v-footer></v-footer>
+
+    <v-footer app padless></v-footer>
   </v-app>
 </template>
