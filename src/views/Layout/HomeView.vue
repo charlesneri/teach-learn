@@ -33,19 +33,19 @@
                   >Contact us</router-link
                 ></v-list-item
               >
-              <v-divider></v-divider>
+              <!--   <v-divider></v-divider>
               <v-list-item link title="My Profile"></v-list-item>
               <v-list-item link title="My Appointment"></v-list-item>
               <v-divider></v-divider>
               <v-list-item link
                 ><router-link to="/" class="text-decoration-none">Logout</router-link></v-list-item
-              >
+              >-->
             </v-list>
           </v-menu>
         </div>
 
         <!-- Center: Desktop Navigation -->
-        <div class="d-none d-md-flex align-center" style="gap: 24px">
+        <div class="d-none d-md-flex" style="gap: 24px">
           <router-link to="/" class="text-white text-decoration-none font-weight-medium">
             Home
           </router-link>
@@ -61,7 +61,7 @@
 
         <!-- Right: Search Bar -->
         <v-responsive max-width="240">
-          <div class="d-flex align-center gap-2">
+          <div class="d-flex gap-2">
             <v-text-field
               density="compact"
               label="Search"
