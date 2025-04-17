@@ -10,28 +10,6 @@
           <v-avatar color="#fff" size="50" style="border-width: 1px">
             <v-img src="image/Teach&Learn.png" alt="Logo" />
           </v-avatar>
-
-          <!-- Mobile Menu -->
-          <v-menu transition="scale-transition" offset-y>
-            <template #activator="{ props }">
-              <v-app-bar-nav-icon v-bind="props" class="d-md-none" />
-            </template>
-            <v-list>
-              <v-list-item link
-                ><router-link to="/home" class="text-decoration-none">Home</router-link></v-list-item
-              >
-              <v-list-item link
-                ><router-link to="/about" class="text-decoration-none"
-                  >About Us</router-link
-                ></v-list-item
-              >
-              <v-list-item link
-                ><router-link to="/contact" class="text-decoration-none"
-                  >Contact Us</router-link
-                ></v-list-item
-              >
-            </v-list>
-          </v-menu>
         </div>
 
         <!-- Center: Desktop Navigation -->
@@ -65,6 +43,45 @@
             <v-btn color="#fff" icon rounded="lg" class="elevation-1">
               <v-icon>mdi-magnify</v-icon>
             </v-btn>
+            <!-- Mobile Menu -->
+            <v-menu transition="scale-transition" offset-y>
+              <template #activator="{ props }">
+                <v-app-bar-nav-icon v-bind="props" class="d-md-none" />
+              </template>
+              <v-list>
+                <v-list-item link
+                  ><router-link to="/home" class="text-decoration-none"
+                    >Home</router-link
+                  ></v-list-item
+                >
+                <v-list-item link
+                  ><router-link to="/home" class="text-decoration-none"
+                    >My profile</router-link
+                  ></v-list-item
+                ><v-list-item link
+                  ><router-link to="/home" class="text-decoration-none"
+                    >My appointments</router-link
+                  ></v-list-item
+                >
+                <v-list-item link
+                  ><router-link to="/about" class="text-decoration-none"
+                    >About Us</router-link
+                  ></v-list-item
+                >
+
+                <v-list-item link
+                  ><router-link to="/contact" class="text-decoration-none"
+                    >Contact Us</router-link
+                  ></v-list-item
+                >
+                <v-divider></v-divider>
+                <v-list-item link
+                  ><router-link to="/about" class="text-decoration-none"
+                    >Logout</router-link
+                  ></v-list-item
+                >
+              </v-list>
+            </v-menu>
           </div>
         </v-responsive>
       </v-container>
@@ -72,11 +89,11 @@
 
     <!-- Main Content -->
     <v-main class="bg-grey-lighten-3">
-      <v-container fluid class="pa-0" style="max-width: 1400px; margin: auto">
+      <v-container fluid class="pa-0" style="max-width: 95%; margin: auto">
         <v-row>
           <!-- Sidebar -->
-          <v-col cols="12" md="3">
-            <v-sheet rounded="lg" class="pa-4 text-center" style="height: 100%">
+          <v-col cols="12" md="3" class="d-none d-md-flex">
+            <v-sheet rounded="lg" class="pa-4 text-center" style="height: 100%; width: 100%">
               <v-avatar class="mb-3" color="#fff" size="100" style="border-width: 1px">
                 <v-img src="image/Teach&Learn.png" alt="User" />
               </v-avatar>
