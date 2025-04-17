@@ -1,7 +1,4 @@
-<script setup>
-// Future dynamic navigation example:
-// const links = ['Home', 'About us', 'Contact']
-</script>
+<script setup></script>
 
 <template>
   <v-app id="inspire">
@@ -21,25 +18,18 @@
             </template>
             <v-list>
               <v-list-item link
-                ><router-link to="/" class="text-decoration-none">Home</router-link></v-list-item
+                ><router-link to="/home" class="text-decoration-none">Home</router-link></v-list-item
               >
               <v-list-item link
                 ><router-link to="/about" class="text-decoration-none"
-                  >About us</router-link
+                  >About Us</router-link
                 ></v-list-item
               >
               <v-list-item link
                 ><router-link to="/contact" class="text-decoration-none"
-                  >Contact us</router-link
+                  >Contact Us</router-link
                 ></v-list-item
               >
-              <!--   <v-divider></v-divider>
-              <v-list-item link title="My Profile"></v-list-item>
-              <v-list-item link title="My Appointment"></v-list-item>
-              <v-divider></v-divider>
-              <v-list-item link
-                ><router-link to="/" class="text-decoration-none">Logout</router-link></v-list-item
-              >-->
             </v-list>
           </v-menu>
         </div>
@@ -90,7 +80,9 @@
               <v-avatar class="mb-3" color="#fff" size="100" style="border-width: 1px">
                 <v-img src="image/Teach&Learn.png" alt="User" />
               </v-avatar>
-              <span class="d-block font-weight-medium mb-3">My Name</span>
+              <span class="d-block font-weight-medium mb-3"
+                ><router-link to="/profile">My Name</router-link>
+              </span>
               <v-divider class="mb-3"></v-divider>
 
               <v-list density="compact" nav>
@@ -99,7 +91,7 @@
                 </v-list-item>
 
                 <v-list-item link>
-                  <v-list-item-title>My Appointment</v-list-item-title>
+                  <v-list-item-title>My Appointments</v-list-item-title>
                 </v-list-item>
 
                 <v-divider class="my-2" />
@@ -115,7 +107,7 @@
 
           <!-- Main Area -->
           <v-col cols="12" md="9">
-            <v-sheet min-height="70vh" rounded="lg" class="pa-4">
+            <v-sheet min-height="100vh" rounded="lg" class="pa-4">
               <!-- Your content goes here -->
             </v-sheet>
           </v-col>

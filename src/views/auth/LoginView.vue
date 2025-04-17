@@ -209,4 +209,38 @@ onMounted(() => {
 .link:active {
   color: #000;
 }
+@media (max-width: 600px) {
+  .wrapper {
+    padding: 0 1rem;
+    align-items: flex-start;
+    padding-top: 3rem;
+  }
+
+  .theme-toggle-btn {
+    top: 12px;
+    right: 12px;
+    width: 40px !important;
+    height: 40px !important;
+  }
+
+  .signup-btn {
+    font-size: 14px;
+    padding: 10px 20px;
+  }
+
+  .hover-card {
+    width: 100% !important;
+    max-width: 100%;
+    margin: 0 auto;
+  }
+
+  .v-card-text {
+    padding: 16px !important;
+  }
+
+  .v-img {
+    max-width: 120px;
+  }
+}
+
 </style>

@@ -228,4 +228,45 @@ body {
 .link{
   text-decoration: none;
 }
+@media (max-width: 600px) {
+  /* Reduce padding around card */
+  .container-bg {
+    padding: 1rem;
+    align-items: flex-start;
+    padding-top: 3rem;
+  }
+
+  /* Adjust card width and prevent overflow */
+  .hover-card {
+    width: 100% !important;
+    max-width: 100%;
+    margin: 0 auto;
+  }
+
+  /* Reduce toggle button size on small screens */
+  .theme-toggle {
+    top: 12px;
+    right: 12px;
+    width: 40px !important;
+    height: 40px !important;
+  }
+
+  /* Scale image and reduce top margin */
+  .v-img {
+    max-width: 120px !important;
+    margin-top: 8px !important;
+  }
+
+  /* Adjust signup button size and font */
+  .signup-btn {
+    font-size: 14px;
+    padding: 10px 20px;
+  }
+
+  /* Make v-sheet full width on mobile */
+  .v-sheet {
+    width: 100% !important;
+  }
+}
+
 </style>
