@@ -1,4 +1,17 @@
-<script setup></script>
+<script setup>
+import { RouterLink } from 'vue-router'
+import { ref } from 'vue'
+
+const searchQuery = ref('')
+
+// This will run when user presses Enter or clicks the search button
+const performSearch = () => {
+  if (searchQuery.value.trim()) {
+    console.log('Searching for:', searchQuery.value)
+    // You can replace this with your actual search logic, e.g. emit, API call, or router push
+  }
+}
+</script>
 
 <template>
   <v-app id="inspire">
@@ -14,35 +27,45 @@
 
         <!-- Center: Desktop Navigation -->
         <div class="d-none d-md-flex" style="gap: 24px">
-          <router-link to="/" class="text-white text-decoration-none font-weight-medium">
+          <RouterLink to="/" class="text-white text-decoration-none font-weight-medium">
             Home
-          </router-link>
+          </RouterLink>
 
-          <router-link to="/about" class="text-white text-decoration-none font-weight-medium">
+          <RouterLink to="/about" class="text-white text-decoration-none font-weight-medium">
             About us
-          </router-link>
+          </RouterLink>
 
-          <router-link to="/contact" class="text-white text-decoration-none font-weight-medium">
+          <RouterLink to="/contact" class="text-white text-decoration-none font-weight-medium">
             Contact us
-          </router-link>
+          </RouterLink>
         </div>
 
         <!-- Right: Search Bar -->
         <v-responsive max-width="240">
           <div class="d-flex gap-2">
-            <v-text-field
-              density="compact"
-              label="Search"
-              rounded="lg"
-              variant="solo-filled"
-              flat
-              hide-details
-              single-line
-              class="flex-grow-1"
-            />
-            <v-btn color="#fff" icon rounded="lg" class="elevation-1">
-              <v-icon>mdi-magnify</v-icon>
-            </v-btn>
+            <div class="d-flex align-center search-wrapper">
+              <v-text-field
+                v-model="searchQuery"
+                density="compact"
+                label="Search"
+                rounded="lg"
+                variant="solo-filled"
+                flat
+                hide-details
+                single-line
+                class="flex-grow-1 search-input"
+                @keydown.enter="performSearch"
+              />
+              <v-btn
+                color="#fff"
+                icon
+                rounded="lg"
+                class="elevation-1 search-btn"
+                @click="performSearch"
+              >
+                <v-icon>mdi-magnify</v-icon>
+              </v-btn>
+            </div>
             <!-- Mobile Menu -->
             <v-menu transition="scale-transition" offset-y>
               <template #activator="{ props }">
@@ -50,34 +73,34 @@
               </template>
               <v-list>
                 <v-list-item link
-                  ><router-link to="/home" class="text-decoration-none"
-                    >Home</router-link
+                  ><RouterLink to="/home" class="text-decoration-none"
+                    >Home</RouterLink
                   ></v-list-item
                 >
                 <v-list-item link
-                  ><router-link to="/home" class="text-decoration-none"
-                    >My profile</router-link
+                  ><RouterLink to="/home" class="text-decoration-none"
+                    >My profile</RouterLink
                   ></v-list-item
                 ><v-list-item link
-                  ><router-link to="/home" class="text-decoration-none"
-                    >My appointments</router-link
+                  ><RouterLink to="/home" class="text-decoration-none"
+                    >My appointments</RouterLink
                   ></v-list-item
                 >
                 <v-list-item link
-                  ><router-link to="/about" class="text-decoration-none"
-                    >About Us</router-link
+                  ><RouterLink to="/about" class="text-decoration-none"
+                    >About Us</RouterLink
                   ></v-list-item
                 >
 
-                <v-list-item link
-                  ><router-link to="/contact" class="text-decoration-none"
-                    >Contact Us</router-link
+                <v-list-item
+                  ><RouterLink to="/contact" class="text-decoration-none"
+                    >Contact Us</RouterLink
                   ></v-list-item
                 >
                 <v-divider></v-divider>
-                <v-list-item link
-                  ><router-link to="/about" class="text-decoration-none"
-                    >Logout</router-link
+                <v-list-item
+                  ><RouterLink to="/about" class="text-decoration-none"
+                    >Logout</RouterLink
                   ></v-list-item
                 >
               </v-list>
@@ -98,25 +121,29 @@
                 <v-img src="image/Teach&Learn.png" alt="User" />
               </v-avatar>
               <span class="d-block font-weight-medium mb-3"
-                ><router-link to="/profile">My Name</router-link>
+                ><RouterLink to="/profile">My Name</RouterLink>
               </span>
               <v-divider class="mb-3"></v-divider>
 
               <v-list density="compact" nav>
                 <v-list-item link>
-                  <v-list-item-title>My Profile</v-list-item-title>
+                  <v-list-item-title
+                    ><RouterLink to="/profile"> My Profile</RouterLink></v-list-item-title
+                  >
                 </v-list-item>
 
                 <v-list-item link>
-                  <v-list-item-title>My Appointments</v-list-item-title>
+                  <v-list-item-title
+                    ><RouterLink to="/appointments"> My Appoitnments</RouterLink></v-list-item-title
+                  >
                 </v-list-item>
 
                 <v-divider class="my-2" />
 
                 <v-list-item link>
-                  <router-link to="/" class="text-decoration-none">
+                  <RouterLink to="/" class="text-decoration-none">
                     <v-list-item-title>Logout</v-list-item-title>
-                  </router-link>
+                  </RouterLink>
                 </v-list-item>
               </v-list>
             </v-sheet>
@@ -135,3 +162,45 @@
     <v-footer app padless></v-footer>
   </v-app>
 </template>
+<style scoped>
+.search-wrapper {
+  gap: 8px;
+  max-width: 300px;
+  width: 100%;
+}
+
+.search-input {
+  min-height: 40px;
+  font-size: 15px;
+}
+
+.search-btn {
+  width: 48px;
+  height: 48px;
+  transition: all 0.3s ease;
+}
+
+.search-btn .v-icon {
+  font-size: 24px;
+}
+
+@media (max-width: 600px) {
+  .search-wrapper {
+    max-width: 100%;
+    gap: 6px;
+  }
+
+  .search-btn {
+    width: 40px;
+    height: 40px;
+  }
+
+  .search-btn .v-icon {
+    font-size: 20px;
+  }
+
+  .search-input {
+    font-size: 14px;
+  }
+}
+</style>

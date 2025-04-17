@@ -1,4 +1,137 @@
-<script></script>
+<script setup></script>
+
 <template>
-  <h1>profile</h1>
+  <v-app id="inspire">
+    <!-- App Bar -->
+    <v-app-bar flat color="#1565c0">
+      <v-container class="d-flex align-center justify-space-between">
+        <!-- Left: Logo -->
+        <div class="d-flex align-center gap-4">
+          <v-avatar color="#fff" size="50" style="border-width: 1px">
+            <v-img src="image/Teach&Learn.png" alt="Logo" />
+          </v-avatar>
+        </div>
+
+        <!-- Center: Desktop Navigation -->
+        <div class="d-none d-md-flex" style="gap: 24px">
+          <router-link to="/" class="text-white text-decoration-none font-weight-medium">
+            Home
+          </router-link>
+
+          <router-link to="/about" class="text-white text-decoration-none font-weight-medium">
+            About us
+          </router-link>
+
+          <router-link to="/contact" class="text-white text-decoration-none font-weight-medium">
+            Contact us
+          </router-link>
+        </div>
+
+        <!-- Right: Search Bar -->
+        <v-responsive max-width="240">
+          <div class="d-flex gap-2">
+            <v-text-field
+              density="compact"
+              label="Search"
+              rounded="lg"
+              variant="solo-filled"
+              flat
+              hide-details
+              single-line
+              class="flex-grow-1"
+            />
+            <v-btn color="#fff" icon rounded="lg" class="elevation-1">
+              <v-icon>mdi-magnify</v-icon>
+            </v-btn>
+            <!-- Mobile Menu -->
+            <v-menu transition="scale-transition" offset-y>
+              <template #activator="{ props }">
+                <v-app-bar-nav-icon v-bind="props" class="d-md-none" />
+              </template>
+              <v-list>
+                <v-list-item link
+                  ><router-link to="/home" class="text-decoration-none"
+                    >Home</router-link
+                  ></v-list-item
+                >
+                <v-list-item link
+                  ><router-link to="/home" class="text-decoration-none"
+                    >My profile</router-link
+                  ></v-list-item
+                ><v-list-item link
+                  ><router-link to="/home" class="text-decoration-none"
+                    >My appointments</router-link
+                  ></v-list-item
+                >
+                <v-list-item link
+                  ><router-link to="/about" class="text-decoration-none"
+                    >About Us</router-link
+                  ></v-list-item
+                >
+
+                <v-list-item link
+                  ><router-link to="/contact" class="text-decoration-none"
+                    >Contact Us</router-link
+                  ></v-list-item
+                >
+                <v-divider></v-divider>
+                <v-list-item link
+                  ><router-link to="/about" class="text-decoration-none"
+                    >Logout</router-link
+                  ></v-list-item
+                >
+              </v-list>
+            </v-menu>
+          </div>
+        </v-responsive>
+      </v-container>
+    </v-app-bar>
+
+    <!-- Main Content -->
+    <v-main class="bg-grey-lighten-3">
+      <v-container fluid class="pa-0" style="max-width: 95%; margin: auto">
+        <v-row>
+          <!-- Sidebar -->
+          <v-col cols="12" md="3" class="d-none d-md-flex">
+            <v-sheet rounded="lg" class="pa-4 text-center" style="height: 100%; width: 100%">
+              <v-avatar class="mb-3" color="#fff" size="100" style="border-width: 1px">
+                <v-img src="image/Teach&Learn.png" alt="User" />
+              </v-avatar>
+              <span class="d-block font-weight-medium mb-3"
+                ><router-link to="/profile">My Name</router-link>
+              </span>
+              <v-divider class="mb-3"></v-divider>
+
+              <v-list density="compact" nav>
+                <v-list-item link>
+                  <v-list-item-title>My Profile</v-list-item-title>
+                </v-list-item>
+
+                <v-list-item link>
+                  <v-list-item-title>My Appointments</v-list-item-title>
+                </v-list-item>
+
+                <v-divider class="my-2" />
+
+                <v-list-item link>
+                  <router-link to="/" class="text-decoration-none">
+                    <v-list-item-title>Logout</v-list-item-title>
+                  </router-link>
+                </v-list-item>
+              </v-list>
+            </v-sheet>
+          </v-col>
+
+          <!-- Main Area 
+          <v-col cols="12" md="9">
+            <v-sheet min-height="100vh" rounded="lg" class="pa-4">
+               Your content goes here 
+            </v-sheet>
+          </v-col>-->
+        </v-row>
+      </v-container>
+    </v-main>
+
+    <v-footer app padless></v-footer>
+  </v-app>
 </template>
