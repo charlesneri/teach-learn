@@ -18,7 +18,7 @@ const performSearch = () => {
     <!-- App Bar -->
     <v-app-bar flat color="#1565c0">
       <v-container class="d-flex align-center justify-space-between">
-        <!-- Left: Logo -->
+      
         <div class="d-flex align-center gap-4">
           <v-avatar color="#fff" size="50" style="border-width: 1px">
             <v-img src="image/Teach&Learn.png" alt="Logo" />
@@ -78,7 +78,7 @@ const performSearch = () => {
                   ></v-list-item
                 >
                 <v-list-item link
-                  ><RouterLink to="/home" class="text-decoration-none"
+                  ><RouterLink to="/profile" class="text-decoration-none"
                     >My profile</RouterLink
                   ></v-list-item
                 ><v-list-item link
