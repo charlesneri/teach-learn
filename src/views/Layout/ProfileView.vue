@@ -126,15 +126,19 @@ function getEducationPlaceholder(index) {
   <v-app id="inspire">
     <!-- App Bar -->
     <v-app-bar flat :color="currentTheme === 'light' ? '#1565c0' : 'grey-darken-4'">
-      <v-container class="d-flex align-center justify-space-between">
-        <div class="d-flex align-center gap-4">
-          <v-avatar color="#fff" size="50">
+      <v-container class="d-flex align-center justify-space-between pa-2">
+        <!-- Logo -->
+        <div class="d-flex align-center gap-2">
+          <v-avatar color="#fff" size="44">
             <v-img src="image/Teach&Learn.png" alt="Logo" />
           </v-avatar>
         </div>
 
-        <!-- Navigation Links -->
-        <div class="d-none d-md-flex" style="gap: 24px">
+        <!-- Desktop Navigation -->
+        <v-spacer />
+
+        <!-- Centered Navigation Links (Desktop only) -->
+        <div class="d-none d-md-flex align-center" style="gap: 24px">
           <RouterLink to="/home" class="text-white text-decoration-none font-weight-medium"
             >Home</RouterLink
           >
@@ -146,97 +150,76 @@ function getEducationPlaceholder(index) {
           >
         </div>
 
-        <!-- Search & Mobile Menu -->
-        <v-responsive max-width="240">
-          <div class="d-flex">
-            <div class="d-flex align-center search-wrapper" style="max-width: 400px; width: 100%">
-              <v-text-field
-                v-model="searchQuery"
-                placeholder="Search..."
-                variant="solo-filled"
-                density="compact"
-                rounded="lg"
-                flat
-                hide-details
-                single-line
-                class="search-input flex-grow-1"
-                @keydown.enter="performSearch"
-                append-inner-icon="mdi-magnify"
-                @click:append-inner="performSearch"
-              />
-            </div>
+        <!-- Spacer after center links -->
+        <v-spacer />
 
-            <!-- Mobile Menu -->
-            <v-menu transition="scale-transition" offset-y theme="light">
-              <template #activator="{ props }">
-                <v-app-bar-nav-icon v-bind="props" class="d-md-none" />
-              </template>
-              <v-list>
-                <v-list-item link
-                  ><RouterLink to="/home" class="text-decoration-none"
-                    >Home</RouterLink
-                  ></v-list-item
-                >
-                <v-list-item link
-                  ><RouterLink to="/profile" class="text-decoration-none"
-                    >My Profile</RouterLink
-                  ></v-list-item
-                >
-                <v-list-item link
-                  ><RouterLink to="/appointments" class="text-decoration-none"
-                    >My Appointments</RouterLink
-                  ></v-list-item
-                >
-                <v-list-item link
-                  ><RouterLink to="/about" class="text-decoration-none"
-                    >About us</RouterLink
-                  ></v-list-item
-                >
-                <v-list-item link
-                  ><RouterLink to="/contact" class="text-decoration-none"
-                    >Contact us</RouterLink
-                  ></v-list-item
-                >
-                <v-divider></v-divider>
-                <v-list-item link
-                  ><RouterLink to="/logout" class="text-decoration-none"
-                    >Logout</RouterLink
-                  ></v-list-item
-                >
-              </v-list>
-            </v-menu>
-          </div>
-        </v-responsive>
+        <!-- Mobile Menu -->
+        <v-menu transition="scale-transition" offset-y theme="light">
+          <template #activator="{ props }">
+            <v-app-bar-nav-icon v-bind="props" class="d-md-none" />
+          </template>
+          <v-list>
+            <v-list-item link
+              ><RouterLink to="/home" class="text-decoration-none">Home</RouterLink></v-list-item
+            >
+            <v-list-item link
+              ><RouterLink to="/profile" class="text-decoration-none"
+                >My Profile</RouterLink
+              ></v-list-item
+            >
+            <v-list-item link
+              ><RouterLink to="/appointments" class="text-decoration-none"
+                >My Appointments</RouterLink
+              ></v-list-item
+            >
+            <v-list-item link
+              ><RouterLink to="/about" class="text-decoration-none"
+                >About Us</RouterLink
+              ></v-list-item
+            >
+            <v-list-item link
+              ><RouterLink to="/contact" class="text-decoration-none"
+                >Contact Us</RouterLink
+              ></v-list-item
+            >
+            <v-divider></v-divider>
+            <v-list-item link
+              ><RouterLink to="/logout" class="text-decoration-none"
+                >Logout</RouterLink
+              ></v-list-item
+            >
+          </v-list>
+        </v-menu>
       </v-container>
     </v-app-bar>
 
     <!-- Main Content -->
     <v-main :class="currentTheme === 'dark' ? 'bg-grey-darken-4 text-white' : 'bg-grey-lighten-3'">
-      <v-container fluid class="pa-4 pa-sm-6" style="max-width: 95%; margin: auto">
+      <v-container fluid class="py-6 px-4 px-sm-6">
         <v-row justify="center">
-          <v-col cols="12" md="8">
+          <v-col cols="12" sm="10" md="8">
             <v-sheet
               :class="currentTheme === 'dark' ? 'bg-grey-darken-3 text-white' : 'bg-white'"
-              class="pa-6 text-center"
+              class="pa-4 pa-sm-6 text-sm-center"
               elevation="2"
               rounded="lg"
-              style="position: relative"
             >
-              <!-- Theme Toggle Button -->
+              <!-- Theme Toggle -->
               <v-btn
                 icon
                 size="small"
                 @click="toggleTheme"
-                style="position: absolute; top: 16px; right: 16px; z-index: 10"
+                class="position-absolute"
+                style="top: 16px; right: 16px; z-index: 10"
               >
                 <v-icon>
                   {{ currentTheme === 'light' ? 'mdi-weather-night' : 'mdi-white-balance-sunny' }}
                 </v-icon>
               </v-btn>
 
-              <!-- Profile Picture -->
+              <!-- Profile Image -->
               <div class="d-flex flex-column align-center mb-4">
-                <v-avatar size="120" color="grey-lighten-2">
+                <v-avatar :size="$vuetify.display.smAndDown ? 100 : 120" color="grey-lighten-2">
                   <v-img v-if="profileImage" :src="profileImage" cover />
                   <v-icon v-else size="80" color="grey-darken-1">mdi-account</v-icon>
                 </v-avatar>
@@ -245,7 +228,6 @@ function getEducationPlaceholder(index) {
                   <v-btn size="small" color="primary" @click="$refs.imageInput.click()">
                     <v-icon start>mdi-upload</v-icon>
                   </v-btn>
-
                   <v-btn
                     v-if="profileImage"
                     size="small"
@@ -256,7 +238,6 @@ function getEducationPlaceholder(index) {
                     <v-icon start>mdi-delete</v-icon>
                   </v-btn>
                 </div>
-
                 <input
                   type="file"
                   ref="imageInput"
@@ -266,6 +247,7 @@ function getEducationPlaceholder(index) {
                 />
               </div>
 
+              <!-- Full Name -->
               <h3 class="font-weight-medium mb-4">{{ fullName }}</h3>
               <v-btn color="primary" class="mb-3" @click="dialog = true">Apply as Tutor?</v-btn>
 
@@ -310,7 +292,7 @@ function getEducationPlaceholder(index) {
 
               <v-divider class="my-4" />
 
-              <!-- Profile Details -->
+              <!-- Profile Form -->
               <div class="text-start">
                 <v-row
                   v-for="(label, key) in {
@@ -326,8 +308,8 @@ function getEducationPlaceholder(index) {
                   class="py-1"
                   dense
                 >
-                  <v-col cols="6" class="font-weight-medium">{{ label }}</v-col>
-                  <v-col cols="6">
+                  <v-col cols="12" sm="6" class="font-weight-medium">{{ label }}</v-col>
+                  <v-col cols="12" sm="6">
                     <div v-if="!isEditing">{{ profile[key] }}</div>
                     <v-text-field
                       v-else
@@ -342,8 +324,8 @@ function getEducationPlaceholder(index) {
 
                 <!-- About Me -->
                 <v-row class="py-1" dense>
-                  <v-col cols="6" class="font-weight-medium">About Me:</v-col>
-                  <v-col cols="6">
+                  <v-col cols="12" sm="6" class="font-weight-medium">About Me:</v-col>
+                  <v-col cols="12" sm="6">
                     <div v-if="!isEditing">{{ profile.about }}</div>
                     <v-textarea
                       v-else
@@ -359,8 +341,8 @@ function getEducationPlaceholder(index) {
 
                 <!-- Education -->
                 <v-row class="py-1" dense>
-                  <v-col cols="6" class="font-weight-medium">Educational Background:</v-col>
-                  <v-col cols="6">
+                  <v-col cols="12" sm="6" class="font-weight-medium">Educational Background:</v-col>
+                  <v-col cols="12" sm="6">
                     <div v-if="!isEditing">
                       <div v-for="item in profile.education" :key="item">{{ item }}</div>
                     </div>
@@ -380,17 +362,16 @@ function getEducationPlaceholder(index) {
 
               <v-divider class="my-4" />
 
-              <!-- Action Buttons -->
-              <div class="d-flex justify-center gap-2">
+              <!-- Edit / Save Buttons -->
+              <div class="d-flex flex-wrap justify-center gap-2">
                 <v-btn
                   v-if="!isEditing"
                   size="small"
                   variant="outlined"
                   color="blue"
                   @click="enableEdit"
+                  >Edit</v-btn
                 >
-                  Edit
-                </v-btn>
                 <template v-else>
                   <v-btn size="small" variant="text" color="red" @click="cancelEdit">Cancel</v-btn>
                   <v-btn size="small" color="green" @click="saveProfile">Save</v-btn>

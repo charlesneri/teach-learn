@@ -45,7 +45,10 @@ onMounted(() => {
         </div>
 
         <!-- Navigation Links -->
-        <div class="d-none d-md-flex" style="gap: 24px">
+        <v-spacer />
+
+        <!-- Centered Navigation Links (Desktop only) -->
+        <div class="d-none d-md-flex align-center" style="gap: 24px">
           <RouterLink to="/home" class="text-white text-decoration-none font-weight-medium"
             >Home</RouterLink
           >
@@ -56,6 +59,8 @@ onMounted(() => {
             >Contact Us</RouterLink
           >
         </div>
+
+        <v-spacer />
 
         <!-- Search & Mobile Menu -->
         <v-responsive max-width="240">
