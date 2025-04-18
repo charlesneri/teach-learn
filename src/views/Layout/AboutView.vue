@@ -182,7 +182,7 @@ function getEducationPlaceholder(index) {
               </v-list-item>
               <v-divider></v-divider>
               <v-list-item>
-                <router-link to="/logout" class="text-decoration-none">Logout</router-link>
+                <router-link to="/" class="text-decoration-none">Logout</router-link>
               </v-list-item>
             </v-list>
           </v-menu>
