@@ -155,7 +155,7 @@ function getEducationPlaceholder(index) {
         <!-- Spacer after center links -->
         <v-spacer />
 
-        <!-- Mobile Search and Menu -->
+       
         <div class="d-flex align-center gap-2">
           
 
