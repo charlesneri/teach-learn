@@ -248,8 +248,10 @@ function getEducationPlaceholder(index) {
               </div>
 
               <!-- Full Name -->
-              <h3 class="font-weight-medium mb-4">{{ fullName }}</h3>
-              <v-btn color="primary" class="mb-3" @click="dialog = true">Apply as Tutor?</v-btn>
+              <div class="d-flex flex-column align-center">
+                <h3 class="font-weight-medium mb-4">{{ fullName }}</h3>
+                <v-btn color="primary" class="mb-3" @click="dialog = true"> Apply as Tutor? </v-btn>
+              </div>
 
               <!-- Confirm Dialog -->
               <v-dialog

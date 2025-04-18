@@ -157,21 +157,6 @@ function getEducationPlaceholder(index) {
 
         <!-- Mobile Search and Menu -->
         <div class="d-flex align-center gap-2">
-          <!-- Search -->
-          <v-text-field
-            v-model="searchQuery"
-            placeholder="Search..."
-            density="compact"
-            flat
-            rounded="lg"
-            hide-details
-            class="search-input d-none d-sm-flex"
-            style="max-width: 160px"
-            append-inner-icon="mdi-magnify"
-            @keydown.enter="performSearch"
-            @click:append-inner="performSearch"
-          />
-
           <!-- Mobile Menu Button -->
           <v-menu transition="scale-transition" offset-y>
             <template #activator="{ props }">
