@@ -118,55 +118,82 @@ function getEducationPlaceholder(index) {
     <!-- App Bar -->
     <v-app-bar flat :color="currentTheme === 'light' ? '#1565c0' : 'grey-darken-4'">
       <v-container class="d-flex align-center justify-space-between">
-        <!-- Logo -->
         <div class="d-flex align-center gap-4">
           <v-avatar color="#fff" size="50">
             <v-img src="image/Teach&Learn.png" alt="Logo" />
           </v-avatar>
         </div>
 
-        <!-- Navigation (Desktop) -->
-        <div class="d-none d-md-flex align-center justify-center" style="gap: 24px">
-          <router-link to="/home" class="text-white text-decoration-none font-weight-medium"
-            >Home</router-link
+        <!-- Navigation Links -->
+        <div class="d-none d-md-flex" style="gap: 24px">
+          <RouterLink to="/home" class="text-white text-decoration-none font-weight-medium"
+            >Home</RouterLink
           >
-          <router-link to="/about" class="text-white text-decoration-none font-weight-medium"
-            >About Us</router-link
+          <RouterLink to="/about" class="text-white text-decoration-none font-weight-medium"
+            >About Us</RouterLink
           >
-          <router-link to="/contact" class="text-white text-decoration-none font-weight-medium"
-            >Contact Us</router-link
+          <RouterLink to="/contact" class="text-white text-decoration-none font-weight-medium"
+            >Contact Us</RouterLink
           >
         </div>
 
-        <!--  Mobile Menu -->
-        <v-responsive max-width="240" style="height: 100%">
-          <div class="d-flex justify-center align-center">
-            <v-menu transition="scale-transition" offset-y>
+        <!-- Search & Mobile Menu -->
+        <v-responsive max-width="240">
+          <div class="d-flex">
+            <div class="d-flex align-center search-wrapper" style="max-width: 400px; width: 100%">
+              <v-text-field
+                v-model="searchQuery"
+                placeholder="Search..."
+                variant="solo-filled"
+                density="compact"
+                rounded="lg"
+                flat
+                hide-details
+                single-line
+                class="search-input flex-grow-1"
+                @keydown.enter="performSearch"
+                append-inner-icon="mdi-magnify"
+                @click:append-inner="performSearch"
+              />
+            </div>
+
+            <!-- Mobile Menu -->
+            <v-menu transition="scale-transition" offset-y theme="light">
               <template #activator="{ props }">
                 <v-app-bar-nav-icon v-bind="props" class="d-md-none" />
               </template>
               <v-list>
-                <v-list-item link>
-                  <router-link to="/home" class="text-decoration-none">Home</router-link>
-                </v-list-item>
-                <v-list-item link>
-                  <router-link to="/profile" class="text-decoration-none">My Profile</router-link>
-                </v-list-item>
-                <v-list-item link>
-                  <router-link to="/appointments" class="text-decoration-none"
-                    >My Appointments</router-link
-                  >
-                </v-list-item>
-                <v-list-item link>
-                  <router-link to="/about" class="text-decoration-none">About Us</router-link>
-                </v-list-item>
-                <v-list-item link>
-                  <router-link to="/contact" class="text-decoration-none">Contact Us</router-link>
-                </v-list-item>
+                <v-list-item link
+                  ><RouterLink to="/home" class="text-decoration-none"
+                    >Home</RouterLink
+                  ></v-list-item
+                >
+                <v-list-item link
+                  ><RouterLink to="/profile" class="text-decoration-none"
+                    >My Profile</RouterLink
+                  ></v-list-item
+                >
+                <v-list-item link
+                  ><RouterLink to="/appointments" class="text-decoration-none"
+                    >My Appointments</RouterLink
+                  ></v-list-item
+                >
+                <v-list-item link
+                  ><RouterLink to="/about" class="text-decoration-none"
+                    >About us</RouterLink
+                  ></v-list-item
+                >
+                <v-list-item link
+                  ><RouterLink to="/contact" class="text-decoration-none"
+                    >Contact us</RouterLink
+                  ></v-list-item
+                >
                 <v-divider></v-divider>
-                <v-list-item link>
-                  <router-link to="/logout" class="text-decoration-none">Logout</router-link>
-                </v-list-item>
+                <v-list-item link
+                  ><RouterLink to="/logout" class="text-decoration-none"
+                    >Logout</RouterLink
+                  ></v-list-item
+                >
               </v-list>
             </v-menu>
           </div>
