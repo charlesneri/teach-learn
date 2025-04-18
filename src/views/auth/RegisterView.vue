@@ -1,7 +1,7 @@
 <script setup>
 import { ref, onMounted, watch } from 'vue'
 
-// Get user's preferred theme
+// Theme setup
 const getPreferredTheme = () => {
   const savedTheme = localStorage.getItem('theme')
   if (savedTheme) return savedTheme
@@ -9,18 +9,10 @@ const getPreferredTheme = () => {
 }
 
 const theme = ref(getPreferredTheme())
-
-// Toggle theme
 const toggleTheme = () => {
   theme.value = theme.value === 'light' ? 'dark' : 'light'
 }
-
-// Watch theme changes and save
-watch(theme, (val) => {
-  localStorage.setItem('theme', val)
-})
-
-// Optional: Sync with system theme if no preference saved
+watch(theme, (val) => localStorage.setItem('theme', val))
 onMounted(() => {
   const media = window.matchMedia('(prefers-color-scheme: dark)')
   media.addEventListener('change', (e) => {
@@ -29,6 +21,37 @@ onMounted(() => {
     }
   })
 })
+
+// User registration data
+const userProfile = ref({
+  firstName: '',
+  lastName: '',
+  middleInitial: '',
+  age: '',
+  about: '',
+  school: '',
+  course: '',
+  yearLevel: '',
+  email: '',
+  password: '',
+  confirmPassword: '',
+})
+
+// Form submit
+const handleSubmit = () => {
+  if (
+    userProfile.value.password !== userProfile.value.confirmPassword ||
+    !userProfile.value.firstName ||
+    !userProfile.value.lastName ||
+    !userProfile.value.email
+  ) {
+    alert('Please complete all required fields and ensure passwords match.')
+    return
+  }
+
+  localStorage.setItem('userProfile', JSON.stringify(userProfile.value))
+  alert('Registration successful!')
+}
 </script>
 
 <template>
@@ -82,29 +105,73 @@ onMounted(() => {
 
                   <v-card-text class="pt-4">
                     <v-sheet class="mx-auto" width="300">
-                      <v-form fast-fail @submit.prevent>
+                      <v-form fast-fail @submit.prevent="handleSubmit">
                         <v-text-field
+                          v-model="userProfile.firstName"
                           label="First Name"
                           variant="outlined"
                           :color="theme === 'dark' ? 'white' : 'primary'"
                         />
                         <v-text-field
+                          v-model="userProfile.lastName"
                           label="Last Name"
                           variant="outlined"
                           :color="theme === 'dark' ? 'white' : 'primary'"
                         />
                         <v-text-field
-                          label="Email"
+                          v-model="userProfile.middleInitial"
+                          label="Middle Initial"
                           variant="outlined"
                           :color="theme === 'dark' ? 'white' : 'primary'"
                         />
                         <v-text-field
+                          v-model="userProfile.age"
+                          label="Age"
+                          type="number"
+                          variant="outlined"
+                          :color="theme === 'dark' ? 'white' : 'primary'"
+                        />
+                        <v-text-field
+                          v-model="userProfile.about"
+                          label="About Me"
+                          variant="outlined"
+                          :color="theme === 'dark' ? 'white' : 'primary'"
+                        />
+                        <v-text-field
+                          v-model="userProfile.school"
+                          label="School / University"
+                          variant="outlined"
+                          :color="theme === 'dark' ? 'white' : 'primary'"
+                        />
+                        <v-text-field
+                          v-model="userProfile.course"
+                          label="Course / Degree"
+                          variant="outlined"
+                          :color="theme === 'dark' ? 'white' : 'primary'"
+                        />
+                        <v-text-field
+                          v-model="userProfile.yearLevel"
+                          label="Year Level"
+                          type="number"
+                          variant="outlined"
+                          :color="theme === 'dark' ? 'white' : 'primary'"
+                        />
+                        <v-text-field
+                          v-model="userProfile.email"
+                          label="Email"
+                          type="email"
+                          variant="outlined"
+                          :color="theme === 'dark' ? 'white' : 'primary'"
+                        />
+                        <v-text-field
+                          v-model="userProfile.password"
                           label="Password"
                           type="password"
                           variant="outlined"
                           :color="theme === 'dark' ? 'white' : 'primary'"
                         />
                         <v-text-field
+                          v-model="userProfile.confirmPassword"
                           label="Confirm Password"
                           type="password"
                           variant="outlined"
@@ -119,6 +186,7 @@ onMounted(() => {
                         >
                           Signup
                         </v-btn>
+
                         <v-divider class="my-5" />
                         <p class="text-center text-primary">
                           Already have an account?
@@ -222,10 +290,11 @@ body {
   box-shadow: 0 0 8px rgba(33, 150, 243, 0.8);
 }
 
-.link:active{
-  color: #000000;}
-  
-.link{
+.link:active {
+  color: #000000;
+}
+
+.link {
   text-decoration: none;
 }
 @media (max-width: 600px) {
@@ -268,5 +337,4 @@ body {
     width: 100% !important;
   }
 }
-
 </style>

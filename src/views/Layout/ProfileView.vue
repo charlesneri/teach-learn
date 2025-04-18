@@ -1,5 +1,9 @@
 <script setup>
 import { ref, onMounted, watch, computed } from 'vue'
+import { useTheme } from 'vuetify'
+
+const theme = useTheme()
+const currentTheme = ref(localStorage.getItem('theme') || 'light')
 
 const dialog = ref(false)
 const loading = ref(false)
@@ -12,15 +16,36 @@ const selectedFile = ref(null)
 const maxSizeMB = 2
 
 const profile = ref({
-  firstName: 'Jane',
-  lastName: 'Doe',
-  middleInitial: 'J',
-  age: '25',
-  expertise: 'J',
-  email: 'jane.doe@example.com',
-  phone: '+63 912 345 6789',
-  about: 'lem',
-  education: ['Caraga State University', 'BS in Information Systems', 'Year level: 3'],
+  firstName: '',
+  lastName: '',
+  middleInitial: '',
+  age: '',
+  expertise: '',
+  email: '',
+  phone: '',
+  about: '',
+  education: ['', '', ''],
+})
+
+function toggleTheme() {
+  currentTheme.value = currentTheme.value === 'light' ? 'dark' : 'light'
+  theme.global.name.value = currentTheme.value
+  localStorage.setItem('theme', currentTheme.value)
+}
+
+watch(currentTheme, (val) => {
+  theme.global.name.value = val
+  localStorage.setItem('theme', val)
+})
+
+onMounted(() => {
+  theme.global.name.value = currentTheme.value
+  const storedImage = localStorage.getItem('profileImage')
+  if (storedImage) profileImage.value = storedImage
+})
+
+watch(profileImage, (newVal) => {
+  if (newVal) localStorage.setItem('profileImage', newVal)
 })
 
 function proceedWithApplication() {
@@ -72,101 +97,76 @@ function onImageSelected(event) {
   reader.readAsDataURL(file)
 }
 
-// Persist image locally (for UI testing purposes)
-onMounted(() => {
-  const storedImage = localStorage.getItem('profileImage')
-  if (storedImage) profileImage.value = storedImage
-})
-watch(profileImage, (newVal) => {
-  if (newVal) localStorage.setItem('profileImage', newVal)
-})
+function removeProfileImage() {
+  profileImage.value = ''
+  localStorage.removeItem('profileImage')
+}
 
-//for the name
 const fullName = computed(() => {
   return `${profile.value.firstName} ${profile.value.middleInitial}. ${profile.value.lastName}`
 })
-</script>
 
+function getEducationPlaceholder(index) {
+  if (index === 0) return 'Enter your school/university'
+  if (index === 1) return 'Enter your course or degree'
+  if (index === 2) return 'Enter your year level'
+  return 'Enter educational info'
+}
+</script>
 <template>
   <v-app id="inspire">
     <!-- App Bar -->
-    <v-app-bar flat color="#1565c0">
+    <v-app-bar flat :color="currentTheme === 'light' ? '#1565c0' : 'grey-darken-4'">
       <v-container class="d-flex align-center justify-space-between">
-        <!-- Left: Logo -->
+        <!-- Logo -->
         <div class="d-flex align-center gap-4">
-          <v-avatar color="#fff" size="50" style="border-width: 1px">
+          <v-avatar color="#fff" size="50">
             <v-img src="image/Teach&Learn.png" alt="Logo" />
           </v-avatar>
         </div>
 
-        <!-- Center: Desktop Navigation -->
-        <div class="d-none d-md-flex" style="gap: 24px">
-          <router-link to="/" class="text-white text-decoration-none font-weight-medium">
-            Home
-          </router-link>
-
-          <router-link to="/about" class="text-white text-decoration-none font-weight-medium">
-            About us
-          </router-link>
-
-          <router-link to="/contact" class="text-white text-decoration-none font-weight-medium">
-            Contact us
-          </router-link>
+        <!-- Navigation (Desktop) -->
+        <div class="d-none d-md-flex align-center justify-center" style="gap: 24px">
+          <router-link to="/home" class="text-white text-decoration-none font-weight-medium"
+            >Home</router-link
+          >
+          <router-link to="/about" class="text-white text-decoration-none font-weight-medium"
+            >About Us</router-link
+          >
+          <router-link to="/contact" class="text-white text-decoration-none font-weight-medium"
+            >Contact Us</router-link
+          >
         </div>
 
-        <!-- Right: Search Bar -->
-        <v-responsive max-width="240">
-          <div class="d-flex gap-2">
-            <v-text-field
-              density="compact"
-              label="Search"
-              rounded="lg"
-              variant="solo-filled"
-              flat
-              hide-details
-              single-line
-              class="flex-grow-1"
-            />
-            <v-btn color="#fff" icon rounded="lg" class="elevation-1">
-              <v-icon>mdi-magnify</v-icon>
-            </v-btn>
-            <!-- Mobile Menu -->
+        <!--  Mobile Menu -->
+        <v-responsive max-width="240" style="height: 100%">
+          <div class="d-flex justify-center align-center">
             <v-menu transition="scale-transition" offset-y>
               <template #activator="{ props }">
                 <v-app-bar-nav-icon v-bind="props" class="d-md-none" />
               </template>
               <v-list>
-                <v-list-item link
-                  ><router-link to="/home" class="text-decoration-none"
-                    >Home</router-link
-                  ></v-list-item
-                >
-                <v-list-item link
-                  ><router-link to="/home" class="text-decoration-none"
-                    >My profile</router-link
-                  ></v-list-item
-                ><v-list-item link
-                  ><router-link to="/home" class="text-decoration-none"
-                    >My appointments</router-link
-                  ></v-list-item
-                >
-                <v-list-item link
-                  ><router-link to="/about" class="text-decoration-none"
-                    >About Us</router-link
-                  ></v-list-item
-                >
-
-                <v-list-item link
-                  ><router-link to="/contact" class="text-decoration-none"
-                    >Contact Us</router-link
-                  ></v-list-item
-                >
+                <v-list-item link>
+                  <router-link to="/home" class="text-decoration-none">Home</router-link>
+                </v-list-item>
+                <v-list-item link>
+                  <router-link to="/profile" class="text-decoration-none">My Profile</router-link>
+                </v-list-item>
+                <v-list-item link>
+                  <router-link to="/appointments" class="text-decoration-none"
+                    >My Appointments</router-link
+                  >
+                </v-list-item>
+                <v-list-item link>
+                  <router-link to="/about" class="text-decoration-none">About Us</router-link>
+                </v-list-item>
+                <v-list-item link>
+                  <router-link to="/contact" class="text-decoration-none">Contact Us</router-link>
+                </v-list-item>
                 <v-divider></v-divider>
-                <v-list-item link
-                  ><router-link to="/about" class="text-decoration-none"
-                    >Logout</router-link
-                  ></v-list-item
-                >
+                <v-list-item link>
+                  <router-link to="/logout" class="text-decoration-none">Logout</router-link>
+                </v-list-item>
               </v-list>
             </v-menu>
           </div>
@@ -174,40 +174,66 @@ const fullName = computed(() => {
       </v-container>
     </v-app-bar>
 
-    <v-main class="bg-grey-lighten-3">
+    <!-- Main Content -->
+    <v-main :class="currentTheme === 'dark' ? 'bg-grey-darken-4 text-white' : 'bg-grey-lighten-3'">
       <v-container fluid class="pa-4 pa-sm-6" style="max-width: 95%; margin: auto">
         <v-row justify="center">
           <v-col cols="12" md="8">
-            <v-sheet class="pa-6 text-center" elevation="2" rounded="lg">
-              <!-- Profile Picture & Upload -->
-              <v-avatar
-                class="mb-4 mx-auto"
-                size="120"
-                color="grey-lighten-2"
-                style="cursor: pointer"
-                @click="$refs.imageInput.click()"
+            <v-sheet
+              :class="currentTheme === 'dark' ? 'bg-grey-darken-3 text-white' : 'bg-white'"
+              class="pa-6 text-center"
+              elevation="2"
+              rounded="lg"
+              style="position: relative"
+            >
+              <!-- Theme Toggle Button -->
+              <v-btn
+                icon
+                size="small"
+                @click="toggleTheme"
+                style="position: absolute; top: 16px; right: 16px; z-index: 10"
               >
-                <v-img v-if="profileImage" :src="profileImage" cover></v-img>
-                <v-icon v-else size="80" color="grey-darken-1">mdi-account</v-icon>
-              </v-avatar>
+                <v-icon>
+                  {{ currentTheme === 'light' ? 'mdi-weather-night' : 'mdi-white-balance-sunny' }}
+                </v-icon>
+              </v-btn>
 
-              <!-- Hidden File Input -->
-              <input
-                type="file"
-                ref="imageInput"
-                accept="image/*"
-                class="d-none"
-                @change="onImageSelected"
-              />
+              <!-- Profile Picture -->
+              <div class="d-flex flex-column align-center mb-4">
+                <v-avatar size="120" color="grey-lighten-2">
+                  <v-img v-if="profileImage" :src="profileImage" cover />
+                  <v-icon v-else size="80" color="grey-darken-1">mdi-account</v-icon>
+                </v-avatar>
 
-              <h3 class="font-weight-medium mb-4">
-                {{ fullName }}
-              </h3>
+                <div class="mt-3 d-flex flex-wrap justify-center gap-2">
+                  <v-btn size="small" color="primary" @click="$refs.imageInput.click()">
+                    <v-icon start>mdi-upload</v-icon>
+                  </v-btn>
 
-              <!-- Apply Button -->
-              <v-btn color="primary" class="mb-3" @click="dialog = true">Apply as tutor?</v-btn>
+                  <v-btn
+                    v-if="profileImage"
+                    size="small"
+                    color="red"
+                    variant="outlined"
+                    @click="removeProfileImage"
+                  >
+                    <v-icon start>mdi-delete</v-icon>
+                  </v-btn>
+                </div>
 
-              <!-- Dialog Modal -->
+                <input
+                  type="file"
+                  ref="imageInput"
+                  accept="image/*"
+                  class="d-none"
+                  @change="onImageSelected"
+                />
+              </div>
+
+              <h3 class="font-weight-medium mb-4">{{ fullName }}</h3>
+              <v-btn color="primary" class="mb-3" @click="dialog = true">Apply as Tutor?</v-btn>
+
+              <!-- Confirm Dialog -->
               <v-dialog
                 v-model="dialog"
                 max-width="500"
@@ -220,114 +246,65 @@ const fullName = computed(() => {
                     <v-icon class="me-2">mdi-alert-circle-outline</v-icon>
                     Confirm Application
                   </v-card-title>
-
                   <v-card-text class="text-start">
                     Your personal information will be public. Do you still wish to proceed?
                   </v-card-text>
-
                   <v-card-actions class="justify-end">
                     <v-btn
                       color="red"
                       variant="outlined"
                       @click="dialog = false"
                       :disabled="loading"
+                      >No</v-btn
                     >
-                      No
-                    </v-btn>
-                    <v-btn color="green" @click="proceedWithApplication" :loading="loading">
-                      Yes
-                    </v-btn>
+                    <v-btn color="green" @click="proceedWithApplication" :loading="loading"
+                      >Yes</v-btn
+                    >
                   </v-card-actions>
                 </v-card>
               </v-dialog>
 
               <!-- Snackbar -->
               <v-snackbar v-model="snackbar" timeout="3000" color="success" location="top">
-                Application submitted successfully!
+                {{ snackbarMsg }}
                 <template #actions>
-                  <v-btn variant="text" @click="snackbar = false" icon="mdi-close"></v-btn>
+                  <v-btn variant="text" @click="snackbar = false" icon="mdi-close" />
                 </template>
               </v-snackbar>
 
-              <v-divider class="my-4"></v-divider>
+              <v-divider class="my-4" />
 
-              <!-- Profile Info -->
+              <!-- Profile Details -->
               <div class="text-start">
-                <v-row class="py-1" dense>
-                  <v-col cols="6" class="font-weight-medium">Given Name:</v-col>
+                <v-row
+                  v-for="(label, key) in {
+                    'Given Name:': 'firstName',
+                    'Last Name:': 'lastName',
+                    'Middle Initial:': 'middleInitial',
+                    'Age:': 'age',
+                    'Expertise:': 'expertise',
+                    'Email:': 'email',
+                    'Phone:': 'phone',
+                  }"
+                  :key="key"
+                  class="py-1"
+                  dense
+                >
+                  <v-col cols="6" class="font-weight-medium">{{ label }}</v-col>
                   <v-col cols="6">
-                    <div v-if="!isEditing">{{ profile.firstName }}</div>
+                    <div v-if="!isEditing">{{ profile[key] }}</div>
                     <v-text-field
                       v-else
-                      v-model="profile.firstName"
+                      v-model="profile[key]"
+                      :placeholder="`Enter your ${label.toLowerCase().replace(':', '')}`"
                       density="compact"
                       hide-details
+                      :type="key === 'age' ? 'number' : 'text'"
                     />
                   </v-col>
                 </v-row>
-                <v-row class="py-1" dense>
-                  <v-col cols="6" class="font-weight-medium">Last Name:</v-col>
-                  <v-col cols="6">
-                    <div v-if="!isEditing">{{ profile.lastName }}</div>
-                    <v-text-field
-                      v-else
-                      v-model="profile.lastName"
-                      density="compact"
-                      hide-details
-                    />
-                  </v-col>
-                </v-row>
-                <v-row class="py-1" dense>
-                  <v-col cols="6" class="font-weight-medium">Middle Initial:</v-col>
-                  <v-col cols="6">
-                    <div v-if="!isEditing">{{ profile.middleInitial }}</div>
-                    <v-text-field
-                      v-else
-                      v-model="profile.middleInitial"
-                      density="compact"
-                      hide-details
-                    />
-                  </v-col>
-                </v-row>
-                <v-row class="py-1" dense>
-                  <v-col cols="6" class="font-weight-medium">Age:</v-col>
-                  <v-col cols="6">
-                    <div v-if="!isEditing">{{ profile.age }}</div>
-                    <v-text-field
-                      v-else
-                      v-model="profile.age"
-                      type="number"
-                      density="compact"
-                      hide-details
-                    />
-                  </v-col>
-                </v-row>
-                <v-row class="py-1" dense>
-                  <v-col cols="6" class="font-weight-medium">Expertise:</v-col>
-                  <v-col cols="6">
-                    <div v-if="!isEditing">{{ profile.expertise }}</div>
-                    <v-text-field
-                      v-else
-                      v-model="profile.expertise"
-                      density="compact"
-                      hide-details
-                    />
-                  </v-col>
-                </v-row>
-                <v-row class="py-1" dense>
-                  <v-col cols="6" class="font-weight-medium">Email:</v-col>
-                  <v-col cols="6">
-                    <div v-if="!isEditing">{{ profile.email }}</div>
-                    <v-text-field v-else v-model="profile.email" density="compact" hide-details />
-                  </v-col>
-                </v-row>
-                <v-row class="py-1" dense>
-                  <v-col cols="6" class="font-weight-medium">Phone:</v-col>
-                  <v-col cols="6">
-                    <div v-if="!isEditing">{{ profile.phone }}</div>
-                    <v-text-field v-else v-model="profile.phone" density="compact" hide-details />
-                  </v-col>
-                </v-row>
+
+                <!-- About Me -->
                 <v-row class="py-1" dense>
                   <v-col cols="6" class="font-weight-medium">About Me:</v-col>
                   <v-col cols="6">
@@ -335,6 +312,7 @@ const fullName = computed(() => {
                     <v-textarea
                       v-else
                       v-model="profile.about"
+                      placeholder="Write something about yourself"
                       rows="2"
                       auto-grow
                       density="compact"
@@ -342,6 +320,8 @@ const fullName = computed(() => {
                     />
                   </v-col>
                 </v-row>
+
+                <!-- Education -->
                 <v-row class="py-1" dense>
                   <v-col cols="6" class="font-weight-medium">Educational Background:</v-col>
                   <v-col cols="6">
@@ -353,6 +333,7 @@ const fullName = computed(() => {
                         v-for="(item, index) in profile.education"
                         :key="index"
                         v-model="profile.education[index]"
+                        :placeholder="getEducationPlaceholder(index)"
                         density="compact"
                         hide-details
                       />
@@ -361,7 +342,7 @@ const fullName = computed(() => {
                 </v-row>
               </div>
 
-              <v-divider class="my-4"></v-divider>
+              <v-divider class="my-4" />
 
               <!-- Action Buttons -->
               <div class="d-flex justify-center gap-2">
@@ -371,8 +352,9 @@ const fullName = computed(() => {
                   variant="outlined"
                   color="blue"
                   @click="enableEdit"
-                  >Edit</v-btn
                 >
+                  Edit
+                </v-btn>
                 <template v-else>
                   <v-btn size="small" variant="text" color="red" @click="cancelEdit">Cancel</v-btn>
                   <v-btn size="small" color="green" @click="saveProfile">Save</v-btn>
