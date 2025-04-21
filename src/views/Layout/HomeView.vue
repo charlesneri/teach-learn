@@ -115,7 +115,7 @@ onMounted(() => {
                 >
                 <v-divider></v-divider>
                 <v-list-item link
-                  ><RouterLink to="/" class="text-decoration-none"
+                  ><RouterLink to="/login" class="text-decoration-none"
                     >Logout</RouterLink
                   ></v-list-item
                 >
