@@ -90,7 +90,7 @@ function onImageSelected(event) {
     return
   }
 
-  const sizeMB = file.size / 1024 / 1024
+  const sizeMB = file.size
   if (sizeMB > maxSizeMB) {
     snackbarMsg.value = `File size exceeds ${maxSizeMB}MB limit.`
     snackbar.value = true
