@@ -1,5 +1,11 @@
 <script setup>
 import { ref, onMounted, watch } from 'vue'
+import {
+  requiredValidator,
+  emailValidator,
+  passwordValidator,
+  confirmedValidator,
+} from '@/utils/validators'
 
 // Theme setup
 const getPreferredTheme = () => {
@@ -23,7 +29,7 @@ onMounted(() => {
 })
 
 // User registration data
-const userProfile = ref({
+const FormDataDefault = {
   firstName: '',
   lastName: '',
   middleInitial: '',
@@ -35,6 +41,9 @@ const userProfile = ref({
   email: '',
   password: '',
   confirmPassword: '',
+}
+const formData = ref({
+  ...FormDataDefault,
 })
 
 // Form submit
@@ -51,6 +60,18 @@ const handleSubmit = () => {
 
   localStorage.setItem('userProfile', JSON.stringify(userProfile.value))
   alert('Registration successful!')
+}
+//here code here
+const refVform = ref()
+
+const onFormSubmit = () => {
+  refVform.value?.validate().then(({ valid }) => {
+    if (valid) onLogin()
+  })
+}
+
+const onLogin = () => {
+  alert(formData.value.email)
 }
 </script>
 
@@ -105,77 +126,91 @@ const handleSubmit = () => {
 
                   <v-card-text class="pt-4">
                     <v-sheet class="mx-auto" width="300">
-                      <v-form fast-fail @submit.prevent="handleSubmit">
+                      <v-form ref="refVform" @submit.prevent="onFormSubmit">
                         <v-text-field
-                          v-model="userProfile.firstName"
+                          v-model="formData.firstName"
                           label="First Name"
                           variant="outlined"
                           :color="theme === 'dark' ? 'white' : 'primary'"
+                          :rules="[requiredValidator]"
                         />
                         <v-text-field
-                          v-model="userProfile.lastName"
+                          v-model="formData.lastName"
                           label="Last Name"
                           variant="outlined"
                           :color="theme === 'dark' ? 'white' : 'primary'"
+                          :rules="[requiredValidator]"
                         />
                         <v-text-field
-                          v-model="userProfile.middleInitial"
+                          v-model="formData.middleInitial"
                           label="Middle Initial"
                           variant="outlined"
                           :color="theme === 'dark' ? 'white' : 'primary'"
+                          :rules="[requiredValidator]"
                         />
                         <v-text-field
-                          v-model="userProfile.age"
+                          v-model="formData.age"
                           label="Age"
                           type="number"
                           variant="outlined"
                           :color="theme === 'dark' ? 'white' : 'primary'"
+                          :rules="[requiredValidator]"
                         />
                         <v-text-field
-                          v-model="userProfile.about"
+                          v-model="formData.about"
                           label="About Me"
                           variant="outlined"
                           :color="theme === 'dark' ? 'white' : 'primary'"
+                          :rules="[requiredValidator]"
                         />
                         <v-text-field
-                          v-model="userProfile.school"
+                          v-model="formData.school"
                           label="School / University"
                           variant="outlined"
                           :color="theme === 'dark' ? 'white' : 'primary'"
+                          :rules="[requiredValidator]"
                         />
                         <v-text-field
-                          v-model="userProfile.course"
+                          v-model="formData.course"
                           label="Course / Degree"
                           variant="outlined"
                           :color="theme === 'dark' ? 'white' : 'primary'"
+                          :rules="[requiredValidator]"
                         />
                         <v-text-field
-                          v-model="userProfile.yearLevel"
+                          v-model="formData.yearLevel"
                           label="Year Level"
                           type="number"
                           variant="outlined"
                           :color="theme === 'dark' ? 'white' : 'primary'"
+                          :rules="[requiredValidator]"
                         />
                         <v-text-field
-                          v-model="userProfile.email"
+                          v-model="formData.email"
                           label="Email"
                           type="email"
                           variant="outlined"
                           :color="theme === 'dark' ? 'white' : 'primary'"
+                          :rules="[requiredValidator, emailValidator]"
                         />
                         <v-text-field
-                          v-model="userProfile.password"
+                          v-model="formData.password"
                           label="Password"
                           type="password"
                           variant="outlined"
                           :color="theme === 'dark' ? 'white' : 'primary'"
+                          :rules="[requiredValidator, passwordValidator]"
                         />
                         <v-text-field
-                          v-model="userProfile.confirmPassword"
+                          v-model="formData.confirmPassword"
                           label="Confirm Password"
                           type="password"
                           variant="outlined"
                           :color="theme === 'dark' ? 'white' : 'primary'"
+                          :rules="[
+                            requiredValidator,
+                            confirmedValidator(formData.confirmPassword, formData.password),
+                          ]"
                         />
 
                         <v-btn
@@ -190,7 +225,7 @@ const handleSubmit = () => {
                         <v-divider class="my-5" />
                         <p class="text-center text-primary">
                           Already have an account?
-                          <RouterLink class="link" to="/">Login now!</RouterLink>
+                          <RouterLink to="/">Login now!</RouterLink>
                         </p>
                       </v-form>
                     </v-sheet>

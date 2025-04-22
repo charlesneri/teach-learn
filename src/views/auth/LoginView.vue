@@ -1,4 +1,5 @@
 <script setup>
+import {requiredValidator, emailValidator} from '@/utils/validators'
 import { ref, onMounted, watch } from 'vue'
 
 // Get theme preference from localStorage or system
@@ -28,6 +29,26 @@ onMounted(() => {
       theme.value = e.matches ? 'dark' : 'light'
     }
   })
+})
+//until here
+const refVForm = ref()
+
+const onFormSubmit = () => {
+  refVform.value?.validate().then(({ valid }) => {
+   if (valid) onLogin()
+  })
+}
+
+const onLogin = () => {
+  alert(formData.value.email)
+}
+
+const FormDataDefault = {
+  email:'',
+  password:'',
+}
+const formData = ref({
+  ...FormDataDefault
 })
 </script>
 
@@ -80,25 +101,28 @@ onMounted(() => {
                   </template>
 
                   <v-card-text class="p-4">
-                    <v-form fast-fail @submit.prevent>
+                    <v-form ref="refVForm" @submit.prevent="onFormSubmit">
                       <v-text-field
                         label="Email"
                         variant="outlined"
                         :color="theme === 'dark' ? 'white' : 'primary'"
+                        :rules="[requiredValidator,emailValidator]"
+                        v-model="formData.email"
                       />
                       <v-text-field
                         label="Password"
                         type="password"
                         variant="outlined"
                         :color="theme === 'dark' ? 'white' : 'primary'"
-                      />
+                      :rules="[requiredValidator]"
+                      v-model="formData.password"/>
                       <v-btn
                         color="light-blue-darken-2"
                         class="mt-2 signup-btn"
                         type="submit"
                         prepend-icon="mdi-login"
                         block
-                        to="/home"
+                       to="home"
                       >
                         Login
                       </v-btn>
@@ -106,7 +130,7 @@ onMounted(() => {
                       <v-divider class="my-5" />
                       <p class="text-center text-primary">
                         Don’t have an account yet?
-                        <RouterLink class="link" to="/register">Register now!</RouterLink>
+                        <RouterLink  to="/register">Register now!</RouterLink>
                       </p>
                     </v-form>
                   </v-card-text>
