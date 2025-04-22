@@ -2,21 +2,29 @@
 import { ref, onMounted, watch, computed } from 'vue'
 import { useTheme } from 'vuetify'
 
+// Theme setup
 const theme = useTheme()
 const currentTheme = ref(localStorage.getItem('theme') || 'light')
 
+watch(currentTheme, (val) => {
+  theme.global.name.value = val
+  localStorage.setItem('theme', val)
+})
+
+// UI States
 const dialog = ref(false)
 const loading = ref(false)
 const snackbar = ref(false)
 const snackbarMsg = ref('')
 const isEditing = ref(false)
 
+// Profile Image Handling
 const profileImage = ref('')
 const selectedFile = ref(null)
 const maxSizeMB = 2
 
+// Search
 const searchQuery = ref('')
-
 function performSearch() {
   if (searchQuery.value.trim()) {
     snackbarMsg.value = `You searched for: "${searchQuery.value}"`
@@ -24,6 +32,7 @@ function performSearch() {
   }
 }
 
+// Profile Data
 const profile = ref({
   firstName: '',
   lastName: '',
@@ -36,49 +45,12 @@ const profile = ref({
   education: ['', '', ''],
 })
 
+// Theme toggle
 function toggleTheme() {
   currentTheme.value = currentTheme.value === 'light' ? 'dark' : 'light'
-  theme.global.name.value = currentTheme.value
-  localStorage.setItem('theme', currentTheme.value)
 }
 
-watch(currentTheme, (val) => {
-  theme.global.name.value = val
-  localStorage.setItem('theme', val)
-})
-
-onMounted(() => {
-  theme.global.name.value = currentTheme.value
-  const storedImage = localStorage.getItem('profileImage')
-  if (storedImage) profileImage.value = storedImage
-})
-
-watch(profileImage, (newVal) => {
-  if (newVal) localStorage.setItem('profileImage', newVal)
-})
-
-function proceedWithApplication() {
-  loading.value = true
-  setTimeout(() => {
-    loading.value = false
-    dialog.value = false
-    snackbarMsg.value = 'Application submitted successfully!'
-    snackbar.value = true
-  }, 2000)
-}
-
-function enableEdit() {
-  isEditing.value = true
-}
-function cancelEdit() {
-  isEditing.value = false
-}
-function saveProfile() {
-  isEditing.value = false
-  snackbarMsg.value = 'Profile saved!'
-  snackbar.value = true
-}
-
+// Profile image select
 function onImageSelected(event) {
   const file = event.target.files[0]
   if (!file) return
@@ -106,22 +78,98 @@ function onImageSelected(event) {
   reader.readAsDataURL(file)
 }
 
+// Remove image
 function removeProfileImage() {
   profileImage.value = ''
   localStorage.removeItem('profileImage')
 }
 
+// Edit handlers
+function enableEdit() {
+  isEditing.value = true
+}
+
+function cancelEdit() {
+  isEditing.value = false
+}
+
+// Save profile changes
+function saveProfile() {
+  const updatedProfile = {
+    firstName: profile.value.firstName,
+    lastName: profile.value.lastName,
+    middleInitial: profile.value.middleInitial,
+    age: profile.value.age,
+    about: profile.value.about,
+    email: profile.value.email,
+    phone: profile.value.phone,
+    expertise: profile.value.expertise,
+    school: profile.value.education[0],
+    course: profile.value.education[1],
+    yearLevel: profile.value.education[2],
+  }
+  localStorage.setItem('userProfile', JSON.stringify(updatedProfile))
+  snackbarMsg.value = 'Profile updated successfully!'
+  snackbar.value = true
+  isEditing.value = false
+}
+
+// Submit application simulation
+function proceedWithApplication() {
+  loading.value = true
+  setTimeout(() => {
+    loading.value = false
+    dialog.value = false
+    snackbarMsg.value = 'Application submitted successfully!'
+    snackbar.value = true
+  }, 2000)
+}
+
+// Full name computed
 const fullName = computed(() => {
   return `${profile.value.firstName} ${profile.value.middleInitial}. ${profile.value.lastName}`
 })
 
+// Placeholder text for education
 function getEducationPlaceholder(index) {
   if (index === 0) return 'Enter your school/university'
   if (index === 1) return 'Enter your course or degree'
   if (index === 2) return 'Enter your year level'
   return 'Enter educational info'
 }
+
+// Load profile + image from storage
+onMounted(() => {
+  theme.global.name.value = currentTheme.value
+
+  const storedImage = localStorage.getItem('profileImage')
+  if (storedImage) profileImage.value = storedImage
+
+  const storedProfile = localStorage.getItem('userProfile')
+  if (storedProfile) {
+    const parsed = JSON.parse(storedProfile)
+    profile.value.firstName = parsed.firstName || ''
+    profile.value.lastName = parsed.lastName || ''
+    profile.value.middleInitial = parsed.middleInitial || ''
+    profile.value.age = parsed.age || ''
+    profile.value.email = parsed.email || ''
+    profile.value.phone = parsed.phone || ''
+    profile.value.about = parsed.about || ''
+    profile.value.expertise = parsed.expertise || ''
+    profile.value.education = [
+      parsed.school || '',
+      parsed.course || '',
+      parsed.yearLevel || '',
+    ]
+  }
+})
+
+// Watch image and save
+watch(profileImage, (newVal) => {
+  if (newVal) localStorage.setItem('profileImage', newVal)
+})
 </script>
+
 <template>
   <v-app id="inspire">
     <!-- App Bar -->

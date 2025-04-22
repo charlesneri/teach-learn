@@ -1,5 +1,8 @@
 <script setup>
 import { ref, onMounted, watch } from 'vue'
+import { useRouter } from 'vue-router'
+
+const router = useRouter()
 
 // Theme setup
 const getPreferredTheme = () => {
@@ -13,6 +16,7 @@ const toggleTheme = () => {
   theme.value = theme.value === 'light' ? 'dark' : 'light'
 }
 watch(theme, (val) => localStorage.setItem('theme', val))
+
 onMounted(() => {
   const media = window.matchMedia('(prefers-color-scheme: dark)')
   media.addEventListener('change', (e) => {
@@ -22,12 +26,14 @@ onMounted(() => {
   })
 })
 
-// User registration data
+// Registration form data
 const userProfile = ref({
   firstName: '',
   lastName: '',
   middleInitial: '',
   age: '',
+  phone: '',
+  expertise: '',
   about: '',
   school: '',
   course: '',
@@ -37,7 +43,7 @@ const userProfile = ref({
   confirmPassword: '',
 })
 
-// Form submit
+// Form submit logic
 const handleSubmit = () => {
   if (
     userProfile.value.password !== userProfile.value.confirmPassword ||
@@ -49,8 +55,28 @@ const handleSubmit = () => {
     return
   }
 
-  localStorage.setItem('userProfile', JSON.stringify(userProfile.value))
+  // Save only the fields needed for profile
+  const formattedProfile = {
+    firstName: userProfile.value.firstName,
+    lastName: userProfile.value.lastName,
+    middleInitial: userProfile.value.middleInitial,
+    age: userProfile.value.age,
+    phone: userProfile.value.phone,
+    expertise: userProfile.value.expertise,
+    about: userProfile.value.about,
+    email: userProfile.value.email,
+    education: [
+      userProfile.value.school,
+      userProfile.value.course,
+      userProfile.value.yearLevel,
+    ],
+  }
+
+  localStorage.setItem('userProfile', JSON.stringify(formattedProfile))
   alert('Registration successful!')
+
+  // Optional redirect to profile
+  // router.push('/profile')
 }
 </script>
 
@@ -131,6 +157,24 @@ const handleSubmit = () => {
                           variant="outlined"
                           :color="theme === 'dark' ? 'white' : 'primary'"
                         />
+
+                        <!-- ✅ New Field: Phone Number -->
+                        <v-text-field
+                          v-model="userProfile.phone"
+                          label="Phone Number"
+                          type="tel"
+                          variant="outlined"
+                          :color="theme === 'dark' ? 'white' : 'primary'"
+                        />
+
+                        <!-- ✅ New Field: Expertise -->
+                        <v-text-field
+                          v-model="userProfile.expertise"
+                          label="Expertise / Field"
+                          variant="outlined"
+                          :color="theme === 'dark' ? 'white' : 'primary'"
+                        />
+
                         <v-text-field
                           v-model="userProfile.about"
                           label="About Me"
