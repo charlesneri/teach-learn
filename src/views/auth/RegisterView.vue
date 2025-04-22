@@ -7,6 +7,8 @@ import {
   confirmedValidator,
 } from '@/utils/validators'
 
+import { supabase, formActionDefault } from '@/utils/supabase.js'
+
 // Theme setup
 const getPreferredTheme = () => {
   const savedTheme = localStorage.getItem('theme')
@@ -123,6 +125,30 @@ const onLogin = () => {
                     <v-divider class="mb-5 mt-4" thickness="3" color="black" />
                     <span class="font-weight-black d-flex justify-center">Register Now!</span>
                   </template>
+
+                  <!--Alert-->
+                  <v-alert
+                    v-if="formAction.formSuccessMessage"
+                    :text="formAction.formSuccessMessage"
+                    title="success"
+                    type="succes"
+                    variant="submit"
+                    density="compact"
+                    border="start"
+                    closable
+                  >
+                  </v-alert>
+                  <v-alert
+                    v-if="formAction.formErrorMessage"
+                    :text="formAction.formErrorMessage"
+                    title="Ooopps!"
+                    variant="tonal"
+                    type="error"
+                    density="compact"
+                    border="start"
+                    closable
+                  >
+                  </v-alert>
 
                   <v-card-text class="pt-4">
                     <v-sheet class="mx-auto" width="300">
