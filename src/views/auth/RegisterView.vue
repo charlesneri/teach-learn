@@ -47,6 +47,9 @@ const FormDataDefault = {
 const formData = ref({
   ...FormDataDefault,
 })
+const formAction = ref({
+  ...FormDataDefault,
+})
 
 // Form submit
 const handleSubmit = () => {
@@ -72,6 +75,38 @@ const onFormSubmit = () => {
   })
 }
 
+const onSubmit = async () => {
+  formAction.value = { ...formActionDefault }
+  formAction.value.formProcess = true
+  
+  const { data, error } = await supabase.auth.signUp({
+    email: formData.value.email,
+    password: formData.value.password,
+    options: {
+      data: {
+        firstName: formData.value.firstName,
+        lastName: formData.value.lastName,
+        middleInitial: formData.value.middleInitial,
+        age: formData.value.age,
+        about: formData.value.about,
+        school: formData.value.school,
+        course: formData.value.course,
+        yearLevel: formData.value.yearLevel,
+      },
+    },
+  })
+  if (error) {
+    console.log(error)
+    formAction.value.formErrorMessage = error.message
+    console.log(formAction.value.formErrorMessage)
+    formAction.value.formstatus = error.status
+  } else if (data) {
+    console.log(data)
+    formAction.value.formSuccessMessage = 'Successfully Registered!'
+  }
+
+  formAction.value.formProcess = false
+}
 const onLogin = () => {
   alert(formData.value.email)
 }
@@ -172,7 +207,6 @@ const onLogin = () => {
                           label="Middle Initial"
                           variant="outlined"
                           :color="theme === 'dark' ? 'white' : 'primary'"
-                          :rules="[requiredValidator]"
                         />
                         <v-text-field
                           v-model="formData.age"
@@ -244,6 +278,8 @@ const onLogin = () => {
                           type="submit"
                           prepend-icon="mdi-account-plus"
                           block
+                          :disabled="formAction.formProcess"
+                          :loading="formAction.formProcess"
                         >
                           Signup
                         </v-btn>
@@ -267,6 +303,9 @@ const onLogin = () => {
 </template>
 
 <style scoped>
+.v-alert {
+  z-index: 10; /* Make sure it's on top */
+}
 /* Entrance animation */
 .slide-fade-enter-active {
   transition: all 0.6s ease;
