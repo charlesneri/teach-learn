@@ -5,5 +5,8 @@ export const supabase=createClient(import.meta.env.VITE_SUPABASE_URL, import.met
 
 //form action defaults
 export const formActionDefault={
-    
+    formProcess:false,
+    formSatus:200,
+    formErrorMessage:'',
+    formSuccessMessage:''
 }
