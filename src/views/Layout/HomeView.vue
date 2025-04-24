@@ -129,6 +129,91 @@ const saveAppointment = () => {
               append-inner-icon="mdi-magnify"
               @click:append-inner="performSearch"
             />
+            <!-- Mobile Search and Menu -->
+            <div class="d-flex align-center gap-2">
+              <!-- Mobile Menu Button -->
+              <v-menu transition="scale-transition" offset-y>
+                <template #activator="{ props }">
+                  <v-app-bar-nav-icon v-bind="props" class="d-md-none" />
+                </template>
+                <v-list>
+  <v-list-item link>
+    <RouterLink
+      to="/"
+      :class="[
+        'active-click text-decoration-none',
+        currentTheme === 'dark' ? 'text-white' : 'text-black'
+      ]"
+    >
+      Home
+    </RouterLink>
+  </v-list-item>
+
+  <v-list-item link>
+    <RouterLink
+      to="/profile"
+      :class="[
+        'active-click text-decoration-none',
+        currentTheme === 'dark' ? 'text-white' : 'text-black'
+      ]"
+    >
+      My Profile
+    </RouterLink>
+  </v-list-item>
+
+  <v-list-item link>
+    <RouterLink
+      to="/appointments"
+      :class="[
+        'active-click text-decoration-none',
+        currentTheme === 'dark' ? 'text-white' : 'text-black'
+      ]"
+    >
+      My Appointment
+    </RouterLink>
+  </v-list-item>
+
+  <v-list-item link>
+    <RouterLink
+      to="/about"
+      :class="[
+        'active-click text-decoration-none',
+        currentTheme === 'dark' ? 'text-white' : 'text-black'
+      ]"
+    >
+      About Us
+    </RouterLink>
+  </v-list-item>
+
+  <v-list-item link>
+    <RouterLink
+      to="/contact"
+      :class="[
+        'active-click text-decoration-none',
+        currentTheme === 'dark' ? 'text-white' : 'text-black'
+      ]"
+    >
+      Contact Us
+    </RouterLink>
+  </v-list-item>
+
+  <v-divider></v-divider>
+
+  <v-list-item link>
+    <RouterLink
+      to="/"
+      :class="[
+        'active-click text-decoration-none',
+        currentTheme === 'dark' ? 'text-white' : 'text-black'
+      ]"
+    >
+      Logout
+    </RouterLink>
+  </v-list-item>
+</v-list>
+
+              </v-menu>
+            </div>
           </div>
         </v-responsive>
       </v-container>
@@ -150,7 +235,15 @@ const saveAppointment = () => {
                 <v-img src="image/Teach&Learn.png" alt="User" />
               </v-avatar>
               <span class="d-block font-weight-medium mb-3">
-                <RouterLink to="/profile" class="text-decoration-none">My Name</RouterLink>
+                <RouterLink
+  to="/profile"
+  :class="[
+    'text-decoration-none active-click',
+    currentTheme === 'dark' ? 'text-white' : 'text-black'
+  ]"
+>
+  My Name
+</RouterLink>
               </span>
               <v-divider> </v-divider>
               <!-- Theme Toggle Button -->
@@ -161,23 +254,45 @@ const saveAppointment = () => {
               </v-btn>
               <!-- Sidebar Menu -->
               <v-list density="compact" nav>
-                <v-list-item link>
-                  <v-list-item-title
-                    ><RouterLink to="/profile">My Profile</RouterLink></v-list-item-title
-                  >
-                </v-list-item>
-                <v-list-item link>
-                  <v-list-item-title
-                    ><RouterLink to="/appointments">My Appointments</RouterLink></v-list-item-title
-                  >
-                </v-list-item>
-                <v-divider class="my-2" />
-                <v-list-item link>
-                  <RouterLink to="/" class="text-decoration-none"
-                    ><v-list-item-title>Logout</v-list-item-title></RouterLink
-                  >
-                </v-list-item>
-              </v-list>
+  <v-list-item
+    link
+    :to="'/profile'"
+    tag="RouterLink"
+    :class="[
+      'active-click text-decoration-none',
+      currentTheme === 'dark' ? 'text-white' : 'text-black'
+    ]"
+  >
+    <v-list-item-title>My Profile</v-list-item-title>
+  </v-list-item>
+
+  <v-list-item
+    link
+    :to="'/appointments'"
+    tag="RouterLink"
+    :class="[
+      'active-click text-decoration-none',
+      currentTheme === 'dark' ? 'text-white' : 'text-black'
+    ]"
+  >
+    <v-list-item-title>My Appointments</v-list-item-title>
+  </v-list-item>
+
+  <v-divider class="my-2" />
+
+  <v-list-item
+    link
+    :to="'/'"
+    tag="RouterLink"
+    :class="[
+      'active-click text-decoration-none',
+      currentTheme === 'dark' ? 'text-white' : 'text-black'
+    ]"
+  >
+    <v-list-item-title>Logout</v-list-item-title>
+  </v-list-item>
+</v-list>
+
             </v-sheet>
           </v-col>
 
@@ -271,4 +386,18 @@ h1 {
 body[data-theme='dark'] h1 {
   color: #e3f2fd; /* Lighter color for dark mode */
 }
+
+/* Remove underline on link */
+.active-click {
+  font-weight: 700;
+  text-decoration: none;
+  transition: color 0.3s;
+}
+.active-click:active {
+  color: #d34b4b;
+}
+.active-click:hover {
+  color: #2196f3;
+}
+
 </style>

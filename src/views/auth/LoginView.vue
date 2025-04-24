@@ -142,7 +142,7 @@ const formData = ref({
                       <v-divider class="my-5" />
                       <p class="text-center text-primary">
                         Don’t have an account yet?
-                        <RouterLink to="/register">Register now!</RouterLink>
+                        <RouterLink class="active-click" to="/register">Register now!</RouterLink>
                       </p>
                     </v-form>
                   </v-card-text>
@@ -239,11 +239,16 @@ const formData = ref({
 }
 
 /* Remove underline on link */
-.link {
+
+.active-click{
+  color: #0d47a1;
   text-decoration: none;
 }
-.link:active {
-  color: #000;
+.active-click:active{
+  color: #ffffff19;
+}
+.active-click:hover{
+  color: #ffffffd1;
 }
 @media (max-width: 600px) {
   .wrapper {

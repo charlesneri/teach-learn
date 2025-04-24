@@ -287,7 +287,7 @@ const onLogin = () => {
                         <v-divider class="my-5" />
                         <p class="text-center text-primary">
                           Already have an account?
-                          <RouterLink to="/">Login now!</RouterLink>
+                          <RouterLink class="active-click" to="/">Login now!</RouterLink>
                         </p>
                       </v-form>
                     </v-sheet>
@@ -390,12 +390,17 @@ body {
   box-shadow: 0 0 8px rgba(33, 150, 243, 0.8);
 }
 
-.link:active {
-  color: #000000;
-}
+/* Remove underline on link */
 
-.link {
+.active-click{
+  color: #0d47a1;
   text-decoration: none;
+}
+.active-click:active{
+  color: #ffffff19;
+}
+.active-click:hover{
+  color: #ffffffd1;
 }
 @media (max-width: 600px) {
   /* Reduce padding around card */
