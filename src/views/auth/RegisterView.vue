@@ -8,7 +8,10 @@ import {
 } from '@/utils/validators'
 
 import { supabase, formActionDefault } from '@/utils/supabase.js'
+import  AlertNotification from '@/components/common/AlertNotification.vue'
 
+//for visible password
+const visible = ref(false)
 // Theme setup
 const getPreferredTheme = () => {
   const savedTheme = localStorage.getItem('theme')
@@ -30,11 +33,11 @@ onMounted(() => {
   })
 })
 
-// User registration data
-const FormDataDefault = {
-  firstName: '',
-  lastName: '',
-  middleInitial: '',
+// User registration data kang sir jabez
+const formDataDefault = {
+  firstname: '',
+  lastname: '',
+  middleinitial: '',
   age: '',
   about: '',
   school: '',
@@ -42,15 +45,27 @@ const FormDataDefault = {
   yearLevel: '',
   email: '',
   password: '',
-  confirmPassword: '',
+  confirm_password: '',
 }
 const formData = ref({
-  ...FormDataDefault,
+  ...formDataDefault,
 })
 const formAction = ref({
-  ...FormDataDefault,
+  ...formDataDefault,
 })
 
+
+const refVForm = ref()
+
+const onFormSubmit = () => {
+  refVForm.value?.validate().then(({ valid }) => {
+    if (valid) onSubmit()
+  })
+}
+/*
+const onSubmit = () => {
+ alert(formData.value.email)
+}*/
 // Form submit
 const handleSubmit = () => {
   if (
@@ -66,14 +81,6 @@ const handleSubmit = () => {
   localStorage.setItem('userProfile', JSON.stringify(userProfile.value))
   alert('Registration successful!')
 }
-//here code here
-const refVform = ref()
-
-const onFormSubmit = () => {
-  refVform.value?.validate().then(({ valid }) => {
-    if (valid) onLogin()
-  })
-}
 
 const onSubmit = async () => {
   formAction.value = { ...formActionDefault }
@@ -84,9 +91,9 @@ const onSubmit = async () => {
     password: formData.value.password,
     options: {
       data: {
-        firstName: formData.value.firstName,
-        lastName: formData.value.lastName,
-        middleInitial: formData.value.middleInitial,
+        firstName: formData.value.firstname,
+        lastName: formData.value.lastname,
+        middleInitial: formData.value.middleinitial,
         age: formData.value.age,
         about: formData.value.about,
         school: formData.value.school,
@@ -99,17 +106,16 @@ const onSubmit = async () => {
     console.log(error)
     formAction.value.formErrorMessage = error.message
     console.log(formAction.value.formErrorMessage)
-    formAction.value.formstatus = error.status
+    formAction.value.formStatus = error.status
   } else if (data) {
     console.log(data)
     formAction.value.formSuccessMessage = 'Successfully Registered!'
+    refVForm.value?.reset()
   }
 
   formAction.value.formProcess = false
 }
-const onLogin = () => {
-  alert(formData.value.email)
-}
+
 </script>
 
 <template>
@@ -160,51 +166,30 @@ const onLogin = () => {
                     <v-divider class="mb-5 mt-4" thickness="3" color="black" />
                     <span class="font-weight-black d-flex justify-center">Register Now!</span>
                   </template>
+                  <AlertNotification :form-success-message="formAction.formSuccessMessage" :form-error-message="formAction.formErrorMessage"></AlertNotification>
 
-                  <!--Alert-->
-                  <v-alert
-                    v-if="formAction.formSuccessMessage"
-                    :text="formAction.formSuccessMessage"
-                    title="success"
-                    type="succes"
-                    variant="submit"
-                    density="compact"
-                    border="start"
-                    closable
-                  >
-                  </v-alert>
-                  <v-alert
-                    v-if="formAction.formErrorMessage"
-                    :text="formAction.formErrorMessage"
-                    title="Ooopps!"
-                    variant="tonal"
-                    type="error"
-                    density="compact"
-                    border="start"
-                    closable
-                  >
-                  </v-alert>
+              
 
                   <v-card-text class="pt-4">
                     <v-sheet class="mx-auto" width="300">
-                      <v-form ref="refVform" @submit.prevent="onFormSubmit">
+                      <v-form ref="refVForm" @submit.prevent="onFormSubmit">
                         <v-text-field
-                          v-model="formData.firstName"
+                          v-model="formData.firstname"
                           label="First Name"
                           variant="outlined"
                           :color="theme === 'dark' ? 'white' : 'primary'"
                           :rules="[requiredValidator]"
                         />
                         <v-text-field
-                          v-model="formData.lastName"
+                          v-model="formData.lastname"
                           label="Last Name"
                           variant="outlined"
                           :color="theme === 'dark' ? 'white' : 'primary'"
                           :rules="[requiredValidator]"
                         />
                         <v-text-field
-                          v-model="formData.middleInitial"
-                          label="Middle Initial"
+                          v-model="formData.middleinitial"
+                          label="Middle Initial (optional)"
                           variant="outlined"
                           :color="theme === 'dark' ? 'white' : 'primary'"
                         />
@@ -255,21 +240,28 @@ const onLogin = () => {
                         />
                         <v-text-field
                           v-model="formData.password"
-                          label="Password"
+                          :append-inner-icon="visible ? 'mdi-eye-off' : 'mdi-eye'"
+                        :type="visible ? 'text' : 'password'"
+                        label="Password"
+                        @click:append-inner="visible = !visible"
                           type="password"
                           variant="outlined"
                           :color="theme === 'dark' ? 'white' : 'primary'"
                           :rules="[requiredValidator, passwordValidator]"
                         />
                         <v-text-field
-                          v-model="formData.confirmPassword"
+                          v-model="formData.confirm_password"
                           label="Confirm Password"
+                          :append-inner-icon="visible ? 'mdi-eye-off' : 'mdi-eye'"
+                        :type="visible ? 'text' : 'password'"
+                      
+                        @click:append-inner="visible = !visible"
                           type="password"
                           variant="outlined"
                           :color="theme === 'dark' ? 'white' : 'primary'"
                           :rules="[
                             requiredValidator,
-                            confirmedValidator(formData.confirmPassword, formData.password),
+                            confirmedValidator(formData.confirm_password, formData.password),
                           ]"
                         />
 
@@ -303,9 +295,7 @@ const onLogin = () => {
 </template>
 
 <style scoped>
-.v-alert {
-  z-index: 10; /* Make sure it's on top */
-}
+
 /* Entrance animation */
 .slide-fade-enter-active {
   transition: all 0.6s ease;

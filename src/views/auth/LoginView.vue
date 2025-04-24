@@ -1,6 +1,8 @@
 <script setup>
-import { requiredValidator, emailValidator } from '@/utils/validators'
+import { requiredValidator, emailValidator } from '@/utils/validators.js'
 import { ref, onMounted, watch } from 'vue'
+
+const visible = ref(false)
 
 // Get theme preference from localStorage or system
 const getPreferredTheme = () => {
@@ -30,20 +32,32 @@ onMounted(() => {
     }
   })
 })
-//until here
+//until here kang sir jabez code
 const refVForm = ref()
 
+
+const formDataDefault = {
+  email: '',
+  password: '',
+}
+const formData = ref({
+  ...formDataDefault,
+})
+
+const onLogin = () => {
+ // alert(formData.value.email)
+  
+  
+}
+
 const onFormSubmit = () => {
-  refVform.value?.validate().then(({ valid }) => {
-    if (valid) onLogin()
+  refVForm.value?.validate().then(({ valid }) => {
+ if(valid) onLogin()
   })
 }
+
+
 /*
-const onLogin = () => {
-  alert(formData.value.email)
-  
-  
-}*/
 const onLogin = () => {
   if (!formData.value.email || !formData.value.password) {
     alert('Please enter email and password')
@@ -52,15 +66,10 @@ const onLogin = () => {
 
   alert(`Logged in as: ${formData.value.email}`)
   window.location.href = '/home'
-}
+}*/
 
-const FormDataDefault = {
-  email: '',
-  password: '',
-}
-const formData = ref({
-  ...FormDataDefault,
-})
+
+
 </script>
 
 <template>
@@ -114,6 +123,7 @@ const formData = ref({
                   <v-card-text class="p-4">
                     <v-form ref="refVForm" @submit.prevent="onFormSubmit">
                       <v-text-field
+                       
                         label="Email"
                         variant="outlined"
                         :color="theme === 'dark' ? 'white' : 'primary'"
@@ -121,7 +131,10 @@ const formData = ref({
                         v-model="formData.email"
                       />
                       <v-text-field
+                       :append-inner-icon="visible ? 'mdi-eye-off' : 'mdi-eye'"
+                        :type="visible ? 'text' : 'password'"
                         label="Password"
+                        @click:append-inner="visible = !visible"
                         type="password"
                         variant="outlined"
                         :color="theme === 'dark' ? 'white' : 'primary'"
@@ -240,14 +253,14 @@ const formData = ref({
 
 /* Remove underline on link */
 
-.active-click{
+.active-click {
   color: #0d47a1;
   text-decoration: none;
 }
-.active-click:active{
+.active-click:active {
   color: #ffffff19;
 }
-.active-click:hover{
+.active-click:hover {
   color: #ffffffd1;
 }
 @media (max-width: 600px) {
