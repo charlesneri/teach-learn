@@ -59,28 +59,80 @@ watch(currentTheme, (val) => {
               <v-app-bar-nav-icon v-bind="props" class="d-md-none" />
             </template>
             <v-list>
-              <v-list-item>
-                <router-link to="/home" class="text-decoration-none">Home</router-link>
-              </v-list-item>
-              <v-list-item>
-                <router-link to="/profile" class="text-decoration-none">My Profile</router-link>
-              </v-list-item>
-              <v-list-item>
-                <router-link to="/appointments" class="text-decoration-none"
-                  >My Appointments</router-link
-                >
-              </v-list-item>
-              <v-list-item>
-                <router-link to="/about" class="text-decoration-none">About Us</router-link>
-              </v-list-item>
-              <v-list-item>
-                <router-link to="/contact" class="text-decoration-none">Contact Us</router-link>
-              </v-list-item>
-              <v-divider></v-divider>
-              <v-list-item>
-                <router-link to="/" class="text-decoration-none">Logout</router-link>
-              </v-list-item>
-            </v-list>
+                  <v-list-item link>
+                    <RouterLink
+                      to="/"
+                      :class="[
+                        'active-click text-decoration-none',
+                        currentTheme === 'dark' ? 'text-white' : 'text-black',
+                      ]"
+                    >
+                      Home
+                    </RouterLink>
+                  </v-list-item>
+
+                  <v-list-item link>
+                    <RouterLink
+                      to="/profile"
+                      :class="[
+                        'active-click text-decoration-none',
+                        currentTheme === 'dark' ? 'text-white' : 'text-black',
+                      ]"
+                    >
+                      My Profile
+                    </RouterLink>
+                  </v-list-item>
+
+                  <v-list-item link>
+                    <RouterLink
+                      to="/appointments"
+                      :class="[
+                        'active-click text-decoration-none',
+                        currentTheme === 'dark' ? 'text-white' : 'text-black',
+                      ]"
+                    >
+                      My Appointment
+                    </RouterLink>
+                  </v-list-item>
+
+                  <v-list-item link>
+                    <RouterLink
+                      to="/about"
+                      :class="[
+                        'active-click text-decoration-none',
+                        currentTheme === 'dark' ? 'text-white' : 'text-black',
+                      ]"
+                    >
+                      About Us
+                    </RouterLink>
+                  </v-list-item>
+
+                  <v-list-item link>
+                    <RouterLink
+                      to="/contact"
+                      :class="[
+                        'active-click text-decoration-none',
+                        currentTheme === 'dark' ? 'text-white' : 'text-black',
+                      ]"
+                    >
+                      Contact Us
+                    </RouterLink>
+                  </v-list-item>
+
+                  <v-divider></v-divider>
+
+                  <v-list-item link>
+                    <RouterLink
+                      to="/"
+                      :class="[
+                        'active-click text-decoration-none',
+                        currentTheme === 'dark' ? 'text-white' : 'text-black',
+                      ]"
+                    >
+                      Logout
+                    </RouterLink>
+                  </v-list-item>
+                </v-list>
           </v-menu>
         </div>
       </v-container>
@@ -154,3 +206,17 @@ watch(currentTheme, (val) => {
     </v-main>
   </v-app>
 </template>
+<style scoped>
+
+/* Remove underline on link */
+.active-click {
+  font-weight: 700;
+  text-decoration: none;
+  transition: color 0.3s;
+}
+.active-click:active {
+  color: #d34b4b;
+}
+.active-click:hover {
+  color: #2196f3;
+}</style>
