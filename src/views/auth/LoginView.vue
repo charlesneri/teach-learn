@@ -53,6 +53,7 @@ const onLogin = () => {
 const onFormSubmit = () => {
   refVForm.value?.validate().then(({ valid }) => {
  if(valid) onLogin()
+
   })
 }
 
@@ -148,6 +149,7 @@ const onLogin = () => {
                         prepend-icon="mdi-login"
                         block
                         @click="onLogin()"
+                        to="/home"
                       >
                         Login
                       </v-btn>
