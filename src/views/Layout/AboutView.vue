@@ -202,8 +202,50 @@ function getEducationPlaceholder(index) {
               rounded="lg"
             >
               <!-- Title -->
-              <h1 class="text-h5 text-md-h4 font-weight-bold mb-4">About</h1>
-              <!-- Future content goes here -->
+            <h1 class="text-h5 text-md-h4 font-weight-bold mb-4">About Teach & Learn</h1>
+
+            <!-- Description -->
+            <p class="mb-6 text-body-1">
+                <strong>Teach & Learn</strong> is a platform built to connect learners and educators in a streamlined and interactive environment. The goal is to make tutoring and learning more accessible, organized, and effective.
+            </p>
+
+            <!-- Step-by-step process -->
+            <v-sheet dense>
+              <v-col cols="12" sm="6">
+                <h2 class="text-subtitle-1 font-weight-medium mb-2">Step 1: Create Your Profile</h2>
+                  <p class="text-body-2">
+                      Fill in your basic information, educational background, and upload a profile picture. This helps tutors and learners find the right match.
+                  </p>
+              </v-col>
+
+              <v-col cols="12" sm="6">
+                <h2 class="text-subtitle-1 font-weight-medium mb-2">Step 2: Search and Connect</h2>
+                  <p class="text-body-2">
+                     Use the search bar to look for educators or learners by expertise or subject. Once matched, start a conversation.
+                  </p>
+              </v-col>
+
+              <v-col cols="12" sm="6">
+                <h2 class="text-subtitle-1 font-weight-medium mb-2">Step 3: Book an Appointment</h2>
+                  <p class="text-body-2">
+                    Schedule a session by picking a date and time that works for both parties. Confirm and wait for the appointment reminder.
+                  </p>
+              </v-col>
+
+              <v-col cols="12" sm="6">
+                <h2 class="text-subtitle-1 font-weight-medium mb-2">Step 4: Attend & Learn</h2>
+                  <p class="text-body-2">
+                    Join the session, take notes, and interact live with your tutor or learner. Keep learning progress on track.
+                  </p>
+              </v-col>
+
+              <v-col cols="12">
+                <h2 class="text-subtitle-1 font-weight-medium mb-2">Step 5: Review and Continue</h2>
+                  <p class="text-body-2">
+                    After each session, reflect on the learning. Save notes, give feedback, and schedule your next session to keep growing.
+                  </p>
+                </v-col>
+            </v-sheet>
             </v-sheet>
           </v-col>
         </v-row>
