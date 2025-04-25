@@ -255,7 +255,7 @@ function getEducationPlaceholder(index) {
               elevation="2"
               rounded="lg"
             >
-              <!-- Title -->
+              <!-- Tdri ka code -->
               <h1 class="text-h5 text-md-h4 font-weight-bold mb-4">contact</h1>
               <!-- Future content goes here -->
             </v-sheet>
