@@ -35,7 +35,6 @@ onMounted(() => {
 //until here kang sir jabez code
 const refVForm = ref()
 
-
 const formDataDefault = {
   email: '',
   password: '',
@@ -45,32 +44,14 @@ const formData = ref({
 })
 
 const onLogin = () => {
- // alert(formData.value.email)
-  
-  
+  // alert(formData.value.email)
 }
 
 const onFormSubmit = () => {
   refVForm.value?.validate().then(({ valid }) => {
- if(valid) onLogin()
-
+    if (valid) onLogin()
   })
 }
-
-
-/*
-const onLogin = () => {
-  if (!formData.value.email || !formData.value.password) {
-    alert('Please enter email and password')
-    return
-  }
-
-  alert(`Logged in as: ${formData.value.email}`)
-  window.location.href = '/home'
-}*/
-
-
-
 </script>
 
 <template>
@@ -124,7 +105,6 @@ const onLogin = () => {
                   <v-card-text class="p-4">
                     <v-form ref="refVForm" @submit.prevent="onFormSubmit">
                       <v-text-field
-                       
                         label="Email"
                         variant="outlined"
                         :color="theme === 'dark' ? 'white' : 'primary'"
@@ -132,7 +112,7 @@ const onLogin = () => {
                         v-model="formData.email"
                       />
                       <v-text-field
-                       :append-inner-icon="visible ? 'mdi-eye-off' : 'mdi-eye'"
+                        :append-inner-icon="visible ? 'mdi-eye-off' : 'mdi-eye'"
                         :type="visible ? 'text' : 'password'"
                         label="Password"
                         @click:append-inner="visible = !visible"
@@ -263,7 +243,7 @@ const onLogin = () => {
   color: #ffffff19;
 }
 .active-click:hover {
-  color: #ffffffd1;
+  color: #1c1717d1;
 }
 @media (max-width: 600px) {
   .wrapper {

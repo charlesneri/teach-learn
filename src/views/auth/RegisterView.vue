@@ -8,7 +8,7 @@ import {
 } from '@/utils/validators'
 
 import { supabase, formActionDefault } from '@/utils/supabase.js'
-import  AlertNotification from '@/components/common/AlertNotification.vue'
+import AlertNotification from '@/components/common/AlertNotification.vue'
 
 //for visible password
 const visible = ref(false)
@@ -54,7 +54,6 @@ const formAction = ref({
   ...formDataDefault,
 })
 
-
 const refVForm = ref()
 
 const onFormSubmit = () => {
@@ -62,30 +61,12 @@ const onFormSubmit = () => {
     if (valid) onSubmit()
   })
 }
-/*
-const onSubmit = () => {
- alert(formData.value.email)
-}*/
-// Form submit
-const handleSubmit = () => {
-  if (
-    userProfile.value.password !== userProfile.value.confirmPassword ||
-    !userProfile.value.firstName ||
-    !userProfile.value.lastName ||
-    !userProfile.value.email
-  ) {
-    alert('Please complete all required fields and ensure passwords match.')
-    return
-  }
 
-  localStorage.setItem('userProfile', JSON.stringify(userProfile.value))
-  alert('Registration successful!')
-}
 
 const onSubmit = async () => {
   formAction.value = { ...formActionDefault }
   formAction.value.formProcess = true
-  
+
   const { data, error } = await supabase.auth.signUp({
     email: formData.value.email,
     password: formData.value.password,
@@ -115,7 +96,6 @@ const onSubmit = async () => {
 
   formAction.value.formProcess = false
 }
-
 </script>
 
 <template>
@@ -166,9 +146,10 @@ const onSubmit = async () => {
                     <v-divider class="mb-5 mt-4" thickness="3" color="black" />
                     <span class="font-weight-black d-flex justify-center">Register Now!</span>
                   </template>
-                  <AlertNotification :form-success-message="formAction.formSuccessMessage" :form-error-message="formAction.formErrorMessage"></AlertNotification>
-
-              
+                  <AlertNotification
+                    :form-success-message="formAction.formSuccessMessage"
+                    :form-error-message="formAction.formErrorMessage"
+                  ></AlertNotification>
 
                   <v-card-text class="pt-4">
                     <v-sheet class="mx-auto" width="300">
@@ -233,7 +214,6 @@ const onSubmit = async () => {
                         <v-text-field
                           v-model="formData.email"
                           label="Email"
-                          type="email"
                           variant="outlined"
                           :color="theme === 'dark' ? 'white' : 'primary'"
                           :rules="[requiredValidator, emailValidator]"
@@ -241,9 +221,9 @@ const onSubmit = async () => {
                         <v-text-field
                           v-model="formData.password"
                           :append-inner-icon="visible ? 'mdi-eye-off' : 'mdi-eye'"
-                        :type="visible ? 'text' : 'password'"
-                        label="Password"
-                        @click:append-inner="visible = !visible"
+                          :type="visible ? 'text' : 'password'"
+                          label="Password"
+                          @click:append-inner="visible = !visible"
                           type="password"
                           variant="outlined"
                           :color="theme === 'dark' ? 'white' : 'primary'"
@@ -253,9 +233,8 @@ const onSubmit = async () => {
                           v-model="formData.confirm_password"
                           label="Confirm Password"
                           :append-inner-icon="visible ? 'mdi-eye-off' : 'mdi-eye'"
-                        :type="visible ? 'text' : 'password'"
-                      
-                        @click:append-inner="visible = !visible"
+                          :type="visible ? 'text' : 'password'"
+                          @click:append-inner="visible = !visible"
                           type="password"
                           variant="outlined"
                           :color="theme === 'dark' ? 'white' : 'primary'"
@@ -295,7 +274,6 @@ const onSubmit = async () => {
 </template>
 
 <style scoped>
-
 /* Entrance animation */
 .slide-fade-enter-active {
   transition: all 0.6s ease;
@@ -382,15 +360,15 @@ body {
 
 /* Remove underline on link */
 
-.active-click{
+.active-click {
   color: #0d47a1;
   text-decoration: none;
 }
-.active-click:active{
+.active-click:active {
   color: #ffffff19;
 }
-.active-click:hover{
-  color: #ffffffd1;
+.active-click:hover {
+  color: #1c1717d1;
 }
 @media (max-width: 600px) {
   /* Reduce padding around card */
