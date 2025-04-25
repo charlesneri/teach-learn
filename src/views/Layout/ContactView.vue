@@ -121,6 +121,38 @@ function getEducationPlaceholder(index) {
   if (index === 2) return 'Enter your year level'
   return 'Enter educational info'
 }
+const contacts = [
+  {
+    name: 'Erica Ellazo',
+    position: 'Frontend',
+    email: '0144mine@gmail.com',
+    phone: '+639635680457',
+    photo: 'public/image/erica.jpg',
+    description: 'Passionate frontend developer skilled in Vue and Tailwind CSS.',
+    newMessage: '',
+    messages: [],
+  },
+  {
+    name: 'Charles Neri',
+    position: 'Analyst',
+    email: 'charlesneri0201@gmail.com',
+    phone: '',
+    photo: 'public/image/neri.png',
+    description: 'Data analyst who loves diving into numbers and creating insights.',
+    newMessage: '',
+    messages: ['dfgdf'],
+  },
+  {
+    name: 'Jade C. Collado',
+    position: 'Frontend',
+    email: 'jadecollado8@gmail.com',
+    phone: '+639102889791',
+    photo: 'public/image/jade.jpg',
+    description: 'Creative frontend developer focused on clean UI and UX design.',
+    newMessage: '',
+    messages: [],
+  },
+]
 </script>
 <template>
   <v-app id="inspire">
@@ -155,90 +187,87 @@ function getEducationPlaceholder(index) {
         <!-- Spacer after center links -->
         <v-spacer />
 
-       
         <div class="d-flex align-center gap-2">
-          
-
           <!-- Mobile Menu Button -->
           <v-menu transition="scale-transition" offset-y>
             <template #activator="{ props }">
               <v-app-bar-nav-icon v-bind="props" class="d-md-none" />
             </template>
             <v-list>
-                  <v-list-item link>
-                    <RouterLink
-                      to="/"
-                      :class="[
-                        'active-click text-decoration-none',
-                        currentTheme === 'dark' ? 'text-white' : 'text-black',
-                      ]"
-                    >
-                      Home
-                    </RouterLink>
-                  </v-list-item>
+              <v-list-item link>
+                <RouterLink
+                  to="/"
+                  :class="[
+                    'active-click text-decoration-none',
+                    currentTheme === 'dark' ? 'text-white' : 'text-black',
+                  ]"
+                >
+                  Home
+                </RouterLink>
+              </v-list-item>
 
-                  <v-list-item link>
-                    <RouterLink
-                      to="/profile"
-                      :class="[
-                        'active-click text-decoration-none',
-                        currentTheme === 'dark' ? 'text-white' : 'text-black',
-                      ]"
-                    >
-                      My Profile
-                    </RouterLink>
-                  </v-list-item>
+              <v-list-item link>
+                <RouterLink
+                  to="/profile"
+                  :class="[
+                    'active-click text-decoration-none',
+                    currentTheme === 'dark' ? 'text-white' : 'text-black',
+                  ]"
+                >
+                  My Profile
+                </RouterLink>
+              </v-list-item>
 
-                  <v-list-item link>
-                    <RouterLink
-                      to="/appointments"
-                      :class="[
-                        'active-click text-decoration-none',
-                        currentTheme === 'dark' ? 'text-white' : 'text-black',
-                      ]"
-                    >
-                      My Appointment
-                    </RouterLink>
-                  </v-list-item>
+              <v-list-item link>
+                <RouterLink
+                  to="/appointments"
+                  :class="[
+                    'active-click text-decoration-none',
+                    currentTheme === 'dark' ? 'text-white' : 'text-black',
+                  ]"
+                >
+                  My Appointment
+                </RouterLink>
+              </v-list-item>
 
-                  <v-list-item link>
-                    <RouterLink
-                      to="/about"
-                      :class="[
-                        'active-click text-decoration-none',
-                        currentTheme === 'dark' ? 'text-white' : 'text-black',
-                      ]"
-                    >
-                      About Us
-                    </RouterLink>
-                  </v-list-item>
+              <v-list-item link>
+                <RouterLink
+                  to="/about"
+                  :class="[
+                    'active-click text-decoration-none',
+                    currentTheme === 'dark' ? 'text-white' : 'text-black',
+                  ]"
+                >
+                  About Us
+                </RouterLink>
+              </v-list-item>
 
-                  <v-list-item link>
-                    <RouterLink
-                      to="/contact"
-                      :class="[
-                        'active-click text-decoration-none',
-                        currentTheme === 'dark' ? 'text-white' : 'text-black',
-                      ]"
-                    >
-                      Contact Us
-                    </RouterLink>
-                  </v-list-item>
+              <v-list-item link>
+                <RouterLink
+                  to="/contact"
+                  :class="[
+                    'active-click text-decoration-none',
+                    currentTheme === 'dark' ? 'text-white' : 'text-black',
+                  ]"
+                >
+                  Contact Us
+                </RouterLink>
+              </v-list-item>
 
-                  <v-divider></v-divider>
+              <v-divider></v-divider>
 
-                  <v-list-item link>
-                    <RouterLink
-                      to="/"
-                      :class="[
-                        'active-click text-decoration-none',
-                        currentTheme === 'dark' ? 'text-white' : 'text-black',
-                      ]"
-                    >
-                      Logout
-                    </RouterLink>
-                  </v-list-item>
-                </v-list>
+              <v-list-item link>
+                <RouterLink
+                  to="/"
+                  :class="[
+                    'active-click text-decoration-none',
+                    currentTheme === 'dark' ? 'text-white' : 'text-black',
+                  ]"
+                >
+                  Logout
+                </RouterLink>
+              </v-list-item>
+            </v-list>
           </v-menu>
         </div>
       </v-container>
@@ -255,8 +284,48 @@ function getEducationPlaceholder(index) {
               elevation="2"
               rounded="lg"
             >
-              <!-- Tdri ka code -->
+              <!-- dri ka code -->
               <h1 class="text-h5 text-md-h4 font-weight-bold mb-4">contact</h1>
+              <v-row dense class="mt-4" justify="center" align="stretch">
+              <v-col cols="12" sm="4" v-for="(contact, index) in contacts" :key="index">
+              <v-card :class="currentTheme === 'dark' ? 'bg-grey-darken-2 text-white' : ''" elevation="3">
+              <v-img :src="contact.photo" height="200" cover class="rounded-t"></v-img>
+
+             <v-card-title class="font-weight-bold">{{ contact.name }}</v-card-title>
+              <v-card-subtitle>{{ contact.position }}</v-card-subtitle>
+              <v-card-text>
+             <div><strong>Email:</strong> {{ contact.email }}</div>
+              <div><strong>Phone:</strong> {{ contact.phone }}</div>
+
+        <!-- Chat Messages -->
+              <div
+             class="mt-4 mb-2"
+             style="min-height: 80px; max-height: 120px; overflow-y: auto; background-color: rgba(0,0,0,0.05); padding: 8px; border-radius: 4px;">
+              <div v-for="(msg, msgIndex) in contact.messages" :key="msgIndex">
+              <small><strong>You:</strong> {{ msg }}</small>
+
+             </div>
+              </div>
+
+        <!-- Chat Input -->
+             <v-text-field
+              v-model="contact.newMessage"
+             density="compact"
+             placeholder="Type a message..."
+             hide-details
+             @keyup.enter="sendMessage(index)">
+             <template #append-inner>
+              <v-btn icon size="small" @click="sendMessage(index)">
+              <v-icon>mdi-send</v-icon>
+            </v-btn>
+          </template>
+        </v-text-field>
+      </v-card-text>
+    </v-card>
+  </v-col>
+</v-row>
+
+
               <!-- Future content goes here -->
             </v-sheet>
           </v-col>
@@ -266,7 +335,6 @@ function getEducationPlaceholder(index) {
   </v-app>
 </template>
 <style scoped>
-
 /* Remove underline on link */
 .active-click {
   font-weight: 700;
@@ -278,4 +346,5 @@ function getEducationPlaceholder(index) {
 }
 .active-click:hover {
   color: #2196f3;
-}</style>
+}
+</style>
