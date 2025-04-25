@@ -1,6 +1,10 @@
 <script setup>
 import { requiredValidator, emailValidator } from '@/utils/validators.js'
 import { ref, onMounted, watch } from 'vue'
+import { supabase } from '@/utils/supabase.js'
+import { useRouter } from 'vue-router'
+import AlertNotification from '@/components/common/AlertNotification.vue'
+
 
 const visible = ref(false)
 
@@ -32,24 +36,51 @@ onMounted(() => {
     }
   })
 })
-//until here kang sir jabez code
-const refVForm = ref()
 
-const formDataDefault = {
+const refVForm = ref()
+const router = useRouter()
+
+// Reactive state for form data
+const formData = ref({
   email: '',
   password: '',
-}
-const formData = ref({
-  ...formDataDefault,
 })
 
-const onLogin = () => {
-  // alert(formData.value.email)
+// Reactive state for form action (processing status)
+const formAction = ref({
+  formProcess: false,
+  formErrorMessage: '',
+  formSuccessMessage: '',
+})
+
+// Login function
+const onLogin = async () => {
+  formAction.value.formProcess = true
+  const { data, error } = await supabase.auth.signInWithPassword({
+    email: formData.value.email,
+    password: formData.value.password,
+  })
+
+  // Handle success and error responses
+  formAction.value.formProcess = false
+  if (error) {
+    formAction.value.formErrorMessage = error.message
+    return
+  }
+
+  // If login is successful, navigate to home
+  if (data) {
+    formAction.value.formSuccessMessage = 'Successfully Logged In!'
+    router.replace('/home')
+  }
 }
 
+// Form submission handler
 const onFormSubmit = () => {
   refVForm.value?.validate().then(({ valid }) => {
-    if (valid) onLogin()
+    if (valid) {
+      onLogin()
+    }
   })
 }
 </script>
@@ -58,11 +89,7 @@ const onFormSubmit = () => {
   <v-responsive class="login-wrapper">
     <v-app :theme="theme">
       <v-main class="no-scroll">
-        <v-container
-          fluid
-          class="wrapper"
-          :style="{ background: theme === 'light' ? '#1565c0' : '#121212' }"
-        >
+        <v-container fluid class="wrapper" :style="{ background: theme === 'light' ? '#1565c0' : '#121212' }">
           <!-- Theme Toggle Button -->
           <v-btn
             :icon="true"
@@ -101,7 +128,10 @@ const onFormSubmit = () => {
                     <v-divider class="mb-5 mt-4" thickness="3" color="black" />
                     <span class="font-weight-black d-flex justify-center">Login</span>
                   </template>
-
+                  <AlertNotification
+                    :form-success-message="formAction.formSuccessMessage"
+                    :form-error-message="formAction.formErrorMessage"
+                  ></AlertNotification>
                   <v-card-text class="p-4">
                     <v-form ref="refVForm" @submit.prevent="onFormSubmit">
                       <v-text-field
@@ -116,7 +146,6 @@ const onFormSubmit = () => {
                         :type="visible ? 'text' : 'password'"
                         label="Password"
                         @click:append-inner="visible = !visible"
-                        type="password"
                         variant="outlined"
                         :color="theme === 'dark' ? 'white' : 'primary'"
                         :rules="[requiredValidator]"
@@ -128,8 +157,6 @@ const onFormSubmit = () => {
                         type="submit"
                         prepend-icon="mdi-login"
                         block
-                        @click="onLogin()"
-                        to="/home"
                       >
                         Login
                       </v-btn>
