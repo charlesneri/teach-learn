@@ -197,10 +197,10 @@ function getEducationPlaceholder(index) {
     <v-main :class="currentTheme === 'dark' ? 'bg-grey-darken-4 text-white' : 'bg-grey-lighten-3'">
       <v-container fluid class="py-6 px-4 px-sm-6">
         <v-row justify="center">
-          <v-col cols="12" sm="10" md="8">
+          <v-col cols="12" sm="10"  md="10" lg="10">
             <v-sheet
               :class="currentTheme === 'dark' ? 'bg-grey-darken-3 text-white' : 'bg-white'"
-              class="pa-4 pa-sm-6 text-sm-center"
+              class="fade-slide-up pa-4 pa-sm-6 text-sm-center"
               elevation="2"
               rounded="lg"
             >
@@ -386,3 +386,19 @@ function getEducationPlaceholder(index) {
     </v-main>
   </v-app>
 </template>
+<style scoped >
+.fade-slide-up {
+  animation: fadeSlideUp 1.6s ease-in both;
+}
+
+@keyframes fadeSlideUp {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+</style>

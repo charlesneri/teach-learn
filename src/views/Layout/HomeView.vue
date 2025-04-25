@@ -219,6 +219,7 @@ const saveAppointment = () => {
     </v-app-bar>
 
     <!-- Main -->
+    <transition name="fade-slide-up">
     <v-main :class="currentTheme === 'dark' ? 'bg-grey-darken-4 text-white' : 'bg-grey-lighten-3'">
       <v-container fluid class="pa-0" style="max-width: 95%; margin: auto">
         <v-row>
@@ -355,6 +356,7 @@ const saveAppointment = () => {
         </v-row>
       </v-container>
     </v-main>
+    </transition>
   </v-app>
 </template>
 
@@ -371,7 +373,7 @@ const saveAppointment = () => {
 
 /* Custom styling for heading */
 h1 {
-  font-size: 2.5rem; /* Make it bigger */
+  font-size: 2rem; /* Make it bigger */
   font-weight: 700; /* Bold text */
   color: #1565c0; /* Primary color */
   text-align: center; /* Center the heading */
@@ -396,5 +398,20 @@ body[data-theme='dark'] h1 {
 }
 .active-click:hover {
   color: #2196f3;
+}
+/* for animation*/
+.fade-slide-up-enter-active {
+  animation: fadeSlideUp 0.6s ease-out;
+}
+
+@keyframes fadeSlideUp {
+  from {
+    opacity: 0;
+    transform: translateY(24px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 </style>

@@ -121,38 +121,50 @@ function getEducationPlaceholder(index) {
   if (index === 2) return 'Enter your year level'
   return 'Enter educational info'
 }
-const contacts = [
+
+// Set up  contacts
+
+// Reactive state variables
+const messageInput = ref('') // Single input field for messages
+const contacts = ref([
   {
     name: 'Erica Ellazo',
-    position: 'Frontend',
+    position: 'Developer',
     email: '0144mine@gmail.com',
     phone: '+639635680457',
     photo: 'public/image/erica.jpg',
-    description: 'Passionate frontend developer skilled in Vue and Tailwind CSS.',
+    description:
+      'As a developer, I work on the look and feel of the platform, making sure it is easy for students to use. I focus on creating a simple, smooth design that helps students book their sessions without any trouble.',
     newMessage: '',
-    messages: [],
   },
   {
-    name: 'Charles Neri',
+    name: 'Charles Q. Neri',
     position: 'Analyst',
     email: 'charlesneri0201@gmail.com',
     phone: '',
     photo: 'public/image/neri.png',
-    description: 'Data analyst who loves diving into numbers and creating insights.',
+    description:
+      'As a data analyst, I look at how students use the platform to find patterns and ways to improve the system. I use data to help make the booking process better, so students can find the right mentor quickly and easily.',
     newMessage: '',
-    messages: ['dfgdf'],
   },
   {
     name: 'Jade C. Collado',
-    position: 'Frontend',
+    position: 'Developer',
     email: 'jadecollado8@gmail.com',
     phone: '+639102889791',
     photo: 'public/image/jade.jpg',
-    description: 'Creative frontend developer focused on clean UI and UX design.',
+    description:
+      'As a developer, I am in charge of how the platform works behind the scenes. I ensure that everything runs smoothly, from storing data to processing the bookings, so that students can easily schedule their sessions.',
     newMessage: '',
-    messages: [],
   },
-]
+])
+
+// Methods
+const sendMessage = () => {
+  // Handle the logic to send a message
+  console.log('Message sent:', messageInput.value)
+  messageInput.value = '' // Clear the input after sending the message
+}
 </script>
 <template>
   <v-app id="inspire">
@@ -277,56 +289,71 @@ const contacts = [
     <v-main :class="currentTheme === 'dark' ? 'bg-grey-darken-4 text-white' : 'bg-grey-lighten-3'">
       <v-container fluid class="py-6 px-4 px-sm-6">
         <v-row justify="center">
-          <v-col cols="12" sm="10" md="8">
+          <!-- Adjusting the width of the column for responsiveness -->
+          <v-col cols="12" sm="10" md="9" lg="8">
+            <!-- Wider container, responsive on all screens -->
+
             <v-sheet
               :class="currentTheme === 'dark' ? 'bg-grey-darken-3 text-white' : 'bg-white'"
-              class="pa-4 pa-sm-6 text-center"
+              class="pa-6 pa-sm-8 text-center"
               elevation="2"
               rounded="lg"
             >
-              <!-- dri ka code -->
-              <h1 class="text-h5 text-md-h4 font-weight-bold mb-4">contact</h1>
-              <v-row dense class="mt-4" justify="center" align="stretch">
-              <v-col cols="12" sm="4" v-for="(contact, index) in contacts" :key="index">
-              <v-card :class="currentTheme === 'dark' ? 'bg-grey-darken-2 text-white' : ''" elevation="3">
-              <v-img :src="contact.photo" height="200" cover class="rounded-t"></v-img>
+              <h1 class="font-weight-bold mb-5">Contact</h1>
 
-             <v-card-title class="font-weight-bold">{{ contact.name }}</v-card-title>
-              <v-card-subtitle>{{ contact.position }}</v-card-subtitle>
-              <v-card-text>
-             <div><strong>Email:</strong> {{ contact.email }}</div>
-              <div><strong>Phone:</strong> {{ contact.phone }}</div>
+              <v-row dense class="mt-6" justify="center" align="stretch">
+                <v-col cols="12" sm="6" md="4" v-for="(contact, index) in contacts" :key="index">
+                  <v-card
+                    :class="currentTheme === 'dark' ? 'bg-grey-darken-2 text-white' : 'bg-white'"
+                    elevation="5"
+                    class="contact-card"
+                  >
+                    <v-img :src="contact.photo" height="200" cover class="rounded-t"></v-img>
 
-        <!-- Chat Messages -->
-              <div
-             class="mt-4 mb-2"
-             style="min-height: 80px; max-height: 120px; overflow-y: auto; background-color: rgba(0,0,0,0.05); padding: 8px; border-radius: 4px;">
-              <div v-for="(msg, msgIndex) in contact.messages" :key="msgIndex">
-              <small><strong>You:</strong> {{ msg }}</small>
+                    <v-card-title class="font-weight-bold">{{ contact.name }}</v-card-title>
+                    <v-card-subtitle>{{ contact.position }}</v-card-subtitle>
 
-             </div>
-              </div>
+                    <v-card-text>
+                      <div><strong>Email:</strong> {{ contact.email }}</div>
+                      <div><strong>Phone:</strong> {{ contact.phone }}</div>
 
-        <!-- Chat Input -->
-             <v-text-field
-              v-model="contact.newMessage"
-             density="compact"
-             placeholder="Type a message..."
-             hide-details
-             @keyup.enter="sendMessage(index)">
-             <template #append-inner>
-              <v-btn icon size="small" @click="sendMessage(index)">
-              <v-icon>mdi-send</v-icon>
-            </v-btn>
-          </template>
-        </v-text-field>
-      </v-card-text>
-    </v-card>
-  </v-col>
-</v-row>
+                      <!-- Contact Description -->
+                      <div
+                        class="mt-4 mb-2 text-justify"
+                        style="
+                          min-height: 80px;
+                          max-height: 120px;
+                          overflow-y: auto;
+                          background-color: rgba(0, 0, 0, 0.05);
+                          padding: 8px;
+                          border-radius: 4px;
+                        "
+                      >
+                        <small>{{ contact.description }}</small>
+                      </div>
+                    </v-card-text>
+                  </v-card>
+                </v-col>
+              </v-row>
 
-
-              <!-- Future content goes here -->
+              <!-- Single Text Area for Message Input -->
+              <v-card class="mt-6">
+                <v-card-text>
+                  <v-textarea
+                    v-model="messageInput"
+                    label="Your Message"
+                    placeholder="Type your message here..."
+                    rows="4"
+                    dense
+                  >
+                    <template #append-inner>
+                      <v-btn icon size="small" @click="sendMessage">
+                        <v-icon>mdi-send</v-icon>
+                      </v-btn>
+                    </template>
+                  </v-textarea>
+                </v-card-text>
+              </v-card>
             </v-sheet>
           </v-col>
         </v-row>
@@ -346,5 +373,20 @@ const contacts = [
 }
 .active-click:hover {
   color: #2196f3;
+}
+/* Custom styling for heading */
+h1 {
+  font-size: 2.5rem; /* Make it bigger */
+  font-weight: 700; /* Bold text */
+  color: #1565c0; /* Primary color */
+  text-align: center; /* Center the heading */
+  margin-bottom: 20px; /* Space below the heading */
+  text-transform: uppercase; /* Capitalize the text */
+  letter-spacing: 1px; /* Add some spacing between letters */
+}
+
+/* Adjust heading color for dark theme */
+body[data-theme='dark'] h1 {
+  color: #e3f2fd; /* Lighter color for dark mode */
 }
 </style>

@@ -244,23 +244,103 @@ function getEducationPlaceholder(index) {
 
     <!-- Main Content -->
     <v-main :class="currentTheme === 'dark' ? 'bg-grey-darken-4 text-white' : 'bg-grey-lighten-3'">
-      <v-container fluid class="py-6 px-4 px-sm-6">
-        <v-row justify="center">
-          <v-col cols="12" sm="10" md="8">
-            <v-sheet
-              :class="currentTheme === 'dark' ? 'bg-grey-darken-3 text-white' : 'bg-white'"
-              class="pa-4 pa-sm-6 text-center"
-              elevation="2"
-              rounded="lg"
-            >
-              <!-- Title -->
-              <h1 class="text-h5 text-md-h4 font-weight-bold mb-4">About</h1>
-              <!-- Future content goes here -->
-            </v-sheet>
-          </v-col>
-        </v-row>
-      </v-container>
-    </v-main>
+    <v-container fluid class="py-10 px-4 px-sm-6">
+      <v-row justify="center">
+        <v-col cols="12" sm="10" md="10" lg="10">
+          <v-sheet
+            :class="currentTheme === 'dark' ? 'bg-grey-darken-3 text-white' : 'bg-white text-black'"
+            class="pa-6"
+            elevation="2"
+            rounded="lg"
+          >
+            <!-- Header -->
+            <div class="text-center mb-8">
+              <v-responsive class="mb-4">
+                <h1 class="text-h4 font-weight-bold">About Teach & Learn</h1>
+              </v-responsive>
+              <v-responsive>
+                <p class="text-body-1">
+                  It is a platform built to connect learners and educators in a simple, efficient, and inspiring way.
+                </p>
+              </v-responsive>
+            </div>
+
+            <!-- Divider -->
+            <div class="text-center mb-6">
+              <v-divider class="my-4"></v-divider>
+              <h2 class="text-h6 font-weight-medium">How It Works</h2>
+              <v-divider class="my-4"></v-divider>
+            </div>
+
+            <!-- Steps -->
+            <v-row dense>
+              <!-- Step 1 -->
+              <v-col cols="12" sm="6" md="4" class="mb-4 d-flex">
+                <v-card class="pa-4 flex-grow-1 fade-in" variant="outlined" rounded="lg">
+                  <v-icon size="32" class="mb-2" color="primary">mdi-account-plus</v-icon>
+                  <v-card-title class="text-subtitle-1 font-weight-bold">Step 1: Create Your Profile</v-card-title>
+                  <v-card-text class="text-body-2">
+                    Add your details and a profile photo to connect with tutors or learners.
+                  </v-card-text>
+                </v-card>
+              </v-col>
+
+              <!-- Step 2 -->
+              <v-col cols="12" sm="6" md="4" class="mb-4 d-flex">
+                <v-card class="pa-4 flex-grow-1 fade-in" variant="outlined" rounded="lg">
+                  <v-icon size="32" class="mb-2" color="primary">mdi-magnify</v-icon>
+                  <v-card-title class="text-subtitle-1 font-weight-bold">Step 2: Search and Connect</v-card-title>
+                  <v-card-text class="text-body-2">
+                    Find others by subject or expertise and start chatting.
+                  </v-card-text>
+                </v-card>
+              </v-col>
+
+              <!-- Step 3 -->
+              <v-col cols="12" sm="6" md="4" class="mb-4 d-flex">
+                <v-card class="pa-4 flex-grow-1 fade-in" variant="outlined" rounded="lg">
+                  <v-icon size="32" class="mb-2" color="primary">mdi-calendar-clock</v-icon>
+                  <v-card-title class="text-subtitle-1 font-weight-bold">Step 3: Book an Appointment</v-card-title>
+                  <v-card-text class="text-body-2">
+                    Pick a time and confirm your session. Get reminders automatically.
+                  </v-card-text>
+                </v-card>
+              </v-col>
+
+              <!-- Step 4 -->
+              <v-col cols="12" sm="6" md="4" class="mb-4 d-flex">
+                <v-card class="pa-4 flex-grow-1 fade-in" variant="outlined" rounded="lg">
+                  <v-icon size="32" class="mb-2" color="primary">mdi-school</v-icon>
+                  <v-card-title class="text-subtitle-1 font-weight-bold">Step 4: Attend & Learn</v-card-title>
+                  <v-card-text class="text-body-2">
+                    Join the session, engage actively, and take notes.
+                  </v-card-text>
+                </v-card>
+              </v-col>
+
+              <!-- Step 5 -->
+              <v-col cols="12" sm="6" md="4" class="mb-4 d-flex">
+                <v-card class="pa-4 flex-grow-1 fade-in" variant="outlined" rounded="lg">
+                  <v-icon size="32" class="mb-2" color="primary">mdi-star-check</v-icon>
+                  <v-card-title class="text-subtitle-1 font-weight-bold">Step 5: Review and Continue</v-card-title>
+                  <v-card-text class="text-body-2">
+                    Reflect on what you learned, give feedback, and book your next session.
+                  </v-card-text>
+                </v-card>
+              </v-col>
+            </v-row>
+
+            <!-- CTA Button -->
+            <div class="text-center mt-6">
+              <v-btn color="primary" size="large" elevation="1" class="text-none">
+                Get Started Now
+              </v-btn>
+            </div>
+          </v-sheet>
+        </v-col>
+      </v-row>
+    </v-container>
+  </v-main>
   </v-app>
 </template>
 <style scoped>
@@ -276,4 +356,18 @@ function getEducationPlaceholder(index) {
 }
 .active-click:hover {
   color: #2196f3;
+}
+.fade-in {
+  animation: fadeIn 0.6s ease-in;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }</style>
