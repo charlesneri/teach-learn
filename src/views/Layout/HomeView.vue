@@ -90,6 +90,8 @@ const saveAppointment = () => {
 }
 //for publc main
 
+const profileDialog = ref(false) // for View More (profile)
+const appointmentDialog = ref(false) // for Set Appointment
 const tutors = ref([]) // Store public tutors
 
 const fetchTutors = async () => {
@@ -113,12 +115,12 @@ const selectedTutor = ref(null) // store who you are viewing
 
 const viewTutor = (tutor) => {
   selectedTutor.value = tutor
-  dialog.value = true
+  profileDialog.value = true
 }
 
 const openAppointment = (tutor) => {
   selectedTutor.value = tutor
-  dialog.value = true
+  appointmentDialog.value = true
 }
 </script>
 
@@ -348,41 +350,46 @@ const openAppointment = (tutor) => {
                     class="profile-container"
                     style="flex-wrap: wrap; gap: 24px"
                   >
-                    <div
-                      v-for="tutor in tutors"
-                      :key="tutor.id"
-                      class="mentor-card pa-4 d-flex flex-column align-center"
-                      style="border: 1px solid #ccc; border-radius: 12px; width: 250px"
-                    >
-                      <v-avatar size="100" class="mb-3">
-                        <v-img :src="tutor.avatar_url" v-if="tutor.avatar_url" cover>
-                          <template #error>
-                            <v-icon size="60" color="grey-darken-1">mdi-account</v-icon>
-                          </template>
-                        </v-img>
-                        <v-icon v-else size="60" color="grey-darken-1">mdi-account</v-icon>
-                      </v-avatar>
+                    <div v-for="tutor in tutors" :key="tutor.id">
+                      <Transition name="fade-slide-up">
+                        <div
+                          class="mentor-card pa-4 d-flex flex-column align-center"
+                          style="border: 1px solid #ccc; border-radius: 12px; width: 250px"
+                        >
+                          <!-- Your card content here -->
+                          <v-avatar size="100" class="mb-3">
+                            <v-img :src="tutor.avatar_url" v-if="tutor.avatar_url" cover>
+                              <template #error
+                                ><v-icon size="60" color="grey-darken-1"
+                                  >mdi-account</v-icon
+                                ></template
+                              >
+                            </v-img>
+                            <v-icon v-else size="60" color="grey-darken-1">mdi-account</v-icon>
+                          </v-avatar>
 
-                      <h3 class="font-weight-medium mb-2">
-                        {{ tutor.first_name }} {{ tutor.middle_initial }} {{ tutor.last_name }}
-                      </h3>
-                      <p class="text-caption mb-3">
-                        {{ tutor.expertise || 'No expertise listed' }}
-                      </p>
+                          <h3 class="font-weight-medium mb-2">
+                            {{ tutor.first_name }} {{ tutor.middle_initial }} {{ tutor.last_name }}
+                          </h3>
+                          <p class="text-caption mb-3">
+                            {{ tutor.expertise || 'No expertise listed' }}
+                          </p>
 
-                      <span
-                        @click="viewTutor(tutor)"
-                        class="text-primary text-decoration-underline cursor-pointer mb-2"
-                      >
-                        View More
-                      </span>
+                          <span
+                            @click="viewTutor(tutor)"
+                            class="text-primary text-decoration-underline cursor-pointer mb-2"
+                          >
+                            View More
+                          </span>
 
-                      <span
-                        @click="openAppointment(tutor)"
-                        class="text-primary text-decoration-underline cursor-pointer"
-                      >
-                        Set an Appointment
-                      </span>
+                          <span
+                            @click="openAppointment(tutor)"
+                            class="text-primary text-decoration-underline cursor-pointer"
+                          >
+                            Set an Appointment
+                          </span>
+                        </div>
+                      </Transition>
                     </div>
                   </div>
 
@@ -393,14 +400,18 @@ const openAppointment = (tutor) => {
 
                   <v-container>
                     <!-- Appointment Dialog -->
-                    <v-dialog v-model="dialog" max-width="600px">
+                    <v-dialog
+                      v-model="appointmentDialog"
+                      max-width="600px"
+                      transition="scale-transition"
+                    >
                       <v-card>
                         <v-card-title class="headline">
                           Appointment with {{ selectedTutor?.first_name || 'Mentor' }}
                         </v-card-title>
 
                         <v-card-text class="appoint-container" style="width: 50%">
-                          <!-- Full Calendar (v-date-picker) -->
+                          <!-- Date Picker -->
                           <v-date-picker
                             v-model="selectedDate"
                             color="primary"
@@ -410,7 +421,7 @@ const openAppointment = (tutor) => {
                             elevation="24"
                           ></v-date-picker>
 
-                          <!-- Time Picker with clock-like spinner (24hr format) -->
+                          <!-- Time Picker (only after date selected) -->
                           <v-time-picker
                             v-if="selectedDate"
                             v-model="selectedTime"
@@ -422,26 +433,81 @@ const openAppointment = (tutor) => {
                             full-width
                           ></v-time-picker>
 
+                          <!-- Textarea (only after date selected) -->
                           <v-textarea
+                            v-if="selectedDate"
                             v-model="messageInput"
                             label="Your Message"
                             placeholder="Type your message here..."
                             rows="4"
                             dense
                           >
-                            <template #append-inner>
-                              <v-btn icon size="small" @click="sendMessage">
-                                <v-icon>mdi-send</v-icon>
-                              </v-btn>
-                            </template>
                           </v-textarea>
                         </v-card-text>
 
                         <v-card-actions>
-                          <!-- Cancel Button -->
-                          <v-btn color="grey darken-1" @click="dialog = false">Cancel</v-btn>
-                          <!-- Save Button -->
+                          <v-btn color="grey darken-1" @click="appointmentDialog = false"
+                            >Cancel</v-btn
+                          >
                           <v-btn color="primary" @click="saveAppointment">Save</v-btn>
+                        </v-card-actions>
+                      </v-card>
+                    </v-dialog>
+
+                    <!-- View More (Profile Details) Dialog -->
+                    <v-dialog
+                      v-model="profileDialog"
+                      max-width="600px"
+                      transition="scale-transition"
+                    >
+                      <v-card>
+                        <v-card-title class="headline">
+                          {{ selectedTutor?.first_name }} {{ selectedTutor?.middle_initial }}
+                          {{ selectedTutor?.last_name }}
+                        </v-card-title>
+                        <v-card-text class="text-start">
+                          <v-avatar size="100" class="mb-4">
+                            <v-img
+                              :src="selectedTutor?.avatar_url"
+                              v-if="selectedTutor?.avatar_url"
+                              cover
+                            >
+                              <template #error>
+                                <v-icon size="60" color="grey-darken-1">mdi-account</v-icon>
+                              </template>
+                            </v-img>
+                            <v-icon v-else size="60" color="grey-darken-1">mdi-account</v-icon>
+                          </v-avatar>
+
+                          <p>
+                            <strong>Expertise:</strong>
+                            {{ selectedTutor?.expertise || 'No expertise listed' }}
+                          </p>
+                          <p>
+                            <strong>Email:</strong>
+                            {{ selectedTutor?.email || 'No email provided' }}
+                          </p>
+                          <p>
+                            <strong>Phone:</strong> {{ selectedTutor?.phone || 'No phone number' }}
+                          </p>
+                          <p>
+                            <strong>About:</strong> {{ selectedTutor?.about || 'No description' }}
+                          </p>
+                          <p>
+                            <strong>School:</strong>
+                            {{ selectedTutor?.school || 'No school listed' }}
+                          </p>
+                          <p>
+                            <strong>Degree:</strong>
+                            {{ selectedTutor?.degree || 'No degree listed' }}
+                          </p>
+                          <p>
+                            <strong>Year:</strong> {{ selectedTutor?.year || 'No year provided' }}
+                          </p>
+                        </v-card-text>
+
+                        <v-card-actions class="justify-end">
+                          <v-btn color="primary" @click="profileDialog = false">Close</v-btn>
                         </v-card-actions>
                       </v-card>
                     </v-dialog>
@@ -455,35 +521,75 @@ const openAppointment = (tutor) => {
     </transition>
   </v-app>
 </template>
-
 <style scoped>
 .profile-container {
   display: flex;
+  flex-wrap: wrap;
   justify-content: center;
-  margin-top: 30px;
+  gap: 24px;
+  margin-top: 32px;
 }
 
 .v-dialog__content {
-  padding: 20px;
+  padding: 24px;
 }
 
-/* Custom styling for heading */
+/* Heading Style */
 h1 {
-  font-size: 2rem; /* Make it bigger */
-  font-weight: 700; /* Bold text */
-  color: #1565c0; /* Primary color */
-  text-align: center; /* Center the heading */
-  margin-bottom: 20px; /* Space below the heading */
-  text-transform: uppercase; /* Capitalize the text */
-  letter-spacing: 1px; /* Add some spacing between letters */
+  font-size: 2.4rem;
+  font-weight: 800;
+  color: #1565c0;
+  text-align: center;
+  margin-bottom: 24px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
 }
 
-/* Adjust heading color for dark theme */
+/* Dark mode heading */
 body[data-theme='dark'] h1 {
-  color: #e3f2fd; /* Lighter color for dark mode */
+  color: #e3f2fd;
 }
 
-/* Remove underline on link */
+/* Mentor Card Hover */
+.mentor-card {
+  transition:
+    transform 0.3s ease,
+    box-shadow 0.3s ease;
+  background-color: white;
+  border: 1px solid #ddd;
+  border-radius: 12px;
+  width: 260px;
+}
+.mentor-card:hover {
+  transform: translateY(-8px);
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.15);
+}
+
+/* Buttons */
+.v-btn {
+  transition: transform 0.3s ease;
+}
+.v-btn:hover {
+  transform: scale(1.05);
+}
+
+/* Fade and Slide Animation */
+.fade-slide-up-enter-active {
+  animation: fadeSlideUp 0.6s ease;
+}
+
+@keyframes fadeSlideUp {
+  0% {
+    opacity: 0;
+    transform: translateY(24px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Active Click */
 .active-click {
   font-weight: 700;
   text-decoration: none;
@@ -495,19 +601,27 @@ body[data-theme='dark'] h1 {
 .active-click:hover {
   color: #2196f3;
 }
-/* for animation*/
-.fade-slide-up-enter-active {
-  animation: fadeSlideUp 0.6s ease-out;
+
+/* Text Field Enhancement */
+.v-text-field {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  border-radius: 10px;
 }
 
-@keyframes fadeSlideUp {
-  from {
-    opacity: 0;
-    transform: translateY(24px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+/* Dialog Card */
+.v-card {
+  border-radius: 16px;
+}
+
+/* Dialog Transition */
+.v-dialog {
+  transition: all 0.3s ease;
+}
+
+/* Smooth layout padding */
+.v-container {
+  padding: 16px;
 }
 </style>
+
+can you enhance the style such as hover of navigations the layout and designs of the inside of view more and appointment and other things
