@@ -1,33 +1,33 @@
 <script setup>
-// IMPORTS
-import { ref, onMounted, computed, watch } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { supabase, formActionDefault } from '@/utils/supabase'
 import { useTheme } from 'vuetify'
 
-// THEME SETUP
+// THEME
 const theme = useTheme()
 const currentTheme = ref(localStorage.getItem('theme') || 'light')
-const router = useRouter()
-
-const toggleTheme = () => {
-  currentTheme.value = currentTheme.value === 'light' ? 'dark' : 'light'
-  theme.global.name.value = currentTheme.value
-  localStorage.setItem('theme', currentTheme.value)
-}
 watch(currentTheme, (val) => {
   theme.global.name.value = val
   localStorage.setItem('theme', val)
 })
+const toggleTheme = () => {
+  currentTheme.value = currentTheme.value === 'light' ? 'dark' : 'light'
+}
 
-// UI States
+// ROUTER
+const router = useRouter()
+
+// UI STATES
 const dialog = ref(false)
+const confirmRemove = ref(false)
 const snackbar = ref(false)
 const snackbarMsg = ref('')
 const isEditing = ref(false)
 const loading = ref(false)
+const imageLoading = ref(false)
 
-// Profile Data
+// PROFILE STATES
 const profile = ref({
   firstName: '',
   lastName: '',
@@ -42,7 +42,7 @@ const profile = ref({
 const profileImage = ref('')
 const selectedFile = ref(null)
 
-// Field mappings
+// FIELD MAPPING
 const fieldMappings = {
   'Given Name': 'firstName',
   'Last Name': 'lastName',
@@ -53,50 +53,44 @@ const fieldMappings = {
   'Phone': 'phone',
 }
 
-// Computed
+// COMPUTED
 const fullName = computed(() => {
   const mid = profile.value.middleInitial ? `${profile.value.middleInitial}. ` : ''
   return `${profile.value.firstName} ${mid}${profile.value.lastName}`
 })
 
-// --- FUNCTIONS ---
-
-// Check Authentication
+// FUNCTIONS
 const checkAuth = async () => {
   const { data: { user } } = await supabase.auth.getUser()
-  if (!user) {
-    router.push('/login')
-  }
+  if (!user) router.push('/login')
 }
 
-// Fetch Profile
 const getUserProfile = async () => {
   try {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return
 
     const { data, error } = await supabase.from('profiles').select('*').eq('id', user.id).single()
-    if (error) {
-      console.error('Error fetching profile:', error)
-      return
-    }
+    if (error) throw error
 
-    profile.value.firstName = data.first_name || ''
-    profile.value.lastName = data.last_name || ''
-    profile.value.middleInitial = data.middle_initial || ''
-    profile.value.age = data.age || ''
-    profile.value.expertise = data.expertise || ''
-    profile.value.email = data.email || user.email
-    profile.value.phone = data.phone || ''
-    profile.value.about = data.about || ''
-    profile.value.education = [data.school || '', data.degree || '', data.year || '']
+    profile.value = {
+      firstName: data.first_name || '',
+      lastName: data.last_name || '',
+      middleInitial: data.middle_initial || '',
+      age: data.age || '',
+      expertise: data.expertise || '',
+      email: data.email || user.email,
+      phone: data.phone || '',
+      about: data.about || '',
+      education: [data.school || '', data.degree || '', data.year || ''],
+    }
     profileImage.value = data.avatar_url || ''
+
   } catch (error) {
-    console.error('Unexpected error:', error)
+    console.error('Error fetching profile:', error)
   }
 }
 
-// Save Profile
 const saveProfile = async () => {
   isEditing.value = false
   loading.value = true
@@ -120,76 +114,111 @@ const saveProfile = async () => {
       avatar_url: profileImage.value,
     }).eq('id', user.id)
 
-    if (error) {
-      console.error('Error updating profile:', error)
-    } else {
-      snackbarMsg.value = 'Profile saved successfully!'
-      snackbar.value = true
-    }
+    if (error) throw error
+
+    snackbarMsg.value = 'Profile saved successfully!'
+    snackbar.value = true
+
   } catch (error) {
-    console.error('Unexpected error:', error)
+    console.error('Error saving profile:', error)
   } finally {
     loading.value = false
   }
 }
 
-// Image Upload
 const onImageSelected = async (event) => {
   const file = event.target.files[0]
   if (!file) return
 
   selectedFile.value = file
+  imageLoading.value = true
 
   try {
     const { data: { user } } = await supabase.auth.getUser()
-    if (!user) return
+    if (!user) throw new Error('User not authenticated')
 
     const fileExt = file.name.split('.').pop()
     const fileName = `${user.id}_${Date.now()}.${fileExt}`
-    const filePath = `avatars/${fileName}`
 
-    const { error: uploadError } = await supabase.storage.from('avatars').upload(filePath, file, { cacheControl: '3600', upsert: true })
-    if (uploadError) {
-      console.error('Error uploading image:', uploadError)
-      return
-    }
+    const { error: uploadError } = await supabase.storage.from('avatars').upload(fileName, file, {
+      cacheControl: '3600',
+      upsert: true,
+    })
+    if (uploadError) throw uploadError
 
-    const { data: publicUrlData } = supabase.storage.from('avatars').getPublicUrl(filePath)
-    profileImage.value = publicUrlData.publicUrl
+    const { data: publicData, error: publicUrlError } = await supabase.storage.from('avatars').getPublicUrl(fileName)
+    if (publicUrlError || !publicData?.publicUrl) throw publicUrlError
+
+    profileImage.value = publicData.publicUrl
 
     const { error: updateError } = await supabase.from('profiles').update({ avatar_url: profileImage.value }).eq('id', user.id)
-    if (updateError) {
-      console.error('Error updating avatar URL:', updateError)
-    }
+    if (updateError) throw updateError
 
     snackbarMsg.value = 'Profile picture updated!'
     snackbar.value = true
+
   } catch (error) {
-    console.error('Unexpected error uploading image:', error)
+    console.error('Error uploading profile image:', error)
+  } finally {
+    imageLoading.value = false
   }
 }
 
-// Remove Image
+const confirmRemoveImage = () => {
+  confirmRemove.value = true
+}
+
 const removeProfileImage = async () => {
-  profileImage.value = ''
+  if (!profileImage.value) return
+
+  confirmRemove.value = false
+  imageLoading.value = true
+
   try {
     const { data: { user } } = await supabase.auth.getUser()
-    if (!user) return
+    if (!user) throw new Error('User not authenticated')
 
-    const { error } = await supabase.from('profiles').update({ avatar_url: '' }).eq('id', user.id)
-    if (error) {
-      console.error('Error clearing avatar URL:', error)
-    }
+    const fileUrl = new URL(profileImage.value)
+    const filePath = decodeURIComponent(fileUrl.pathname.replace('/storage/v1/object/public/avatars/', ''))
+
+    const { error: deleteError } = await supabase.storage.from('avatars').remove([filePath])
+    if (deleteError) throw deleteError
+
+    const { error: updateError } = await supabase.from('profiles').update({ avatar_url: '' }).eq('id', user.id)
+    if (updateError) throw updateError
+
+    profileImage.value = ''
+
+    snackbarMsg.value = 'Profile picture removed!'
+    snackbar.value = true
+
   } catch (error) {
-    console.error('Unexpected error:', error)
+    console.error('Error removing profile image:', error)
+  } finally {
+    imageLoading.value = false
   }
 }
 
-// Edit mode
+// LOGOUT
+const onLogout = async () => {
+  formActionDefault.formProcess = true
+  try {
+    const { error } = await supabase.auth.signOut()
+    if (error) throw error
+    snackbarMsg.value = 'Logged out successfully!'
+    snackbar.value = true
+    setTimeout(() => router.push('/login'), 1000)
+  } catch (error) {
+    console.error('Error during logout:', error)
+  } finally {
+    formActionDefault.formProcess = false
+  }
+}
+
+// EDIT MODES
 const enableEdit = () => { isEditing.value = true }
 const cancelEdit = () => { isEditing.value = false }
 
-// Education placeholders
 const getEducationPlaceholder = (index) => {
   if (index === 0) return 'Enter your school/university'
   if (index === 1) return 'Enter your course or degree'
@@ -197,28 +226,7 @@ const getEducationPlaceholder = (index) => {
   return ''
 }
 
-// Logout
-const onLogout = async () => {
-  formAction.value = { ...formActionDefault }
-  formAction.value.formProcess = true
-
-  const { error } = await supabase.auth.signOut()
-  if (error) {
-    console.error('Error during logout: ', error)
-    formAction.value.formProcess = false
-    return
-  }
-
-  formAction.value.formProcess = false
-  snackbarMsg.value = 'Logged out successfully!'
-  snackbar.value = true
-
-  setTimeout(() => {
-    router.push('/login')
-  }, 1000)
-}
-
-// Mounted
+// MOUNTED
 onMounted(() => {
   theme.global.name.value = currentTheme.value
   checkAuth()
@@ -228,6 +236,7 @@ onMounted(() => {
 
 <template>
   <v-app id="inspire">
+    <!-- APP BAR -->
     <v-app-bar flat :color="currentTheme === 'light' ? '#1565c0' : 'grey-darken-4'">
       <v-container class="d-flex align-center justify-space-between pa-2">
         <v-avatar color="#fff" size="44">
@@ -244,7 +253,7 @@ onMounted(() => {
 
         <v-spacer />
 
-        <v-menu transition="scale-transition" offset-y theme="light">
+        <v-menu transition="scale-transition" offset-y>
           <template #activator="{ props }">
             <v-app-bar-nav-icon v-bind="props" class="d-md-none" />
           </template>
@@ -263,29 +272,35 @@ onMounted(() => {
       </v-container>
     </v-app-bar>
 
+    <!-- MAIN CONTENT -->
     <v-main :class="currentTheme === 'dark' ? 'bg-grey-darken-4 text-white' : 'bg-grey-lighten-3'">
       <v-container fluid class="py-6 px-4 px-sm-6">
         <v-row justify="center">
           <v-col cols="12" sm="10" md="8" lg="8">
             <v-sheet :class="currentTheme === 'dark' ? 'bg-grey-darken-3 text-white' : 'bg-white'" class="fade-slide-up pa-4 pa-sm-6 text-sm-center" elevation="2" rounded="lg">
-              
+
               <!-- Theme Toggle Button -->
-              <v-btn icon size="small" @click="toggleTheme" class="position-absolute" style="top: 16px; right: 16px; z-index: 10">
+              <v-btn icon size="small" @click="toggleTheme" class="position-absolute" style="top: 16px; right: 16px;">
                 <v-icon>{{ currentTheme === 'light' ? 'mdi-weather-night' : 'mdi-white-balance-sunny' }}</v-icon>
               </v-btn>
 
-              <!-- Profile Image -->
+              <!-- Profile Avatar -->
               <div class="d-flex flex-column align-center mb-4">
                 <v-avatar :size="$vuetify.display.smAndDown ? 100 : 120" class="bg-grey-lighten-2">
-                  <v-img v-if="profileImage" :src="profileImage" cover />
+                  <v-img v-if="profileImage" :src="profileImage" cover>
+                    <template #error>
+                      <v-icon size="80" color="grey-darken-1">mdi-account</v-icon>
+                    </template>
+                  </v-img>
                   <v-icon v-else size="80" color="grey-darken-1">mdi-account</v-icon>
                 </v-avatar>
 
+                <!-- Upload & Remove Buttons -->
                 <div class="mt-3 d-flex flex-wrap justify-center gap-2">
-                  <v-btn size="small" color="primary" @click="$refs.imageInput.click()">
+                  <v-btn size="small" color="primary" @click="$refs.imageInput.click()" :loading="imageLoading" :disabled="imageLoading">
                     <v-icon start>mdi-upload</v-icon> Upload
                   </v-btn>
-                  <v-btn v-if="profileImage" size="small" color="red" variant="outlined" @click="removeProfileImage">
+                  <v-btn v-if="profileImage" size="small" color="red" variant="outlined" @click="confirmRemoveImage" :loading="imageLoading" :disabled="imageLoading">
                     <v-icon start>mdi-delete</v-icon> Remove
                   </v-btn>
                 </div>
@@ -300,18 +315,34 @@ onMounted(() => {
                 </v-btn>
               </div>
 
-              <!-- Confirm Dialog -->
-              <v-dialog v-model="dialog" max-width="500" scrollable transition="dialog-bottom-transition" persistent>
+              <!-- Confirm Dialog: Apply as Tutor -->
+              <v-dialog v-model="dialog" max-width="500" persistent>
                 <v-card>
-                  <v-card-title class="text-h6 text-start">
+                  <v-card-title class="text-h6">
                     <v-icon class="me-2">mdi-alert-circle-outline</v-icon> Confirm Application
                   </v-card-title>
-                  <v-card-text class="text-start">
+                  <v-card-text>
                     Your personal information will be public. Do you still wish to proceed?
                   </v-card-text>
                   <v-card-actions class="justify-end">
-                    <v-btn color="red" variant="outlined" @click="dialog = false" :disabled="loading">No</v-btn>
-                    <v-btn color="green" :loading="loading" @click="dialog = false">Yes</v-btn>
+                    <v-btn color="grey" variant="outlined" @click="dialog = false" :disabled="loading">No</v-btn>
+                    <v-btn color="green" @click="dialog = false" :loading="loading">Yes</v-btn>
+                  </v-card-actions>
+                </v-card>
+              </v-dialog>
+
+              <!-- Confirm Dialog: Remove Profile Image -->
+              <v-dialog v-model="confirmRemove" max-width="400" persistent>
+                <v-card>
+                  <v-card-title class="text-h6">
+                    <v-icon class="me-2">mdi-alert</v-icon> Confirm Deletion
+                  </v-card-title>
+                  <v-card-text>
+                    Are you sure you want to delete your profile picture?
+                  </v-card-text>
+                  <v-card-actions class="justify-end">
+                    <v-btn color="grey" variant="outlined" @click="confirmRemove = false" :disabled="imageLoading">Cancel</v-btn>
+                    <v-btn color="red" @click="removeProfileImage" :loading="imageLoading">Delete</v-btn>
                   </v-card-actions>
                 </v-card>
               </v-dialog>
@@ -320,13 +351,13 @@ onMounted(() => {
               <v-snackbar v-model="snackbar" timeout="3000" color="success" location="top">
                 {{ snackbarMsg }}
                 <template #actions>
-                  <v-btn variant="text" icon="mdi-close" @click="snackbar = false" />
+                  <v-btn icon="mdi-close" variant="text" @click="snackbar = false" />
                 </template>
               </v-snackbar>
 
               <v-divider class="my-4" />
 
-              <!-- Profile Form -->
+              <!-- Profile Fields -->
               <div class="text-start">
                 <v-row v-for="(fieldKey, label) in fieldMappings" :key="fieldKey" class="py-1" dense>
                   <v-col cols="12" sm="6" class="font-weight-medium">{{ label }}:</v-col>
@@ -383,7 +414,7 @@ onMounted(() => {
     </v-main>
   </v-app>
 </template>
-
+  
 <style scoped>
 .fade-slide-up {
   animation: fadeSlideUp 1.6s ease-in both;
