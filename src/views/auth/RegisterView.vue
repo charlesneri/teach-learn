@@ -1,5 +1,7 @@
 <script setup>
 import { ref, onMounted, watch } from 'vue'
+import { supabase, formActionDefault } from '@/utils/supabase'
+import AlertNotification from '@/components/common/AlertNotification.vue'
 import {
   requiredValidator,
   emailValidator,
@@ -7,24 +9,15 @@ import {
   confirmedValidator,
 } from '@/utils/validators'
 
-import { supabase, formActionDefault } from '@/utils/supabase'
-import AlertNotification from '@/components/common/AlertNotification.vue'
-import {useRouter} from 'vue-router'
+import { useRouter } from 'vue-router'
+const router = useRouter()
 
-//for visible password
-const visible = ref(false)
 // Theme setup
-const getPreferredTheme = () => {
-  const savedTheme = localStorage.getItem('theme')
-  if (savedTheme) return savedTheme
-  return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
-}
-
-const theme = ref(getPreferredTheme())
+const theme = ref(localStorage.getItem('theme') || 'light')
 const toggleTheme = () => {
   theme.value = theme.value === 'light' ? 'dark' : 'light'
+  localStorage.setItem('theme', theme.value)
 }
-watch(theme, (val) => localStorage.setItem('theme', val))
 onMounted(() => {
   const media = window.matchMedia('(prefers-color-scheme: dark)')
   media.addEventListener('change', (e) => {
@@ -33,13 +26,18 @@ onMounted(() => {
     }
   })
 })
+watch(theme, (val) => localStorage.setItem('theme', val))
 
-// User registration data kang sir jabez
-const formDataDefault = {
+// Form State
+const visible = ref(false)
+const refVForm = ref()
+const formData = ref({
   firstname: '',
   lastname: '',
   middleinitial: '',
   age: '',
+  phone: '',
+  expertise: '',
   about: '',
   school: '',
   course: '',
@@ -47,23 +45,20 @@ const formDataDefault = {
   email: '',
   password: '',
   confirm_password: '',
-}
-const formData = ref({
-  ...formDataDefault,
-})
-const formAction = ref({
-  ...formDataDefault,
 })
 
-const refVForm = ref()
+const formAction = ref({ ...formActionDefault })
 
+// Submit Handler
 const onFormSubmit = () => {
   refVForm.value?.validate().then(({ valid }) => {
-    if (valid) onSubmit()
+    if (valid) {
+      onSubmit()
+    }
   })
 }
-/*
 
+// Main Submit Function
 const onSubmit = async () => {
   formAction.value = { ...formActionDefault }
   formAction.value.formProcess = true
@@ -76,131 +71,76 @@ const onSubmit = async () => {
         firstName: formData.value.firstname,
         lastName: formData.value.lastname,
         middleInitial: formData.value.middleinitial,
-        age: formData.value.age,
-        about: formData.value.about,
-        school: formData.value.school,
-        course: formData.value.course,
-        yearLevel: formData.value.yearLevel,
-      },
-    },
-  })
-  if (error) {
-    console.log(error)
-    formAction.value.formErrorMessage = error.message
-    console.log(formAction.value.formErrorMessage)
-    formAction.value.formStatus = error.status
-  } else if (data) {
-    console.log(data)
-    formAction.value.formSuccessMessage = 'Successfully Registered!'
-    refVForm.value?.reset()
-  }
-
-  formAction.value.formProcess = false
-}
-  */
- //gpt
- // ----------------------------------------------
-// 🚀 Function to handle the registration process
-// - Creates user authentication in Supabase
-// - Inserts user data into 'profiles' table
-// ----------------------------------------------
-const onSubmit = async () => {
-  // Reset the form action state
-  formAction.value = { ...formActionDefault }
-  formAction.value.formProcess = true
-
-  // Step 1: Create user authentication
-  const { data, error } = await supabase.auth.signUp({
-    email: formData.value.email,
-    password: formData.value.password,
-    options: {
-      data: {
-        firstName: formData.value.firstname,
-        lastName: formData.value.lastname,
-        middleInitial: formData.value.middleinitial,
-        age: formData.value.age,
+        age: Number(formData.value.age),
         phone: formData.value.phone,
+        expertise: formData.value.expertise,
         about: formData.value.about,
         school: formData.value.school,
         course: formData.value.course,
-        yearLevel: formData.value.yearLevel,
+        yearLevel: Number(formData.value.yearLevel),
       },
     },
   })
 
-  // Step 2: Handle registration errors
   if (error) {
-    console.log(error)
+    console.error(error)
     formAction.value.formErrorMessage = error.message
     formAction.value.formStatus = error.status
-  } 
-  // Step 3: If registration successful, insert into 'profiles' table
-  else if (data && data.user) {
+  } else if (data && data.user) {
     console.log('Auth signup success:', data.user)
 
-    const { error: profileError } = await supabase
-      .from('profiles')
-      .insert({
-        id: data.user.id,                   // Link to Auth user id
-        first_name: formData.value.firstname,
-        last_name: formData.value.lastname,
-        middle_initial: formData.value.middleinitial,
-        age: formData.value.age ? parseInt(formData.value.age) : null,   // Ensure age is integer
-        about: formData.value.about,
-        email: formData.value.email,
-        school: formData.value.school,
-        degree: formData.value.course,
-        year: formData.value.yearLevel ? parseInt(formData.value.yearLevel) : null, // Ensure year is integer
-        expertise: '',                      // Default empty expertise
-        phone: formData.value.phone,         // Now correctly saving phone
-        avatar_url: '',                      // Default empty avatar
-      })
+    // Insert into profiles table
+    const { error: profileError } = await supabase.from('profiles').insert({
+      id: data.user.id,
+      first_name: formData.value.firstname,
+      last_name: formData.value.lastname,
+      middle_initial: formData.value.middleinitial,
+      age: Number(formData.value.age),
+      email: formData.value.email,
+      phone: formData.value.phone,
+      expertise: formData.value.expertise,
+      about: formData.value.about,
+      school: formData.value.school,
+      degree: formData.value.course,
+      year: Number(formData.value.yearLevel),
+      avatar_url: '', // No image uploaded yet
+    })
 
-    // Step 4: Handle profile insert error
     if (profileError) {
       console.error('Error inserting into profiles table:', profileError)
       formAction.value.formErrorMessage = 'Profile creation failed!'
       formAction.value.formStatus = 500
-    } 
-    // Step 5: If profile insert success
-    else {
+    } else {
       console.log('Profile inserted successfully')
       formAction.value.formSuccessMessage = 'Successfully Registered!'
       refVForm.value?.reset()
+      // Optionally: router.push('/login')
     }
   }
 
-  // Final: Set form process to false
   formAction.value.formProcess = false
 }
-
 </script>
 
 <template>
   <v-responsive class="app-wrapper">
     <v-app :theme="theme">
       <v-main>
-        <!-- Container Background -->
         <v-container
           fluid
-          class="d-flex align-center justify-center container-bg"
+          class="d-flex align-center justify-center"
           :style="{ backgroundColor: theme === 'light' ? '#1565c0' : '#121212' }"
         >
-          <!-- Theme Toggle Button -->
+          <!-- Theme Toggle -->
           <v-btn
-            :icon="true"
+            icon
             @click="toggleTheme"
-            :color="theme === 'light' ? '#1565c0' : '#ffffff'"
             class="theme-toggle"
             width="48"
             height="48"
             rounded="circle"
           >
-            <v-fade-transition mode="out-in">
-              <v-icon :key="theme" :color="theme === 'light' ? 'white' : '#121212'">
-                {{ theme === 'light' ? 'mdi-weather-sunny' : 'mdi-weather-night' }}
-              </v-icon>
-            </v-fade-transition>
+            <v-icon>{{ theme === 'light' ? 'mdi-weather-night' : 'mdi-weather-sunny' }}</v-icon>
           </v-btn>
 
           <!-- Registration Card -->
@@ -211,23 +151,23 @@ const onSubmit = async () => {
                   :class="theme === 'dark' ? 'bg-grey-darken-4 text-white' : ''"
                   class="mx-auto rounded-xl pb-5 hover-card"
                   width="500"
-                  style="font-size: 85%; font-weight: 200"
                 >
                   <template v-slot:title>
                     <v-img
                       src="/image/Teach&Learn.png"
-                      :width="150"
+                      width="150"
                       class="mx-auto"
                       aspect-ratio="16/9"
                       cover
-                    ></v-img>
+                    />
                     <v-divider class="mb-5 mt-4" thickness="3" color="black" />
                     <span class="font-weight-black d-flex justify-center">Register Now!</span>
                   </template>
+
                   <AlertNotification
                     :form-success-message="formAction.formSuccessMessage"
                     :form-error-message="formAction.formErrorMessage"
-                  ></AlertNotification>
+                  />
 
                   <v-card-text class="pt-4">
                     <v-sheet class="mx-auto" width="300">
@@ -236,49 +176,54 @@ const onSubmit = async () => {
                           v-model="formData.firstname"
                           label="First Name"
                           variant="outlined"
-                          :color="theme === 'dark' ? 'white' : 'primary'"
                           :rules="[requiredValidator]"
                         />
                         <v-text-field
                           v-model="formData.lastname"
                           label="Last Name"
                           variant="outlined"
-                          :color="theme === 'dark' ? 'white' : 'primary'"
                           :rules="[requiredValidator]"
                         />
                         <v-text-field
                           v-model="formData.middleinitial"
                           label="Middle Initial (optional)"
                           variant="outlined"
-                          :color="theme === 'dark' ? 'white' : 'primary'"
                         />
                         <v-text-field
                           v-model="formData.age"
                           label="Age"
                           type="number"
                           variant="outlined"
-                          :color="theme === 'dark' ? 'white' : 'primary'"
                           :rules="[requiredValidator]"
                         />
+                        <v-text-field
+                          v-model="formData.phone"
+                          label="Phone"
+                          variant="outlined"
+                          :rules="[requiredValidator]"
+                        />
+                        <v-text-field
+                          v-model="formData.expertise"
+                          label="Expertise"
+                          variant="outlined"
+                        />
+
                         <v-text-field
                           v-model="formData.about"
                           label="About Me"
                           variant="outlined"
-                          :color="theme === 'dark' ? 'white' : 'primary'"
                           :rules="[requiredValidator]"
                         />
                         <v-text-field
                           v-model="formData.school"
-                          label="School / University"
+                          label="School"
                           variant="outlined"
-                          :color="theme === 'dark' ? 'white' : 'primary'"
                           :rules="[requiredValidator]"
                         />
                         <v-text-field
                           v-model="formData.course"
-                          label="Course / Degree"
+                          label="Course"
                           variant="outlined"
-                          :color="theme === 'dark' ? 'white' : 'primary'"
                           :rules="[requiredValidator]"
                         />
                         <v-text-field
@@ -286,42 +231,30 @@ const onSubmit = async () => {
                           label="Year Level"
                           type="number"
                           variant="outlined"
-                          :color="theme === 'dark' ? 'white' : 'primary'"
                           :rules="[requiredValidator]"
                         />
                         <v-text-field
-                          v-model="formData.phone"
-                          label="Phone"
-                          variant="outlined"
-                          :color="theme === 'dark' ? 'white' : 'primary'"
-                          :rules="[requiredValidator]"
-                        /> <v-text-field
                           v-model="formData.email"
                           label="Email"
                           variant="outlined"
-                          :color="theme === 'dark' ? 'white' : 'primary'"
                           :rules="[requiredValidator, emailValidator]"
                         />
                         <v-text-field
                           v-model="formData.password"
+                          label="Password"
+                          variant="outlined"
                           :append-inner-icon="visible ? 'mdi-eye-off' : 'mdi-eye'"
                           :type="visible ? 'text' : 'password'"
-                          label="Password"
                           @click:append-inner="visible = !visible"
-                          type="password"
-                          variant="outlined"
-                          :color="theme === 'dark' ? 'white' : 'primary'"
                           :rules="[requiredValidator, passwordValidator]"
                         />
                         <v-text-field
                           v-model="formData.confirm_password"
                           label="Confirm Password"
+                          variant="outlined"
                           :append-inner-icon="visible ? 'mdi-eye-off' : 'mdi-eye'"
                           :type="visible ? 'text' : 'password'"
                           @click:append-inner="visible = !visible"
-                          type="password"
-                          variant="outlined"
-                          :color="theme === 'dark' ? 'white' : 'primary'"
                           :rules="[
                             requiredValidator,
                             confirmedValidator(formData.confirm_password, formData.password),
@@ -356,6 +289,10 @@ const onSubmit = async () => {
     </v-app>
   </v-responsive>
 </template>
+
+<style scoped>
+/* Styles are same as your original, no problem there */
+</style>
 
 <style scoped>
 /* Entrance animation */

@@ -12,8 +12,9 @@ export const formActionDefault = {
   formErrorMessage: '',
   formSuccessMessage: '',
 }
+/*
 //retrieve adata
-/*export const getUserInfo = async() =>{
+export const getUserInfo = async() =>{
 
   const{
     data:{
@@ -23,3 +24,18 @@ export const formActionDefault = {
 return user_metadata
  
 }*/
+export const getUserInfo = async () => {
+  const { data, error } = await supabase.auth.getUser()
+
+  if (error) {
+    console.error('Error getting user info:', error)
+    return null
+  }
+
+  if (!data || !data.user) {
+    console.error('No user logged in')
+    return null
+  }
+
+  return data.user.user_metadata
+}

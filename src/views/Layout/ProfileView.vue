@@ -1,11 +1,10 @@
-
 <script setup>
+// IMPORTS
 import { ref, onMounted, computed, watch } from 'vue'
-import { supabase } from '@/utils/supabase'
-import { formActionDefault } from '@/utils/supabase'
+import { supabase, formActionDefault } from '@/utils/supabase'
 import { useTheme } from 'vuetify'
 
-// Theme
+//  THEME SETUP
 const theme = useTheme()
 const currentTheme = ref(localStorage.getItem('theme') || 'light')
 
@@ -20,7 +19,7 @@ watch(currentTheme, (val) => {
   localStorage.setItem('theme', val)
 })
 
-// Profile Data
+//  PROFILE DATA 
 const profile = ref({
   firstName: '',
   lastName: '',
@@ -42,50 +41,44 @@ const fullName = computed(() => {
   return `${profile.value.firstName} ${mid}${profile.value.lastName}`
 })
 
-// UI State
+//  UI STATES 
 const dialog = ref(false)
 const snackbar = ref(false)
 const snackbarMsg = ref('')
 const isEditing = ref(false)
 const loading = ref(false)
 
-// Form Action
 const formAction = ref({ ...formActionDefault })
 
-// User Data (for simpler email/fullname fetch if needed)
-const userData = ref({
-  fullname: '',
-  age: '',
-  expertise: '',
-  email: '',
-  phone: '',
-  aboutme: '',
-  school: '',
-  degree: '',
-  year: '',
-})
+//  FIELD MAPPING 
+const fieldMappings = {
+  'Given Name': 'firstName',
+  'Last Name': 'lastName',
+  'Middle Initial': 'middleInitial',
+  Age: 'age',
+  Expertise: 'expertise',
+  Email: 'email',
+  Phone: 'phone',
+}
 
-// --------------------
-// Functions
-// --------------------
+// FUNCTIONS 
 
-// Fetch Profile
+// FETCH PROFILE DATA
 const getUserProfile = async () => {
   try {
-    const { data: { user } } = await supabase.auth.getUser()
+    const {
+      data: { user },
+    } = await supabase.auth.getUser()
     if (!user) return console.error('No user found.')
 
-    const { data, error } = await supabase
-      .from('profiles')
-      .select('*')
-      .eq('id', user.id)
-      .single()
+    const { data, error } = await supabase.from('profiles').select('*').eq('id', user.id).single()
 
     if (error) {
       console.error('Error fetching profile:', error)
       return
     }
 
+    // Map fetched data to profile fields
     profile.value.firstName = data.first_name || ''
     profile.value.lastName = data.last_name || ''
     profile.value.middleInitial = data.middle_initial || ''
@@ -94,21 +87,22 @@ const getUserProfile = async () => {
     profile.value.email = data.email || user.email
     profile.value.phone = data.phone || ''
     profile.value.about = data.about || ''
-    profile.value.education = data.education || ['', '', '']
+    profile.value.education = [data.school || '', data.degree || '', data.year || '']
     profileImage.value = data.avatar_url || ''
-
   } catch (error) {
     console.error('Unexpected error:', error)
   }
 }
 
-// Save Profile
+// SAVE PROFILE CHANGES
 const saveProfile = async () => {
   isEditing.value = false
   loading.value = true
 
   try {
-    const { data: { user } } = await supabase.auth.getUser()
+    const {
+      data: { user },
+    } = await supabase.auth.getUser()
     if (!user) return
 
     const { error } = await supabase
@@ -122,7 +116,9 @@ const saveProfile = async () => {
         email: profile.value.email,
         phone: profile.value.phone,
         about: profile.value.about,
-        education: profile.value.education,
+        school: profile.value.education[0] || '',
+        degree: profile.value.education[1] || '',
+        year: profile.value.education[2] || '',
         avatar_url: profileImage.value,
       })
       .eq('id', user.id)
@@ -140,7 +136,7 @@ const saveProfile = async () => {
   }
 }
 
-// Upload Image
+// IMAGE HANDLERS
 const onImageSelected = async (event) => {
   const file = event.target.files[0]
   if (!file) return
@@ -162,11 +158,10 @@ const onImageSelected = async (event) => {
   selectedFile.value = file
 
   try {
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) {
-      console.error('No user found')
-      return
-    }
+    const {
+      data: { user },
+    } = await supabase.auth.getUser()
+    if (!user) return
 
     const fileExt = file.name.split('.').pop()
     const fileName = `${user.id}_${Date.now()}.${fileExt}`
@@ -181,10 +176,7 @@ const onImageSelected = async (event) => {
       return
     }
 
-    const { data: publicUrlData } = supabase
-      .storage
-      .from('avatars')
-      .getPublicUrl(filePath)
+    const { data: publicUrlData } = supabase.storage.from('avatars').getPublicUrl(filePath)
 
     profileImage.value = publicUrlData.publicUrl
 
@@ -199,22 +191,19 @@ const onImageSelected = async (event) => {
 
     snackbarMsg.value = 'Profile picture updated!'
     snackbar.value = true
-
   } catch (error) {
     console.error('Unexpected error uploading image:', error)
   }
 }
 
-// Remove Profile Image
 const removeProfileImage = async () => {
   profileImage.value = ''
   try {
-    const { data: { user } } = await supabase.auth.getUser()
+    const {
+      data: { user },
+    } = await supabase.auth.getUser()
     if (user) {
-      const { error } = await supabase
-        .from('profiles')
-        .update({ avatar_url: '' })
-        .eq('id', user.id)
+      const { error } = await supabase.from('profiles').update({ avatar_url: '' }).eq('id', user.id)
 
       if (error) {
         console.error('Error clearing avatar URL:', error)
@@ -225,27 +214,15 @@ const removeProfileImage = async () => {
   }
 }
 
-// Tutor Application
-const proceedWithApplication = () => {
-  loading.value = true
-  setTimeout(() => {
-    loading.value = false
-    dialog.value = false
-    snackbarMsg.value = 'Application submitted successfully!'
-    snackbar.value = true
-  }, 2000)
-}
-
-// Edit Functions
+// EDIT MODE HANDLERS
 const enableEdit = () => {
   isEditing.value = true
 }
-
 const cancelEdit = () => {
   isEditing.value = false
 }
 
-// Education Placeholder
+// EDUCATION PLACEHOLDER
 const getEducationPlaceholder = (index) => {
   if (index === 0) return 'Enter your school/university'
   if (index === 1) return 'Enter your course or degree'
@@ -253,7 +230,7 @@ const getEducationPlaceholder = (index) => {
   return 'Enter educational info'
 }
 
-// Logout Functionality
+// LOGOUT FUNCTION
 const onLogout = async () => {
   formAction.value = { ...formActionDefault }
   formAction.value.formProcess = true
@@ -268,60 +245,62 @@ const onLogout = async () => {
   snackbar.value = true
 }
 
-// Get User Info on Mount
-const getUser = async () => {
-  try {
-    const metadata = await getUserInfo
-    userData.value.email = metadata.email
-    userData.value.fullname = `${metadata.firstname} ${metadata.lastname}`
-  } catch (error) {
-    console.error('Error getting user info:', error)
-  }
-}
-
-// On Mounted
+// ON MOUNT
 onMounted(() => {
   theme.global.name.value = currentTheme.value
-  getUser()
   getUserProfile()
 })
 </script>
-
 
 <template>
   <v-app id="inspire">
     <!-- App Bar -->
     <v-app-bar flat :color="currentTheme === 'light' ? '#1565c0' : 'grey-darken-4'">
       <v-container class="d-flex align-center justify-space-between pa-2">
-        <!-- Logo -->
-        <div class="d-flex align-center gap-2">
-          <v-avatar color="#fff" size="44">
-            <v-img src="image/Teach&Learn.png" alt="Logo" />
-          </v-avatar>
-        </div>
-
+        <v-avatar color="#fff" size="44">
+          <v-img src="image/Teach&Learn.png" alt="Logo" />
+        </v-avatar>
         <v-spacer />
-
-        <!-- Desktop Navigation Links -->
         <div class="d-none d-md-flex align-center" style="gap: 24px">
-          <RouterLink to="/home" class="text-white text-decoration-none font-weight-medium">Home</RouterLink>
-          <RouterLink to="/about" class="text-white text-decoration-none font-weight-medium">About Us</RouterLink>
-          <RouterLink to="/contact" class="text-white text-decoration-none font-weight-medium">Contact Us</RouterLink>
+          <RouterLink to="/home" class="text-white text-decoration-none font-weight-medium"
+            >Home</RouterLink
+          >
+          <RouterLink to="/about" class="text-white text-decoration-none font-weight-medium"
+            >About Us</RouterLink
+          >
+          <RouterLink to="/contact" class="text-white text-decoration-none font-weight-medium"
+            >Contact Us</RouterLink
+          >
         </div>
-
         <v-spacer />
-
-        <!-- Mobile Navigation Menu -->
         <v-menu transition="scale-transition" offset-y theme="light">
           <template #activator="{ props }">
             <v-app-bar-nav-icon v-bind="props" class="d-md-none" />
           </template>
           <v-list>
-            <v-list-item link><RouterLink to="/home" class="text-decoration-none">Home</RouterLink></v-list-item>
-            <v-list-item link><RouterLink to="/profile" class="text-decoration-none">My Profile</RouterLink></v-list-item>
-            <v-list-item link><RouterLink to="/appointments" class="text-decoration-none">My Appointments</RouterLink></v-list-item>
-            <v-list-item link><RouterLink to="/about" class="text-decoration-none">About Us</RouterLink></v-list-item>
-            <v-list-item link><RouterLink to="/contact" class="text-decoration-none">Contact Us</RouterLink></v-list-item>
+            <v-list-item link
+              ><RouterLink to="/home" class="text-decoration-none">Home</RouterLink></v-list-item
+            >
+            <v-list-item link
+              ><RouterLink to="/profile" class="text-decoration-none"
+                >My Profile</RouterLink
+              ></v-list-item
+            >
+            <v-list-item link
+              ><RouterLink to="/appointments" class="text-decoration-none"
+                >My Appointments</RouterLink
+              ></v-list-item
+            >
+            <v-list-item link
+              ><RouterLink to="/about" class="text-decoration-none"
+                >About Us</RouterLink
+              ></v-list-item
+            >
+            <v-list-item link
+              ><RouterLink to="/contact" class="text-decoration-none"
+                >Contact Us</RouterLink
+              ></v-list-item
+            >
             <v-divider></v-divider>
             <v-list-item link @click="onLogout">
               <v-btn text class="text-decoration-none">Logout</v-btn>
@@ -336,12 +315,23 @@ onMounted(() => {
       <v-container fluid class="py-6 px-4 px-sm-6">
         <v-row justify="center">
           <v-col cols="12" sm="10" md="8" lg="8">
-            <v-sheet :class="currentTheme === 'dark' ? 'bg-grey-darken-3 text-white' : 'bg-white'"
-              class="fade-slide-up pa-4 pa-sm-6 text-sm-center" elevation="2" rounded="lg">
-
+            <v-sheet
+              :class="currentTheme === 'dark' ? 'bg-grey-darken-3 text-white' : 'bg-white'"
+              class="fade-slide-up pa-4 pa-sm-6 text-sm-center"
+              elevation="2"
+              rounded="lg"
+            >
               <!-- Theme Toggle -->
-              <v-btn icon size="small" @click="toggleTheme" class="position-absolute" style="top: 16px; right: 16px; z-index: 10">
-                <v-icon>{{ currentTheme === 'light' ? 'mdi-weather-night' : 'mdi-white-balance-sunny' }}</v-icon>
+              <v-btn
+                icon
+                size="small"
+                @click="toggleTheme"
+                class="position-absolute"
+                style="top: 16px; right: 16px; z-index: 10"
+              >
+                <v-icon>{{
+                  currentTheme === 'light' ? 'mdi-weather-night' : 'mdi-white-balance-sunny'
+                }}</v-icon>
               </v-btn>
 
               <!-- Profile Image -->
@@ -355,14 +345,26 @@ onMounted(() => {
                   <v-btn size="small" color="primary" @click="$refs.imageInput.click()">
                     <v-icon start>mdi-upload</v-icon> Upload
                   </v-btn>
-                  <v-btn v-if="profileImage" size="small" color="red" variant="outlined" @click="removeProfileImage">
+                  <v-btn
+                    v-if="profileImage"
+                    size="small"
+                    color="red"
+                    variant="outlined"
+                    @click="removeProfileImage"
+                  >
                     <v-icon start>mdi-delete</v-icon> Remove
                   </v-btn>
                 </div>
-                <input type="file" ref="imageInput" accept="image/*" class="d-none" @change="onImageSelected" />
+                <input
+                  type="file"
+                  ref="imageInput"
+                  accept="image/*"
+                  class="d-none"
+                  @change="onImageSelected"
+                />
               </div>
 
-              <!-- Full Name -->
+              <!-- Full Name Display -->
               <div class="d-flex flex-column align-center">
                 <h3 class="font-weight-medium mb-4">{{ fullName }}</h3>
                 <v-btn color="primary" class="mb-3" @click="dialog = true" :disabled="loading">
@@ -371,7 +373,13 @@ onMounted(() => {
               </div>
 
               <!-- Confirm Dialog -->
-              <v-dialog v-model="dialog" max-width="500" scrollable transition="dialog-bottom-transition" persistent>
+              <v-dialog
+                v-model="dialog"
+                max-width="500"
+                scrollable
+                transition="dialog-bottom-transition"
+                persistent
+              >
                 <v-card>
                   <v-card-title class="text-h6 text-start">
                     <v-icon class="me-2">mdi-alert-circle-outline</v-icon> Confirm Application
@@ -380,8 +388,16 @@ onMounted(() => {
                     Your personal information will be public. Do you still wish to proceed?
                   </v-card-text>
                   <v-card-actions class="justify-end">
-                    <v-btn color="red" variant="outlined" @click="dialog = false" :disabled="loading">No</v-btn>
-                    <v-btn color="green" :loading="loading" @click="proceedWithApplication">Yes</v-btn>
+                    <v-btn
+                      color="red"
+                      variant="outlined"
+                      @click="dialog = false"
+                      :disabled="loading"
+                      >No</v-btn
+                    >
+                    <v-btn color="green" :loading="loading" @click="proceedWithApplication"
+                      >Yes</v-btn
+                    >
                   </v-card-actions>
                 </v-card>
               </v-dialog>
@@ -398,18 +414,22 @@ onMounted(() => {
 
               <!-- Profile Form -->
               <div class="text-start">
-                <v-row v-for="(label, key) in { 'Given Name:': 'firstName', 'Last Name:': 'lastName', 'Middle Initial:': 'middleInitial', 'Age:': 'age', 'Expertise:': 'expertise', 'Email:': 'email', 'Phone:': 'phone' }"
-                  :key="key" class="py-1" dense>
-                  <v-col cols="12" sm="6" class="font-weight-medium">{{ label }}</v-col>
+                <v-row
+                  v-for="(fieldKey, label) in fieldMappings"
+                  :key="fieldKey"
+                  class="py-1"
+                  dense
+                >
+                  <v-col cols="12" sm="6" class="font-weight-medium">{{ label }}:</v-col>
                   <v-col cols="12" sm="6">
-                    <div v-if="!isEditing">{{ profile[key] }}</div>
+                    <div v-if="!isEditing">{{ profile[fieldKey] }}</div>
                     <v-text-field
                       v-else
-                      v-model="profile[key]"
-                      :placeholder="`Enter your ${label.toLowerCase().replace(':', '')}`"
+                      v-model="profile[fieldKey]"
+                      :placeholder="`Enter your ${label}`"
                       density="compact"
                       hide-details
-                      :type="key === 'age' ? 'number' : 'text'"
+                      :type="fieldKey === 'age' ? 'number' : 'text'"
                     />
                   </v-col>
                 </v-row>
@@ -431,7 +451,7 @@ onMounted(() => {
                   </v-col>
                 </v-row>
 
-                <!-- Education Background -->
+                <!-- Educational Background -->
                 <v-row class="py-1" dense>
                   <v-col cols="12" sm="6" class="font-weight-medium">Educational Background:</v-col>
                   <v-col cols="12" sm="6">
@@ -454,7 +474,7 @@ onMounted(() => {
 
               <v-divider class="my-4" />
 
-              <!-- Edit / Save / Cancel Buttons -->
+              <!-- Edit/Save/Cancel Buttons -->
               <div class="d-flex flex-wrap justify-center gap-2">
                 <v-btn
                   v-if="!isEditing"
@@ -462,19 +482,15 @@ onMounted(() => {
                   variant="outlined"
                   color="blue"
                   @click="enableEdit"
+                  >Edit</v-btn
                 >
-                  Edit
-                </v-btn>
                 <template v-else>
-                  <v-btn size="small" variant="text" color="red" @click="cancelEdit">
-                    Cancel
-                  </v-btn>
-                  <v-btn size="small" color="green" @click="saveProfile" :loading="loading">
-                    Save
-                  </v-btn>
+                  <v-btn size="small" variant="text" color="red" @click="cancelEdit">Cancel</v-btn>
+                  <v-btn size="small" color="green" @click="saveProfile" :loading="loading"
+                    >Save</v-btn
+                  >
                 </template>
               </div>
-
             </v-sheet>
           </v-col>
         </v-row>
@@ -483,8 +499,7 @@ onMounted(() => {
   </v-app>
 </template>
 
-
-<style scoped >
+<style scoped>
 .fade-slide-up {
   animation: fadeSlideUp 1.6s ease-in both;
 }
