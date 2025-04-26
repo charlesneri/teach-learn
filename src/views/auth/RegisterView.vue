@@ -7,7 +7,7 @@ import {
   confirmedValidator,
 } from '@/utils/validators'
 
-import { supabase, formActionDefault } from '@/utils/supabase.js'
+import { supabase, formActionDefault } from '@/utils/supabase'
 import AlertNotification from '@/components/common/AlertNotification.vue'
 import {useRouter} from 'vue-router'
 
@@ -62,7 +62,7 @@ const onFormSubmit = () => {
     if (valid) onSubmit()
   })
 }
-
+/*
 
 const onSubmit = async () => {
   formAction.value = { ...formActionDefault }
@@ -97,6 +97,83 @@ const onSubmit = async () => {
 
   formAction.value.formProcess = false
 }
+  */
+ //gpt
+ // ----------------------------------------------
+// 🚀 Function to handle the registration process
+// - Creates user authentication in Supabase
+// - Inserts user data into 'profiles' table
+// ----------------------------------------------
+const onSubmit = async () => {
+  // Reset the form action state
+  formAction.value = { ...formActionDefault }
+  formAction.value.formProcess = true
+
+  // Step 1: Create user authentication
+  const { data, error } = await supabase.auth.signUp({
+    email: formData.value.email,
+    password: formData.value.password,
+    options: {
+      data: {
+        firstName: formData.value.firstname,
+        lastName: formData.value.lastname,
+        middleInitial: formData.value.middleinitial,
+        age: formData.value.age,
+        phone: formData.value.phone,
+        about: formData.value.about,
+        school: formData.value.school,
+        course: formData.value.course,
+        yearLevel: formData.value.yearLevel,
+      },
+    },
+  })
+
+  // Step 2: Handle registration errors
+  if (error) {
+    console.log(error)
+    formAction.value.formErrorMessage = error.message
+    formAction.value.formStatus = error.status
+  } 
+  // Step 3: If registration successful, insert into 'profiles' table
+  else if (data && data.user) {
+    console.log('Auth signup success:', data.user)
+
+    const { error: profileError } = await supabase
+      .from('profiles')
+      .insert({
+        id: data.user.id,                   // Link to Auth user id
+        first_name: formData.value.firstname,
+        last_name: formData.value.lastname,
+        middle_initial: formData.value.middleinitial,
+        age: formData.value.age ? parseInt(formData.value.age) : null,   // Ensure age is integer
+        about: formData.value.about,
+        email: formData.value.email,
+        school: formData.value.school,
+        degree: formData.value.course,
+        year: formData.value.yearLevel ? parseInt(formData.value.yearLevel) : null, // Ensure year is integer
+        expertise: '',                      // Default empty expertise
+        phone: formData.value.phone,         // Now correctly saving phone
+        avatar_url: '',                      // Default empty avatar
+      })
+
+    // Step 4: Handle profile insert error
+    if (profileError) {
+      console.error('Error inserting into profiles table:', profileError)
+      formAction.value.formErrorMessage = 'Profile creation failed!'
+      formAction.value.formStatus = 500
+    } 
+    // Step 5: If profile insert success
+    else {
+      console.log('Profile inserted successfully')
+      formAction.value.formSuccessMessage = 'Successfully Registered!'
+      refVForm.value?.reset()
+    }
+  }
+
+  // Final: Set form process to false
+  formAction.value.formProcess = false
+}
+
 </script>
 
 <template>
@@ -213,6 +290,12 @@ const onSubmit = async () => {
                           :rules="[requiredValidator]"
                         />
                         <v-text-field
+                          v-model="formData.phone"
+                          label="Phone"
+                          variant="outlined"
+                          :color="theme === 'dark' ? 'white' : 'primary'"
+                          :rules="[requiredValidator]"
+                        /> <v-text-field
                           v-model="formData.email"
                           label="Email"
                           variant="outlined"

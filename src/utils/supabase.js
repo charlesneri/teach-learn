@@ -12,3 +12,14 @@ export const formActionDefault = {
   formErrorMessage: '',
   formSuccessMessage: '',
 }
+//retrieve adata
+/*export const getUserInfo = async() =>{
+
+  const{
+    data:{
+      user:{user_metadata}
+    }
+  } =await supabase.auth.getUser()
+return user_metadata
+ 
+}*/

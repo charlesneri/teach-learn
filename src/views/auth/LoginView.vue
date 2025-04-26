@@ -64,7 +64,7 @@ const onLogin = async () => {
   // Handle success and error responses
   formAction.value.formProcess = false
   if (error) {
-    formAction.value.formErrorMessage = error.message
+    formAction.value.formErrorMessage = error.message = 'Failed to login!'
     return
   }
 
