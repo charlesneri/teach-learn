@@ -2,6 +2,7 @@
 import { ref, watch, onMounted } from 'vue'
 import { useTheme } from 'vuetify'
 import { RouterLink } from 'vue-router'
+import { supabase } from '@/utils/supabase'
 
 const theme = useTheme()
 const searchQuery = ref('')
@@ -86,6 +87,38 @@ const saveAppointment = () => {
   } else {
     alert('Please select both a date and a time.')
   }
+}
+//for publc main
+
+const tutors = ref([]) // Store public tutors
+
+const fetchTutors = async () => {
+  try {
+    const { data, error } = await supabase.from('profiles').select('*').eq('is_public_tutor', true)
+
+    if (error) throw error
+    tutors.value = data
+    console.log('Fetched tutors:', data)
+  } catch (error) {
+    console.error('Error fetching tutors:', error)
+    alert('Failed to load mentors. Please try again.')
+  }
+}
+
+onMounted(() => {
+  theme.global.name.value = currentTheme.value
+  fetchTutors() // 🔥 now it fetches public tutors on page load
+})
+const selectedTutor = ref(null) // store who you are viewing
+
+const viewTutor = (tutor) => {
+  selectedTutor.value = tutor
+  dialog.value = true
+}
+
+const openAppointment = (tutor) => {
+  selectedTutor.value = tutor
+  dialog.value = true
 }
 </script>
 
@@ -220,142 +253,205 @@ const saveAppointment = () => {
 
     <!-- Main -->
     <transition name="fade-slide-up">
-    <v-main :class="currentTheme === 'dark' ? 'bg-grey-darken-4 text-white' : 'bg-grey-lighten-3'">
-      <v-container fluid class="pa-0" style="max-width: 95%; margin: auto">
-        <v-row>
-          <!-- Sidebar -->
-          <v-col cols="12" md="3" class="d-none d-md-flex">
-            <v-sheet
-              :class="currentTheme === 'dark' ? 'bg-grey-darken-3 text-white' : ''"
-              rounded="lg"
-              class="pa-4 text-center"
-              style="height: 100%; width: 100%"
-            >
-              <v-avatar class="mb-3" color="#FFFFFF" size="100">
-                <v-img src="image/Teach&Learn.png" alt="User" />
-              </v-avatar>
-              <span class="d-block font-weight-medium mb-3">
-                <RouterLink
-                  to="/profile"
-                  :class="[
-                    'text-decoration-none active-click',
-                    currentTheme === 'dark' ? 'text-white' : 'text-black',
-                  ]"
-                >
-                  My Name
-                </RouterLink>
-              </span>
-              <v-divider> </v-divider>
-              <!-- Theme Toggle Button -->
-              <v-btn icon @click="toggleTheme" size="35" class="ma-3">
-                <v-icon>{{
-                  currentTheme === 'light' ? 'mdi-weather-night' : 'mdi-white-balance-sunny'
-                }}</v-icon>
-              </v-btn>
-              <!-- Sidebar Menu -->
-              <v-list density="compact" nav>
-                <v-list-item
-                  link
-                  :to="'/profile'"
-                  tag="RouterLink"
-                  :class="[
-                    'active-click text-decoration-none',
-                    currentTheme === 'dark' ? 'text-white' : 'text-black',
-                  ]"
-                >
-                  <v-list-item-title>My Profile</v-list-item-title>
-                </v-list-item>
+      <v-main
+        :class="currentTheme === 'dark' ? 'bg-grey-darken-4 text-white' : 'bg-grey-lighten-3'"
+      >
+        <v-container fluid class="pa-0" style="max-width: 95%; margin: auto">
+          <v-row>
+            <!-- Sidebar -->
+            <v-col cols="12" md="3" class="d-none d-md-flex">
+              <v-sheet
+                :class="currentTheme === 'dark' ? 'bg-grey-darken-3 text-white' : ''"
+                rounded="lg"
+                class="pa-4 text-center"
+                style="height: 100%; width: 100%"
+              >
+                <v-avatar class="mb-3" color="#FFFFFF" size="100">
+                  <v-img src="image/Teach&Learn.png" alt="User" />
+                </v-avatar>
+                <span class="d-block font-weight-medium mb-3">
+                  <RouterLink
+                    to="/profile"
+                    :class="[
+                      'text-decoration-none active-click',
+                      currentTheme === 'dark' ? 'text-white' : 'text-black',
+                    ]"
+                  >
+                    My Name
+                  </RouterLink>
+                </span>
+                <v-divider> </v-divider>
+                <!-- Theme Toggle Button -->
+                <v-btn icon @click="toggleTheme" size="35" class="ma-3">
+                  <v-icon>{{
+                    currentTheme === 'light' ? 'mdi-weather-night' : 'mdi-white-balance-sunny'
+                  }}</v-icon>
+                </v-btn>
+                <!-- Sidebar Menu -->
+                <v-list density="compact" nav>
+                  <v-list-item
+                    link
+                    :to="'/profile'"
+                    tag="RouterLink"
+                    :class="[
+                      'active-click text-decoration-none',
+                      currentTheme === 'dark' ? 'text-white' : 'text-black',
+                    ]"
+                  >
+                    <v-list-item-title>My Profile</v-list-item-title>
+                  </v-list-item>
 
-                <v-list-item
-                  link
-                  :to="'/appointments'"
-                  tag="RouterLink"
-                  :class="[
-                    'active-click text-decoration-none',
-                    currentTheme === 'dark' ? 'text-white' : 'text-black',
-                  ]"
-                >
-                  <v-list-item-title>My Appointments</v-list-item-title>
-                </v-list-item>
+                  <v-list-item
+                    link
+                    :to="'/appointments'"
+                    tag="RouterLink"
+                    :class="[
+                      'active-click text-decoration-none',
+                      currentTheme === 'dark' ? 'text-white' : 'text-black',
+                    ]"
+                  >
+                    <v-list-item-title>My Appointments</v-list-item-title>
+                  </v-list-item>
 
-                <v-divider class="my-2" />
+                  <v-divider class="my-2" />
 
-                <v-list-item
-                  link
-                  :to="'/'"
-                  tag="RouterLink"
-                  :class="[
-                    'active-click text-decoration-none',
-                    currentTheme === 'dark' ? 'text-white' : 'text-black',
-                  ]"
-                >
-                  <v-list-item-title>Logout</v-list-item-title>
-                </v-list-item>
-              </v-list>
-            </v-sheet>
-          </v-col>
+                  <v-list-item
+                    link
+                    :to="'/'"
+                    tag="RouterLink"
+                    :class="[
+                      'active-click text-decoration-none',
+                      currentTheme === 'dark' ? 'text-white' : 'text-black',
+                    ]"
+                  >
+                    <v-list-item-title>Logout</v-list-item-title>
+                  </v-list-item>
+                </v-list>
+              </v-sheet>
+            </v-col>
 
-          <!-- Main Area -->
-          <v-col cols="12" md="9">
-            <v-sheet
-              min-height="100vh"
-              rounded="lg"
-              class="pa-4"
-              :class="currentTheme === 'dark' ? 'bg-grey-darken-2 text-white' : ''"
-            >
-              <h1>Mentors List</h1>
-              <v-divider></v-divider>
+            <!-- Main Area -->
+            <v-col cols="12" md="9">
+              <v-sheet
+                min-height="100vh"
+                rounded="lg"
+                class="pa-4"
+                :class="currentTheme === 'dark' ? 'bg-grey-darken-2 text-white' : ''"
+              >
+                <h1>Mentors List</h1>
+                <v-divider></v-divider>
 
-              <!-- Profile Container -->
-              <div class="profile-container">
-                <v-container>
-                  <!-- Set Appointment Button -->
-                  <v-btn @click="dialog = true" color="primary">Set an Appointment</v-btn>
+                <!-- Profile Container -->
+                <div class="profile-container">
+                  <div
+                    v-if="tutors.length"
+                    class="profile-container"
+                    style="flex-wrap: wrap; gap: 24px"
+                  >
+                    <div
+                      v-for="tutor in tutors"
+                      :key="tutor.id"
+                      class="mentor-card pa-4 d-flex flex-column align-center"
+                      style="border: 1px solid #ccc; border-radius: 12px; width: 250px"
+                    >
+                      <v-avatar size="100" class="mb-3">
+                        <v-img :src="tutor.avatar_url" v-if="tutor.avatar_url" cover>
+                          <template #error>
+                            <v-icon size="60" color="grey-darken-1">mdi-account</v-icon>
+                          </template>
+                        </v-img>
+                        <v-icon v-else size="60" color="grey-darken-1">mdi-account</v-icon>
+                      </v-avatar>
 
-                  <!-- Appointment Dialog -->
-                  <v-dialog v-model="dialog" max-width="600px">
-                    <v-card>
-                      <v-card-title class="headline">Select Appointment Date & Time</v-card-title>
+                      <h3 class="font-weight-medium mb-2">
+                        {{ tutor.first_name }} {{ tutor.middle_initial }} {{ tutor.last_name }}
+                      </h3>
+                      <p class="text-caption mb-3">
+                        {{ tutor.expertise || 'No expertise listed' }}
+                      </p>
 
-                      <v-card-text>
-                        <!-- Full Calendar (v-date-picker) -->
-                        <v-date-picker
-                          v-model="selectedDate"
-                          color="primary"
-                          locale="en"
-                          class="mb-4"
-                          @input="onDateSelect"
-                          elevation="24"
-                        ></v-date-picker>
+                      <span
+                        @click="viewTutor(tutor)"
+                        class="text-primary text-decoration-underline cursor-pointer mb-2"
+                      >
+                        View More
+                      </span>
 
-                        <!-- Time Picker with clock-like spinner (24hr format) -->
-                        <v-time-picker
-                          v-if="selectedDate"
-                          v-model="selectedTime"
-                          format="12hr"
-                          color="primary"
-                          class="mb-4"
-                          :disabled="!selectedDate"
-                          @change="onTimeSelect"
-                          full-width
-                        ></v-time-picker>
-                      </v-card-text>
+                      <span
+                        @click="openAppointment(tutor)"
+                        class="text-primary text-decoration-underline cursor-pointer"
+                      >
+                        Set an Appointment
+                      </span>
+                    </div>
+                  </div>
 
-                      <v-card-actions>
-                        <!-- Cancel Button -->
-                        <v-btn color="grey darken-1" @click="dialog = false">Cancel</v-btn>
-                        <!-- Save Button -->
-                        <v-btn color="primary" @click="saveAppointment">Save</v-btn>
-                      </v-card-actions>
-                    </v-card>
-                  </v-dialog>
-                </v-container>
-              </div>
-            </v-sheet>
-          </v-col>
-        </v-row>
-      </v-container>
-    </v-main>
+                  <div v-else class="text-center mt-6">
+                    <v-icon size="60">mdi-account-search</v-icon>
+                    <p>No mentors available yet.</p>
+                  </div>
+
+                  <v-container>
+                    <!-- Appointment Dialog -->
+                    <v-dialog v-model="dialog" max-width="600px">
+                      <v-card>
+                        <v-card-title class="headline">
+                          Appointment with {{ selectedTutor?.first_name || 'Mentor' }}
+                        </v-card-title>
+
+                        <v-card-text class="appoint-container" style="width: 50%">
+                          <!-- Full Calendar (v-date-picker) -->
+                          <v-date-picker
+                            v-model="selectedDate"
+                            color="primary"
+                            locale="en"
+                            class="mb-4"
+                            @input="onDateSelect"
+                            elevation="24"
+                          ></v-date-picker>
+
+                          <!-- Time Picker with clock-like spinner (24hr format) -->
+                          <v-time-picker
+                            v-if="selectedDate"
+                            v-model="selectedTime"
+                            format="12hr"
+                            color="primary"
+                            class="mb-4"
+                            :disabled="!selectedDate"
+                            @change="onTimeSelect"
+                            full-width
+                          ></v-time-picker>
+
+                          <v-textarea
+                            v-model="messageInput"
+                            label="Your Message"
+                            placeholder="Type your message here..."
+                            rows="4"
+                            dense
+                          >
+                            <template #append-inner>
+                              <v-btn icon size="small" @click="sendMessage">
+                                <v-icon>mdi-send</v-icon>
+                              </v-btn>
+                            </template>
+                          </v-textarea>
+                        </v-card-text>
+
+                        <v-card-actions>
+                          <!-- Cancel Button -->
+                          <v-btn color="grey darken-1" @click="dialog = false">Cancel</v-btn>
+                          <!-- Save Button -->
+                          <v-btn color="primary" @click="saveAppointment">Save</v-btn>
+                        </v-card-actions>
+                      </v-card>
+                    </v-dialog>
+                  </v-container>
+                </div>
+              </v-sheet>
+            </v-col>
+          </v-row>
+        </v-container>
+      </v-main>
     </transition>
   </v-app>
 </template>

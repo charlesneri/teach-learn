@@ -47,10 +47,10 @@ const fieldMappings = {
   'Given Name': 'firstName',
   'Last Name': 'lastName',
   'Middle Initial': 'middleInitial',
-  'Age': 'age',
-  'Expertise': 'expertise',
-  'Email': 'email',
-  'Phone': 'phone',
+  Age: 'age',
+  Expertise: 'expertise',
+  Email: 'email',
+  Phone: 'phone',
 }
 
 // COMPUTED
@@ -61,13 +61,17 @@ const fullName = computed(() => {
 
 // FUNCTIONS
 const checkAuth = async () => {
-  const { data: { user } } = await supabase.auth.getUser()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
   if (!user) router.push('/login')
 }
 
 const getUserProfile = async () => {
   try {
-    const { data: { user } } = await supabase.auth.getUser()
+    const {
+      data: { user },
+    } = await supabase.auth.getUser()
     if (!user) return
 
     const { data, error } = await supabase.from('profiles').select('*').eq('id', user.id).single()
@@ -85,7 +89,6 @@ const getUserProfile = async () => {
       education: [data.school || '', data.degree || '', data.year || ''],
     }
     profileImage.value = data.avatar_url || ''
-
   } catch (error) {
     console.error('Error fetching profile:', error)
   }
@@ -96,29 +99,33 @@ const saveProfile = async () => {
   loading.value = true
 
   try {
-    const { data: { user } } = await supabase.auth.getUser()
+    const {
+      data: { user },
+    } = await supabase.auth.getUser()
     if (!user) return
 
-    const { error } = await supabase.from('profiles').update({
-      first_name: profile.value.firstName,
-      last_name: profile.value.lastName,
-      middle_initial: profile.value.middleInitial,
-      age: profile.value.age,
-      expertise: profile.value.expertise,
-      email: profile.value.email,
-      phone: profile.value.phone,
-      about: profile.value.about,
-      school: profile.value.education[0],
-      degree: profile.value.education[1],
-      year: profile.value.education[2],
-      avatar_url: profileImage.value,
-    }).eq('id', user.id)
+    const { error } = await supabase
+      .from('profiles')
+      .update({
+        first_name: profile.value.firstName,
+        last_name: profile.value.lastName,
+        middle_initial: profile.value.middleInitial,
+        age: profile.value.age,
+        expertise: profile.value.expertise,
+        email: profile.value.email,
+        phone: profile.value.phone,
+        about: profile.value.about,
+        school: profile.value.education[0],
+        degree: profile.value.education[1],
+        year: profile.value.education[2],
+        avatar_url: profileImage.value,
+      })
+      .eq('id', user.id)
 
     if (error) throw error
 
     snackbarMsg.value = 'Profile saved successfully!'
     snackbar.value = true
-
   } catch (error) {
     console.error('Error saving profile:', error)
   } finally {
@@ -134,7 +141,9 @@ const onImageSelected = async (event) => {
   imageLoading.value = true
 
   try {
-    const { data: { user } } = await supabase.auth.getUser()
+    const {
+      data: { user },
+    } = await supabase.auth.getUser()
     if (!user) throw new Error('User not authenticated')
 
     const fileExt = file.name.split('.').pop()
@@ -146,17 +155,21 @@ const onImageSelected = async (event) => {
     })
     if (uploadError) throw uploadError
 
-    const { data: publicData, error: publicUrlError } = await supabase.storage.from('avatars').getPublicUrl(fileName)
+    const { data: publicData, error: publicUrlError } = await supabase.storage
+      .from('avatars')
+      .getPublicUrl(fileName)
     if (publicUrlError || !publicData?.publicUrl) throw publicUrlError
 
     profileImage.value = publicData.publicUrl
 
-    const { error: updateError } = await supabase.from('profiles').update({ avatar_url: profileImage.value }).eq('id', user.id)
+    const { error: updateError } = await supabase
+      .from('profiles')
+      .update({ avatar_url: profileImage.value })
+      .eq('id', user.id)
     if (updateError) throw updateError
 
     snackbarMsg.value = 'Profile picture updated!'
     snackbar.value = true
-
   } catch (error) {
     console.error('Error uploading profile image:', error)
   } finally {
@@ -175,23 +188,29 @@ const removeProfileImage = async () => {
   imageLoading.value = true
 
   try {
-    const { data: { user } } = await supabase.auth.getUser()
+    const {
+      data: { user },
+    } = await supabase.auth.getUser()
     if (!user) throw new Error('User not authenticated')
 
     const fileUrl = new URL(profileImage.value)
-    const filePath = decodeURIComponent(fileUrl.pathname.replace('/storage/v1/object/public/avatars/', ''))
+    const filePath = decodeURIComponent(
+      fileUrl.pathname.replace('/storage/v1/object/public/avatars/', ''),
+    )
 
     const { error: deleteError } = await supabase.storage.from('avatars').remove([filePath])
     if (deleteError) throw deleteError
 
-    const { error: updateError } = await supabase.from('profiles').update({ avatar_url: '' }).eq('id', user.id)
+    const { error: updateError } = await supabase
+      .from('profiles')
+      .update({ avatar_url: '' })
+      .eq('id', user.id)
     if (updateError) throw updateError
 
     profileImage.value = ''
 
     snackbarMsg.value = 'Profile picture removed!'
     snackbar.value = true
-
   } catch (error) {
     console.error('Error removing profile image:', error)
   } finally {
@@ -216,8 +235,12 @@ const onLogout = async () => {
 }
 
 // EDIT MODES
-const enableEdit = () => { isEditing.value = true }
-const cancelEdit = () => { isEditing.value = false }
+const enableEdit = () => {
+  isEditing.value = true
+}
+const cancelEdit = () => {
+  isEditing.value = false
+}
 
 const getEducationPlaceholder = (index) => {
   if (index === 0) return 'Enter your school/university'
@@ -232,6 +255,37 @@ onMounted(() => {
   checkAuth()
   getUserProfile()
 })
+
+//functional for public profile
+// Apply as Tutor
+const applyAsTutor = async () => {
+  loading.value = true
+  try {
+    const {
+      data: { user },
+    } = await supabase.auth.getUser()
+    if (!user) throw new Error('User not authenticated')
+
+    const { error } = await supabase
+      .from('profiles')
+      .update({ is_public_tutor: true })
+      .eq('id', user.id)
+
+    if (error) throw error
+
+    snackbarMsg.value = 'You are now listed as a tutor!'
+    snackbar.value = true
+    dialog.value = false
+    // Optionally, refresh profile
+    getUserProfile()
+  } catch (error) {
+    console.error('Error applying as tutor:', error)
+    snackbarMsg.value = 'Failed to apply as tutor. Please try again.'
+    snackbar.value = true
+  } finally {
+    loading.value = false
+  }
+}
 </script>
 
 <template>
@@ -246,9 +300,15 @@ onMounted(() => {
         <v-spacer />
 
         <div class="d-none d-md-flex align-center" style="gap: 24px">
-          <RouterLink to="/home" class="text-white text-decoration-none font-weight-medium">Home</RouterLink>
-          <RouterLink to="/about" class="text-white text-decoration-none font-weight-medium">About Us</RouterLink>
-          <RouterLink to="/contact" class="text-white text-decoration-none font-weight-medium">Contact Us</RouterLink>
+          <RouterLink to="/home" class="text-white text-decoration-none font-weight-medium"
+            >Home</RouterLink
+          >
+          <RouterLink to="/about" class="text-white text-decoration-none font-weight-medium"
+            >About Us</RouterLink
+          >
+          <RouterLink to="/contact" class="text-white text-decoration-none font-weight-medium"
+            >Contact Us</RouterLink
+          >
         </div>
 
         <v-spacer />
@@ -258,11 +318,29 @@ onMounted(() => {
             <v-app-bar-nav-icon v-bind="props" class="d-md-none" />
           </template>
           <v-list>
-            <v-list-item><RouterLink to="/home" class="text-decoration-none">Home</RouterLink></v-list-item>
-            <v-list-item><RouterLink to="/profile" class="text-decoration-none">My Profile</RouterLink></v-list-item>
-            <v-list-item><RouterLink to="/appointments" class="text-decoration-none">My Appointments</RouterLink></v-list-item>
-            <v-list-item><RouterLink to="/about" class="text-decoration-none">About Us</RouterLink></v-list-item>
-            <v-list-item><RouterLink to="/contact" class="text-decoration-none">Contact Us</RouterLink></v-list-item>
+            <v-list-item
+              ><RouterLink to="/home" class="text-decoration-none">Home</RouterLink></v-list-item
+            >
+            <v-list-item
+              ><RouterLink to="/profile" class="text-decoration-none"
+                >My Profile</RouterLink
+              ></v-list-item
+            >
+            <v-list-item
+              ><RouterLink to="/appointments" class="text-decoration-none"
+                >My Appointments</RouterLink
+              ></v-list-item
+            >
+            <v-list-item
+              ><RouterLink to="/about" class="text-decoration-none"
+                >About Us</RouterLink
+              ></v-list-item
+            >
+            <v-list-item
+              ><RouterLink to="/contact" class="text-decoration-none"
+                >Contact Us</RouterLink
+              ></v-list-item
+            >
             <v-divider></v-divider>
             <v-list-item link @click="onLogout">
               <v-btn text class="text-decoration-none">Logout</v-btn>
@@ -277,11 +355,23 @@ onMounted(() => {
       <v-container fluid class="py-6 px-4 px-sm-6">
         <v-row justify="center">
           <v-col cols="12" sm="10" md="8" lg="8">
-            <v-sheet :class="currentTheme === 'dark' ? 'bg-grey-darken-3 text-white' : 'bg-white'" class="fade-slide-up pa-4 pa-sm-6 text-sm-center" elevation="2" rounded="lg">
-
+            <v-sheet
+              :class="currentTheme === 'dark' ? 'bg-grey-darken-3 text-white' : 'bg-white'"
+              class="fade-slide-up pa-4 pa-sm-6 text-sm-center"
+              elevation="2"
+              rounded="lg"
+            >
               <!-- Theme Toggle Button -->
-              <v-btn icon size="small" @click="toggleTheme" class="position-absolute" style="top: 16px; right: 16px;">
-                <v-icon>{{ currentTheme === 'light' ? 'mdi-weather-night' : 'mdi-white-balance-sunny' }}</v-icon>
+              <v-btn
+                icon
+                size="small"
+                @click="toggleTheme"
+                class="position-absolute"
+                style="top: 16px; right: 16px"
+              >
+                <v-icon>{{
+                  currentTheme === 'light' ? 'mdi-weather-night' : 'mdi-white-balance-sunny'
+                }}</v-icon>
               </v-btn>
 
               <!-- Profile Avatar -->
@@ -297,14 +387,34 @@ onMounted(() => {
 
                 <!-- Upload & Remove Buttons -->
                 <div class="mt-3 d-flex flex-wrap justify-center gap-2">
-                  <v-btn size="small" color="primary" @click="$refs.imageInput.click()" :loading="imageLoading" :disabled="imageLoading">
+                  <v-btn
+                    size="small"
+                    color="primary"
+                    @click="$refs.imageInput.click()"
+                    :loading="imageLoading"
+                    :disabled="imageLoading"
+                  >
                     <v-icon start>mdi-upload</v-icon> Upload
                   </v-btn>
-                  <v-btn v-if="profileImage" size="small" color="red" variant="outlined" @click="confirmRemoveImage" :loading="imageLoading" :disabled="imageLoading">
+                  <v-btn
+                    v-if="profileImage"
+                    size="small"
+                    color="red"
+                    variant="outlined"
+                    @click="confirmRemoveImage"
+                    :loading="imageLoading"
+                    :disabled="imageLoading"
+                  >
                     <v-icon start>mdi-delete</v-icon> Remove
                   </v-btn>
                 </div>
-                <input type="file" ref="imageInput" accept="image/*" class="d-none" @change="onImageSelected" />
+                <input
+                  type="file"
+                  ref="imageInput"
+                  accept="image/*"
+                  class="d-none"
+                  @change="onImageSelected"
+                />
               </div>
 
               <!-- Full Name -->
@@ -316,6 +426,7 @@ onMounted(() => {
               </div>
 
               <!-- Confirm Dialog: Apply as Tutor -->
+              <!-- Confirm Dialog: Apply as Tutor -->
               <v-dialog v-model="dialog" max-width="500" persistent>
                 <v-card>
                   <v-card-title class="text-h6">
@@ -325,8 +436,16 @@ onMounted(() => {
                     Your personal information will be public. Do you still wish to proceed?
                   </v-card-text>
                   <v-card-actions class="justify-end">
-                    <v-btn color="grey" variant="outlined" @click="dialog = false" :disabled="loading">No</v-btn>
-                    <v-btn color="green" @click="dialog = false" :loading="loading">Yes</v-btn>
+                    <v-btn
+                      color="grey"
+                      variant="outlined"
+                      @click="dialog = false"
+                      :disabled="loading"
+                      >No</v-btn
+                    >
+                    <v-btn color="green" @click="applyAsTutor" :loading="loading">
+                      Yes, Apply
+                    </v-btn>
                   </v-card-actions>
                 </v-card>
               </v-dialog>
@@ -337,12 +456,18 @@ onMounted(() => {
                   <v-card-title class="text-h6">
                     <v-icon class="me-2">mdi-alert</v-icon> Confirm Deletion
                   </v-card-title>
-                  <v-card-text>
-                    Are you sure you want to delete your profile picture?
-                  </v-card-text>
+                  <v-card-text> Are you sure you want to delete your profile picture? </v-card-text>
                   <v-card-actions class="justify-end">
-                    <v-btn color="grey" variant="outlined" @click="confirmRemove = false" :disabled="imageLoading">Cancel</v-btn>
-                    <v-btn color="red" @click="removeProfileImage" :loading="imageLoading">Delete</v-btn>
+                    <v-btn
+                      color="grey"
+                      variant="outlined"
+                      @click="confirmRemove = false"
+                      :disabled="imageLoading"
+                      >Cancel</v-btn
+                    >
+                    <v-btn color="red" @click="removeProfileImage" :loading="imageLoading"
+                      >Delete</v-btn
+                    >
                   </v-card-actions>
                 </v-card>
               </v-dialog>
@@ -359,11 +484,23 @@ onMounted(() => {
 
               <!-- Profile Fields -->
               <div class="text-start">
-                <v-row v-for="(fieldKey, label) in fieldMappings" :key="fieldKey" class="py-1" dense>
+                <v-row
+                  v-for="(fieldKey, label) in fieldMappings"
+                  :key="fieldKey"
+                  class="py-1"
+                  dense
+                >
                   <v-col cols="12" sm="6" class="font-weight-medium">{{ label }}:</v-col>
                   <v-col cols="12" sm="6">
                     <div v-if="!isEditing">{{ profile[fieldKey] }}</div>
-                    <v-text-field v-else v-model="profile[fieldKey]" :placeholder="`Enter your ${label}`" density="compact" hide-details :type="fieldKey === 'age' ? 'number' : 'text'" />
+                    <v-text-field
+                      v-else
+                      v-model="profile[fieldKey]"
+                      :placeholder="`Enter your ${label}`"
+                      density="compact"
+                      hide-details
+                      :type="fieldKey === 'age' ? 'number' : 'text'"
+                    />
                   </v-col>
                 </v-row>
 
@@ -372,7 +509,15 @@ onMounted(() => {
                   <v-col cols="12" sm="6" class="font-weight-medium">About Me:</v-col>
                   <v-col cols="12" sm="6">
                     <div v-if="!isEditing">{{ profile.about }}</div>
-                    <v-textarea v-else v-model="profile.about" placeholder="Write something about yourself" rows="2" auto-grow density="compact" hide-details />
+                    <v-textarea
+                      v-else
+                      v-model="profile.about"
+                      placeholder="Write something about yourself"
+                      rows="2"
+                      auto-grow
+                      density="compact"
+                      hide-details
+                    />
                   </v-col>
                 </v-row>
 
@@ -384,7 +529,14 @@ onMounted(() => {
                       <div v-for="(item, index) in profile.education" :key="index">{{ item }}</div>
                     </div>
                     <div v-else>
-                      <v-text-field v-for="(item, index) in profile.education" :key="index" v-model="profile.education[index]" :placeholder="getEducationPlaceholder(index)" density="compact" hide-details />
+                      <v-text-field
+                        v-for="(item, index) in profile.education"
+                        :key="index"
+                        v-model="profile.education[index]"
+                        :placeholder="getEducationPlaceholder(index)"
+                        density="compact"
+                        hide-details
+                      />
                     </div>
                   </v-col>
                 </v-row>
@@ -394,7 +546,13 @@ onMounted(() => {
 
               <!-- Edit / Save / Cancel Buttons -->
               <div class="d-flex flex-wrap justify-center gap-2">
-                <v-btn v-if="!isEditing" size="small" variant="outlined" color="blue" @click="enableEdit">
+                <v-btn
+                  v-if="!isEditing"
+                  size="small"
+                  variant="outlined"
+                  color="blue"
+                  @click="enableEdit"
+                >
                   Edit
                 </v-btn>
                 <template v-else>
@@ -406,7 +564,6 @@ onMounted(() => {
                   </v-btn>
                 </template>
               </div>
-
             </v-sheet>
           </v-col>
         </v-row>
@@ -414,7 +571,7 @@ onMounted(() => {
     </v-main>
   </v-app>
 </template>
-  
+
 <style scoped>
 .fade-slide-up {
   animation: fadeSlideUp 1.6s ease-in both;

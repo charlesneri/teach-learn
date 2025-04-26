@@ -332,7 +332,7 @@ function getEducationPlaceholder(index) {
 
             <!-- CTA Button -->
             <div class="text-center mt-6">
-              <v-btn color="primary" size="large" elevation="1" class="text-none">
+              <v-btn color="primary" size="large" elevation="1" class="text-none" to="/home">
                 Get Started Now
               </v-btn>
             </div>
