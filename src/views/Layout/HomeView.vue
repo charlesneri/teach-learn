@@ -1,21 +1,10 @@
 <script setup>
-import { ref, watch, onMounted } from 'vue'
+import { ref, onMounted, watch } from 'vue'
 import { useTheme } from 'vuetify'
 import { RouterLink } from 'vue-router'
 import { supabase } from '@/utils/supabase'
 
 const theme = useTheme()
-const searchQuery = ref('')
-
-// Handle search
-const performSearch = () => {
-  if (searchQuery.value.trim()) {
-    console.log('Searching for:', searchQuery.value)
-    // Replace with actual logic (API, emit, router, etc.)
-  }
-}
-
-// Manage theme toggle and persistence
 const currentTheme = ref(localStorage.getItem('theme') || 'light')
 
 const toggleTheme = () => {
@@ -23,107 +12,67 @@ const toggleTheme = () => {
   theme.global.name.value = currentTheme.value
   localStorage.setItem('theme', currentTheme.value)
 }
-
 watch(currentTheme, (val) => {
   theme.global.name.value = val
   localStorage.setItem('theme', val)
 })
 
-onMounted(() => {
-  theme.global.name.value = currentTheme.value
-})
-//for calendar
+const searchQuery = ref('')
+const tutors = ref([])
+const selectedTutor = ref(null)
+const profileDialog = ref(false)
+const appointmentDialog = ref(false)
+const selectedDate = ref(null)
+const selectedTime = ref(null)
+const messageInput = ref('')
+const currentUserId = ref(null)
+const currentUserProfile = ref({ firstName: '', lastName: '', avatarUrl: '', isPublicTutor: false })
 
-const dialog = ref(false) // Control the visibility of the dialog
-const selectedDate = ref(null) // Store selected date
-const selectedTime = ref(null) // Store selected time
-const isAMSelected = ref(false) // Track if AM is selected
-const isPMSelected = ref(false) // Track if PM is selected
+const performSearch = () => {}
 
-// Validator for time input (e.g., 12-hour format with AM/PM or 24-hour format)
-const timeValidator = (value) => {
-  const regex24hr = /^([0-1]?[0-9]|2[0-3]):([0-5][0-9])$/ // For 24-hour format
-  const regex12hr = /^([0-1]?[0-9]|1[0-2]):([0-5][0-9]) (AM|PM)$/ // For 12-hour format
-
-  if (regex24hr.test(value) || regex12hr.test(value)) {
-    return true
-  }
-  return 'Please enter a valid time (HH:mm AM/PM or HH:mm)'
-}
-
-// Handle when a date is selected from the calendar
-const onDateSelect = (date) => {
-  selectedDate.value = date // Update selected date when user clicks on a date
-}
-
-// Handle when a time is selected
-const onTimeSelect = (time) => {
-  selectedTime.value = time // Update selected time when user selects a time
-}
-
-// Select AM and update the time accordingly
-const selectAM = () => {
-  isAMSelected.value = true
-  isPMSelected.value = false
-  if (selectedTime.value) {
-    selectedTime.value += ' AM' // Append AM to the selected time
+const fetchCurrentUser = async () => {
+  const { data: { user } } = await supabase.auth.getUser()
+  if (user) {
+    currentUserId.value = user.id
+    const { data } = await supabase.from('profiles').select('first_name, last_name, avatar_url, is_public_tutor').eq('id', user.id).single()
+    if (data) {
+      currentUserProfile.value = {
+        firstName: data.first_name || '',
+        lastName: data.last_name || '',
+        avatarUrl: data.avatar_url || '',
+        isPublicTutor: data.is_public_tutor || false
+      }
+    }
   }
 }
-
-// Select PM and update the time accordingly
-const selectPM = () => {
-  isPMSelected.value = true
-  isAMSelected.value = false
-  if (selectedTime.value) {
-    selectedTime.value += ' PM' // Append PM to the selected time
-  }
-}
-
-// Save the appointment
-const saveAppointment = () => {
-  if (selectedDate.value && selectedTime.value) {
-    alert(`Appointment saved for ${selectedDate.value} at ${selectedTime.value}`)
-    dialog.value = false // Close the dialog after saving
-  } else {
-    alert('Please select both a date and a time.')
-  }
-}
-//for publc main
-
-const profileDialog = ref(false) // for View More (profile)
-const appointmentDialog = ref(false) // for Set Appointment
-const tutors = ref([]) // Store public tutors
 
 const fetchTutors = async () => {
-  try {
-    const { data, error } = await supabase.from('profiles').select('*').eq('is_public_tutor', true)
-
-    if (error) throw error
-    tutors.value = data
-    console.log('Fetched tutors:', data)
-  } catch (error) {
-    console.error('Error fetching tutors:', error)
-    alert('Failed to load mentors. Please try again.')
-  }
+  const { data } = await supabase.from('profiles').select('*').eq('is_public_tutor', true)
+  tutors.value = data || []
 }
 
-onMounted(() => {
-  theme.global.name.value = currentTheme.value
-  fetchTutors() // 🔥 now it fetches public tutors on page load
-})
-const selectedTutor = ref(null) // store who you are viewing
+const applyOrCancelTutor = async () => {
+  const newStatus = !currentUserProfile.value.isPublicTutor
+  await supabase.from('profiles').update({ is_public_tutor: newStatus }).eq('id', currentUserId.value)
+  currentUserProfile.value.isPublicTutor = newStatus
+  await fetchTutors()
+}
 
 const viewTutor = (tutor) => {
   selectedTutor.value = tutor
   profileDialog.value = true
 }
-
 const openAppointment = (tutor) => {
   selectedTutor.value = tutor
   appointmentDialog.value = true
 }
-</script>
 
+onMounted(async () => {
+  theme.global.name.value = currentTheme.value
+  await fetchCurrentUser()
+  await fetchTutors()
+})
+</script>
 <template>
   <v-app id="inspire">
     <!-- App Bar -->
@@ -268,20 +217,21 @@ const openAppointment = (tutor) => {
                 class="pa-4 text-center"
                 style="height: 100%; width: 100%"
               >
-                <v-avatar class="mb-3" color="#FFFFFF" size="100">
-                  <v-img src="image/Teach&Learn.png" alt="User" />
-                </v-avatar>
-                <span class="d-block font-weight-medium mb-3">
-                  <RouterLink
-                    to="/profile"
-                    :class="[
-                      'text-decoration-none active-click',
-                      currentTheme === 'dark' ? 'text-white' : 'text-black',
-                    ]"
-                  >
-                    My Name
-                  </RouterLink>
-                </span>
+                <v-sheet
+                  class="pa-4 text-center"
+                  :class="currentTheme === 'dark' ? 'bg-grey-darken-3' : ''"
+                  rounded="lg"
+                >
+                  <v-avatar size="100" class="mb-3">
+                    <v-img
+                      v-if="currentUserProfile.avatarUrl"
+                      :src="currentUserProfile.avatarUrl"
+                      cover
+                    />
+                    <v-icon v-else size="80">mdi-account</v-icon>
+                  </v-avatar>
+                  <h3>{{ currentUserProfile.firstName }} {{ currentUserProfile.lastName }}</h3>
+                </v-sheet>
                 <v-divider> </v-divider>
                 <!-- Theme Toggle Button -->
                 <v-btn icon @click="toggleTheme" size="35" class="ma-3">
@@ -344,7 +294,7 @@ const openAppointment = (tutor) => {
                 <v-divider></v-divider>
 
                 <!-- Profile Container -->
-                <div class="profile-container">
+                <div class="profile-container" >
                   <div
                     v-if="tutors.length"
                     class="profile-container"
@@ -355,7 +305,7 @@ const openAppointment = (tutor) => {
                         <div
                           class="mentor-card pa-4 d-flex flex-column align-center"
                           style="border: 1px solid #ccc; border-radius: 12px; width: 250px"
-                        >
+                          :class="currentTheme === 'dark' ? 'bg-grey-darken-3 text-white' : 'bg-white text-black'">
                           <!-- Your card content here -->
                           <v-avatar size="100" class="mb-3">
                             <v-img :src="tutor.avatar_url" v-if="tutor.avatar_url" cover>
@@ -375,6 +325,7 @@ const openAppointment = (tutor) => {
                             {{ tutor.expertise || 'No expertise listed' }}
                           </p>
 
+                          <!-- View More: always visible -->
                           <span
                             @click="viewTutor(tutor)"
                             class="text-primary text-decoration-underline cursor-pointer mb-2"
@@ -382,12 +333,17 @@ const openAppointment = (tutor) => {
                             View More
                           </span>
 
+                          <!-- Set an Appointment: only if not your own profile -->
                           <span
+                            v-if="tutor.id !== currentUserId"
                             @click="openAppointment(tutor)"
                             class="text-primary text-decoration-underline cursor-pointer"
                           >
                             Set an Appointment
                           </span>
+
+                          <!-- (Optional) Greyed text if it's your own profile -->
+                          <span v-else class="text-grey text-caption"> (My profile) </span>
                         </div>
                       </Transition>
                     </div>
@@ -399,118 +355,100 @@ const openAppointment = (tutor) => {
                   </div>
 
                   <v-container>
-                    <!-- Appointment Dialog -->
-                    <v-dialog
-                      v-model="appointmentDialog"
-                      max-width="600px"
-                      transition="scale-transition"
-                    >
-                      <v-card>
-                        <v-card-title class="headline">
-                          Appointment with {{ selectedTutor?.first_name || 'Mentor' }}
-                        </v-card-title>
+          <!-- View More (Profile Details) Dialog -->
+<v-dialog v-model="profileDialog" max-width="500px" transition="scale-transition">
+  <v-card :class="currentTheme === 'dark' ? 'bg-grey-darken-3 text-white' : 'bg-white text-black'">
+    <v-card-text class="text-center py-6 px-4">
+      <h2 class="font-weight-bold mb-4">
+        {{ selectedTutor?.first_name }} {{ selectedTutor?.middle_initial }} {{ selectedTutor?.last_name }}
+      </h2>
 
-                        <v-card-text class="appoint-container" style="width: 50%">
-                          <!-- Date Picker -->
-                          <v-date-picker
-                            v-model="selectedDate"
-                            color="primary"
-                            locale="en"
-                            class="mb-4"
-                            @input="onDateSelect"
-                            elevation="24"
-                          ></v-date-picker>
+      <v-avatar size="120" class="mb-4 mx-auto">
+        <v-img
+          v-if="selectedTutor?.avatar_url"
+          :src="selectedTutor?.avatar_url"
+          cover
+        >
+          <template #error>
+            <v-icon size="80" color="grey-darken-1">mdi-account</v-icon>
+          </template>
+        </v-img>
+        <v-icon v-else size="80" color="grey-darken-1">mdi-account</v-icon>
+      </v-avatar>
 
-                          <!-- Time Picker (only after date selected) -->
-                          <v-time-picker
-                            v-if="selectedDate"
-                            v-model="selectedTime"
-                            format="12hr"
-                            color="primary"
-                            class="mb-4"
-                            :disabled="!selectedDate"
-                            @change="onTimeSelect"
-                            full-width
-                          ></v-time-picker>
+      <div class="text-start" style="margin: 0 auto; max-width: 300px;">
+        <p><strong>Expertise:</strong> {{ selectedTutor?.expertise || 'No expertise listed' }}</p>
+        <p><strong>Email:</strong> {{ selectedTutor?.email || 'No email provided' }}</p>
+        <p><strong>Phone:</strong> {{ selectedTutor?.phone || 'No phone number' }}</p>
+        <p><strong>About:</strong> {{ selectedTutor?.about || 'No description' }}</p>
+        <p><strong>School:</strong> {{ selectedTutor?.school || 'No school listed' }}</p>
+        <p><strong>Degree:</strong> {{ selectedTutor?.degree || 'No degree listed' }}</p>
+        <p><strong>Year:</strong> {{ selectedTutor?.year || 'No year provided' }}</p>
+      </div>
+    </v-card-text>
 
-                          <!-- Textarea (only after date selected) -->
-                          <v-textarea
-                            v-if="selectedDate"
-                            v-model="messageInput"
-                            label="Your Message"
-                            placeholder="Type your message here..."
-                            rows="4"
-                            dense
-                          >
-                          </v-textarea>
-                        </v-card-text>
+    <v-card-actions class="justify-center pb-4">
+      <v-btn color="primary" @click="profileDialog = false" class="font-weight-bold">CLOSE</v-btn>
+    </v-card-actions>
+  </v-card>
+</v-dialog>
 
-                        <v-card-actions>
-                          <v-btn color="grey darken-1" @click="appointmentDialog = false"
-                            >Cancel</v-btn
-                          >
-                          <v-btn color="primary" @click="saveAppointment">Save</v-btn>
-                        </v-card-actions>
-                      </v-card>
-                    </v-dialog>
 
-                    <!-- View More (Profile Details) Dialog -->
-                    <v-dialog
-                      v-model="profileDialog"
-                      max-width="600px"
-                      transition="scale-transition"
-                    >
-                      <v-card>
-                        <v-card-title class="headline">
-                          {{ selectedTutor?.first_name }} {{ selectedTutor?.middle_initial }}
-                          {{ selectedTutor?.last_name }}
-                        </v-card-title>
-                        <v-card-text class="text-start">
-                          <v-avatar size="100" class="mb-4">
-                            <v-img
-                              :src="selectedTutor?.avatar_url"
-                              v-if="selectedTutor?.avatar_url"
-                              cover
-                            >
-                              <template #error>
-                                <v-icon size="60" color="grey-darken-1">mdi-account</v-icon>
-                              </template>
-                            </v-img>
-                            <v-icon v-else size="60" color="grey-darken-1">mdi-account</v-icon>
-                          </v-avatar>
+                <!-- Appointment Dialog -->
+<v-dialog v-model="appointmentDialog" max-width="500px" transition="scale-transition">
+  <v-card :class="currentTheme === 'dark' ? 'bg-grey-darken-3 text-white' : 'bg-white text-black'">
+    <v-card-text class="text-center py-6 px-4">
+      <h2 class="font-weight-bold mb-4">
+        Appointment with {{ selectedTutor?.first_name || 'Mentor' }}
+      </h2>
 
-                          <p>
-                            <strong>Expertise:</strong>
-                            {{ selectedTutor?.expertise || 'No expertise listed' }}
-                          </p>
-                          <p>
-                            <strong>Email:</strong>
-                            {{ selectedTutor?.email || 'No email provided' }}
-                          </p>
-                          <p>
-                            <strong>Phone:</strong> {{ selectedTutor?.phone || 'No phone number' }}
-                          </p>
-                          <p>
-                            <strong>About:</strong> {{ selectedTutor?.about || 'No description' }}
-                          </p>
-                          <p>
-                            <strong>School:</strong>
-                            {{ selectedTutor?.school || 'No school listed' }}
-                          </p>
-                          <p>
-                            <strong>Degree:</strong>
-                            {{ selectedTutor?.degree || 'No degree listed' }}
-                          </p>
-                          <p>
-                            <strong>Year:</strong> {{ selectedTutor?.year || 'No year provided' }}
-                          </p>
-                        </v-card-text>
+      <div class="d-flex flex-column align-center" style="gap: 20px;">
+        <!-- Date Picker -->
+        <v-date-picker
+          v-model="selectedDate"
+          color="primary"
+          class="mx-auto"
+          style="max-width: 300px;"
+          @input="onDateSelect"
+        ></v-date-picker>
 
-                        <v-card-actions class="justify-end">
-                          <v-btn color="primary" @click="profileDialog = false">Close</v-btn>
-                        </v-card-actions>
-                      </v-card>
-                    </v-dialog>
+        <!-- Time Picker (only after date selected) -->
+        <v-time-picker
+          v-if="selectedDate"
+          v-model="selectedTime"
+          format="12hr"
+          color="primary"
+          class="mx-auto"
+          style="max-width: 300px;"
+          :disabled="!selectedDate"
+          @change="onTimeSelect"
+        ></v-time-picker>
+
+        <!-- Message Input -->
+        <v-textarea
+          v-if="selectedDate"
+          v-model="messageInput"
+          label="Your Message"
+          placeholder="Type your message here..."
+          rows="3"
+          density="compact"
+          hide-details
+          style="max-width: 300px;"
+        ></v-textarea>
+      </div>
+    </v-card-text>
+
+    <v-card-actions class="justify-center pb-4">
+      <v-btn color="grey" variant="outlined" @click="appointmentDialog = false" class="font-weight-bold">
+        CANCEL
+      </v-btn>
+      <v-btn color="primary" @click="saveAppointment" class="font-weight-bold">
+        SAVE
+      </v-btn>
+    </v-card-actions>
+  </v-card>
+</v-dialog>
+
                   </v-container>
                 </div>
               </v-sheet>
@@ -623,4 +561,3 @@ body[data-theme='dark'] h1 {
   padding: 16px;
 }
 </style>
-

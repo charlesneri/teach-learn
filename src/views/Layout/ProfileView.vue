@@ -38,6 +38,7 @@ const profile = ref({
   phone: '',
   about: '',
   education: ['', '', ''],
+  isPublicTutor: false, 
 })
 const profileImage = ref('')
 const selectedFile = ref(null)
@@ -87,6 +88,7 @@ const getUserProfile = async () => {
       phone: data.phone || '',
       about: data.about || '',
       education: [data.school || '', data.degree || '', data.year || ''],
+      isPublicTutor: data.is_public_tutor || false, // <-- ADD THIS
     }
     profileImage.value = data.avatar_url || ''
   } catch (error) {
@@ -268,24 +270,30 @@ const applyAsTutor = async () => {
 
     const { error } = await supabase
       .from('profiles')
-      .update({ is_public_tutor: true })
+      .update({ is_public_tutor: !profile.value.isPublicTutor }) // Toggle apply/cancel
       .eq('id', user.id)
 
     if (error) throw error
 
-    snackbarMsg.value = 'You are now listed as a tutor!'
+    profile.value.isPublicTutor = !profile.value.isPublicTutor // Update frontend state
+
+    snackbarMsg.value = profile.value.isPublicTutor
+      ? 'You are now listed as a tutor!'
+      : 'You have canceled your tutor application.'
+
     snackbar.value = true
     dialog.value = false
-    // Optionally, refresh profile
-    getUserProfile()
+
+    await fetchTutors() // Refresh mentor list in HomeView
   } catch (error) {
     console.error('Error applying as tutor:', error)
-    snackbarMsg.value = 'Failed to apply as tutor. Please try again.'
+    snackbarMsg.value = 'Failed to apply/cancel. Please try again.'
     snackbar.value = true
   } finally {
     loading.value = false
   }
 }
+
 </script>
 
 <template>
@@ -417,14 +425,15 @@ const applyAsTutor = async () => {
                 />
               </div>
 
-              <!-- Full Name -->
-              <div class="d-flex flex-column align-center">
-                <h3 class="font-weight-medium mb-4">{{ fullName }}</h3>
-                <v-btn color="primary" class="mb-3" @click="dialog = true" :disabled="loading">
-                  Apply as Tutor?
-                </v-btn>
-              </div>
-
+              <!-- button for apply as tutor or cancel -->
+              <v-btn
+  :color="profile.isPublicTutor ? 'red' : 'primary'"
+  class="mb-3"
+  @click="dialog = true"
+  :loading="loading"
+>
+  {{ profile.isPublicTutor ? 'Cancel Apply' : 'Apply as Tutor?' }}
+</v-btn>
               <!-- Confirm Dialog: Apply as Tutor -->
               <!-- Confirm Dialog: Apply as Tutor -->
               <v-dialog v-model="dialog" max-width="500" persistent>
