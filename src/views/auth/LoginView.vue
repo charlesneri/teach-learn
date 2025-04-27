@@ -204,8 +204,10 @@ const onFormSubmit = () => {
     box-shadow 0.3s ease;
 }
 .hover-card:hover {
-  transform: scale(1.02);
-  box-shadow: 0 12px 24px rgba(40, 206, 244, 0.2);
+ 
+  transform: scale(1.05);
+  box-shadow: 0 6px 18px rgba(33, 150, 243, 0.6);
+
 }
 
 /* Theme toggle button */

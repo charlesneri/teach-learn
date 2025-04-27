@@ -624,4 +624,3 @@ body[data-theme='dark'] h1 {
 }
 </style>
 
-can you enhance the style such as hover of navigations the layout and designs of the inside of view more and appointment and other things

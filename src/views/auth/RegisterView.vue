@@ -290,9 +290,6 @@ const onSubmit = async () => {
   </v-responsive>
 </template>
 
-<style scoped>
-/* Styles are same as your original, no problem there */
-</style>
 
 <style scoped>
 /* Entrance animation */
@@ -312,8 +309,9 @@ const onSubmit = async () => {
     box-shadow 0.3s ease;
 }
 .hover-card:hover {
-  transform: scale(1.03);
-  box-shadow: 0 0 30px 10px rgba(87, 209, 223, 0.8);
+ 
+  transform: scale(1.05);
+  box-shadow: 0 6px 18px rgba(33, 150, 243, 0.6);
 }
 
 /* Theme toggle transition */
