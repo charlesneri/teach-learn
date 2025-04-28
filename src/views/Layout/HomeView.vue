@@ -72,110 +72,157 @@ onMounted(async () => {
   await fetchCurrentUser()
   await fetchTutors()
 })
+//for alert
+const snackbar = ref(false)
+const snackbarMsg = ref('')
+const snackbarColor = ref('success')  // default color green
+
+const saveAppointment = async () => {
+  try {
+    if (!selectedTutor.value || !selectedDate.value || !selectedTime.value) {
+      snackbarMsg.value = 'Please fill all fields!'
+      snackbarColor.value = 'error'    // 🔥 RED if incomplete
+      snackbar.value = true
+      return
+    }
+
+    const { error } = await supabase.from('appointments').insert([
+      {
+        mentor_id: selectedTutor.value.id,
+        student_id: currentUserId.value,
+        student_name: currentUserProfile.firstName + ' ' + currentUserProfile.lastName,
+        message: messageInput.value,
+        appointment_date: selectedDate.value,
+        appointment_time: selectedTime.value,
+        status: 'pending',
+        created_at: new Date()
+      }
+    ])
+
+    if (error) throw error
+
+    appointmentDialog.value = false
+    selectedDate.value = null
+    selectedTime.value = null
+    messageInput.value = ''
+
+    snackbarMsg.value = 'Appointment request sent successfully!'
+    snackbarColor.value = 'success'   // ✅ GREEN if successful
+    snackbar.value = true
+
+  } catch (err) {
+    console.error('Error saving appointment:', err)
+    snackbarMsg.value = 'Failed to send appointment. Try again.'
+    snackbarColor.value = 'error'    // 🔥 RED if failed
+    snackbar.value = true
+  }
+}
+
+
 </script>
 <template>
   <v-app id="inspire">
     <!-- App Bar -->
     <v-app-bar flat :color="currentTheme === 'light' ? '#1565c0' : 'grey-darken-4'">
-      <v-container class="d-flex align-center justify-space-between">
+  <v-container class="d-flex align-center justify-space-between">
 
-<!-- Logo -->
-<div class="d-flex align-center gap-4">
-  <v-avatar color="#fff" size="50">
-    <v-img src="image/Teach&Learn.png" alt="Logo" />
-  </v-avatar>
-</div>
+    <!-- Logo -->
+    <div class="d-flex align-center gap-4">
+      <v-avatar color="#fff" size="50">
+        <v-img src="image/Teach&Learn.png" alt="Logo" />
+      </v-avatar>
+    </div>
 
-<v-spacer />
+    <v-spacer />
 
-<!-- Desktop Links -->
-<div class="d-none d-md-flex align-center" style="gap: 24px">
-  <RouterLink to="/home" class="text-white text-decoration-none font-weight-medium">Home</RouterLink>
-  <RouterLink to="/about" class="text-white text-decoration-none font-weight-medium">About Us</RouterLink>
-  <RouterLink to="/contact" class="text-white text-decoration-none font-weight-medium">Contact Us</RouterLink>
-</div>
+    <!-- Desktop Links -->
+    <div class="d-none d-md-flex align-center" style="gap: 24px">
+      <RouterLink to="/home" class="text-white text-decoration-none font-weight-medium">Home</RouterLink>
+      <RouterLink to="/about" class="text-white text-decoration-none font-weight-medium">About Us</RouterLink>
+      <RouterLink to="/contact" class="text-white text-decoration-none font-weight-medium">Contact Us</RouterLink>
+    </div>
 
-<v-spacer />
+    <v-spacer />
 
-<!-- Responsive Search + Notification + Mobile Menu -->
-<v-responsive max-width="320">
-  <div class="d-flex align-center gap-2">
-    
-    <!-- Search Bar -->
-    <v-text-field
-      v-model="searchQuery"
-      placeholder="Search..."
-      variant="solo-filled"
-      density="compact"
-      rounded="lg"
-      flat
-      hide-details
-      single-line
-      class="search-input flex-grow-1"
-      @keydown.enter="performSearch"
-      append-inner-icon="mdi-magnify"
-      @click:append-inner="performSearch"
-    />
+    <!-- Mobile Search + Notification + Hamburger Menu -->
+    <v-responsive max-width="300">
+      <div class="d-flex align-center gap-2">
 
-    <!-- Notification Bell -->
-    <v-menu v-model="notificationMenu" offset-y close-on-content-click transition="scale-transition">
-      <template #activator="{ props }">
-        <v-btn icon v-bind="props" @click="toggleMenu">
-          <v-icon>mdi-bell</v-icon>
-        </v-btn>
-      </template>
-      <v-card min-width="300">
-        <v-list density="compact">
-          <v-list-item v-for="notification in notifications" :key="notification.id">
-            <v-list-item-content>
-              <v-list-item-title>{{ notification.title }}</v-list-item-title>
-              <v-list-item-subtitle>{{ notification.time }}</v-list-item-subtitle>
-            </v-list-item-content>
-          </v-list-item>
-          <v-divider></v-divider>
-          <v-list-item>
-            <v-list-item-title class="text-center">
-              <v-btn text small @click="notifications = []">Clear All</v-btn>
-            </v-list-item-title>
-          </v-list-item>
-        </v-list>
-      </v-card>
-    </v-menu>
+        <!-- Search Bar -->
+        <v-text-field
+          v-model="searchQuery"
+          placeholder="Search..."
+          variant="solo-filled"
+          density="compact"
+          rounded="lg"
+          flat
+          hide-details
+          single-line
+          class="search-input flex-grow-1"
+          @keydown.enter="performSearch"
+          append-inner-icon="mdi-magnify"
+          @click:append-inner="performSearch"
+        />
 
-    <!-- Mobile Hamburger Menu -->
-    <v-menu transition="scale-transition" offset-y>
-      <template #activator="{ props }">
-        <v-app-bar-nav-icon v-bind="props" class="d-md-none" />
-      </template>
-      <v-list>
-        <v-list-item link>
-          <RouterLink to="/" :class="[currentTheme === 'dark' ? 'text-white' : 'text-black']">Home</RouterLink>
-        </v-list-item>
-        <v-list-item link>
-          <RouterLink to="/profile" :class="[currentTheme === 'dark' ? 'text-white' : 'text-black']">My Profile</RouterLink>
-        </v-list-item>
-        <v-list-item link>
-          <RouterLink to="/appointments" :class="[currentTheme === 'dark' ? 'text-white' : 'text-black']">My Appointment</RouterLink>
-        </v-list-item>
-        <v-list-item link>
-          <RouterLink to="/about" :class="[currentTheme === 'dark' ? 'text-white' : 'text-black']">About Us</RouterLink>
-        </v-list-item>
-        <v-list-item link>
-          <RouterLink to="/contact" :class="[currentTheme === 'dark' ? 'text-white' : 'text-black']">Contact Us</RouterLink>
-        </v-list-item>
-        <v-divider></v-divider>
-        <v-list-item link>
-          <RouterLink to="/" :class="[currentTheme === 'dark' ? 'text-white' : 'text-black']">Logout</RouterLink>
-        </v-list-item>
-      </v-list>
-    </v-menu>
+        <!-- Notification Bell -->
+        <v-menu v-model="notificationMenu" offset-y close-on-content-click>
+          <template #activator="{ props }">
+            <v-btn icon v-bind="props">
+              <v-icon>mdi-bell</v-icon>
+            </v-btn>
+          </template>
+          <v-card min-width="300">
+            <v-list density="compact">
+              <v-list-item v-for="notification in notifications" :key="notification.id">
+                <v-list-item-content>
+                  <v-list-item-title>{{ notification.title }}</v-list-item-title>
+                  <v-list-item-subtitle>{{ notification.time }}</v-list-item-subtitle>
+                </v-list-item-content>
+              </v-list-item>
+              <v-divider></v-divider>
+              <v-list-item>
+                <v-list-item-title class="text-center">
+                  <v-btn text small @click="notifications = []">Clear All</v-btn>
+                </v-list-item-title>
+              </v-list-item>
+            </v-list>
+          </v-card>
+        </v-menu>
 
-  </div> <!-- End of flex -->
-</v-responsive>
+        <!-- Mobile Hamburger Menu -->
+        <v-menu transition="scale-transition" offset-y>
+          <template #activator="{ props }">
+            <v-app-bar-nav-icon v-bind="props" class="d-md-none" />
+          </template>
+          <v-list>
+            <v-list-item link>
+              <RouterLink to="/home" :class="[currentTheme === 'dark' ? 'text-white' : 'text-black']">Home</RouterLink>
+            </v-list-item>
+            <v-list-item link>
+              <RouterLink to="/profile" :class="[currentTheme === 'dark' ? 'text-white' : 'text-black']">My Profile</RouterLink>
+            </v-list-item>
+            <v-list-item link>
+              <RouterLink to="/appointments" :class="[currentTheme === 'dark' ? 'text-white' : 'text-black']">Appointments</RouterLink>
+            </v-list-item>
+            <v-list-item link>
+              <RouterLink to="/about" :class="[currentTheme === 'dark' ? 'text-white' : 'text-black']">About Us</RouterLink>
+            </v-list-item>
+            <v-list-item link>
+              <RouterLink to="/contact" :class="[currentTheme === 'dark' ? 'text-white' : 'text-black']">Contact Us</RouterLink>
+            </v-list-item>
+            <v-divider></v-divider>
+            <v-list-item link>
+              <RouterLink to="/" :class="[currentTheme === 'dark' ? 'text-white' : 'text-black']">Logout</RouterLink>
+            </v-list-item>
+          </v-list>
+        </v-menu>
 
-</v-container>
+      </div> <!-- end flex -->
+    </v-responsive>
 
-    </v-app-bar>
+  </v-container>
+</v-app-bar>
+
 
     <!-- Main -->
     <transition name="fade-slide-up">
@@ -420,6 +467,13 @@ onMounted(async () => {
       <v-btn color="primary" @click="saveAppointment" class="font-weight-bold">
         SAVE
       </v-btn>
+      <v-snackbar v-model="snackbar" :color="snackbarColor" timeout="3000" location="top">
+  {{ snackbarMsg }}
+  <template #actions>
+    <v-btn icon="mdi-close" variant="text" @click="snackbar = false" />
+  </template>
+</v-snackbar>
+
     </v-card-actions>
   </v-card>
 </v-dialog>
