@@ -140,7 +140,7 @@ function getEducationPlaceholder(index) {
         <v-spacer />
 
         <!-- Centered Navigation Links (Desktop only) -->
-        <div class="d-none d-md-flex align-center" style="gap: 24px">
+        <div class="d-none d-md-flex align-center me-5" style="gap: 24px">
           <RouterLink to="/home" class="text-white text-decoration-none font-weight-medium"
             >Home</RouterLink
           >
@@ -151,11 +151,36 @@ function getEducationPlaceholder(index) {
             >Contact Us</RouterLink
           >
         </div>
+     
+<!--for notification bell-->
 
+  <v-menu v-model="notificationMenu" offset-y close-on-content-click transition="scale-transition">
+      <template #activator="{ props }">
+        <v-btn icon v-bind="props" @click="toggleMenu">
+          <v-icon>mdi-bell</v-icon>
+        </v-btn>
+      </template>
+      <v-card min-width="300">
+        <v-list density="compact">
+          <v-list-item v-for="notification in notifications" :key="notification.id">
+            <v-list-item-content>
+              <v-list-item-title>{{ notification.title }}</v-list-item-title>
+              <v-list-item-subtitle>{{ notification.time }}</v-list-item-subtitle>
+            </v-list-item-content>
+          </v-list-item>
+          <v-divider></v-divider>
+          <v-list-item>
+            <v-list-item-title class="text-center">
+              <v-btn text small @click="notifications = []">Clear All</v-btn>
+            </v-list-item-title>
+          </v-list-item>
+        </v-list>
+      </v-card>
+    </v-menu>
         <!-- Spacer after center links -->
         <v-spacer />
 
-        <!-- Mobile Search and Menu -->
+      
         <div class="d-flex align-center gap-2">
           <!-- Mobile Menu Button -->
           <v-menu transition="scale-transition" offset-y>

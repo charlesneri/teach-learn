@@ -174,7 +174,7 @@ const sendMessage = () => {
       :color="currentTheme === 'light' ? '#1565c0' : 'grey-darken-4'"
       class="px-2 px-md-4"
     >
-      <v-container fluid class="d-flex align-center justify-space-between pa-0">
+    <v-container fluid class="d-flex align-center justify-space-between pa-0">
         <!-- Logo -->
         <v-avatar color="#fff" size="44" class="mr-2">
           <v-img src="image/Teach&Learn.png" alt="Logo" />
@@ -184,7 +184,7 @@ const sendMessage = () => {
         <v-spacer />
 
         <!-- Centered Navigation Links (Desktop only) -->
-        <div class="d-none d-md-flex align-center" style="gap: 24px">
+        <div class="d-none d-md-flex align-center me-5" style="gap: 24px">
           <RouterLink to="/home" class="text-white text-decoration-none font-weight-medium"
             >Home</RouterLink
           >
@@ -195,10 +195,36 @@ const sendMessage = () => {
             >Contact Us</RouterLink
           >
         </div>
+     
+<!--for notification bell-->
 
+  <v-menu v-model="notificationMenu" offset-y close-on-content-click transition="scale-transition">
+      <template #activator="{ props }">
+        <v-btn icon v-bind="props" @click="toggleMenu">
+          <v-icon>mdi-bell</v-icon>
+        </v-btn>
+      </template>
+      <v-card min-width="300">
+        <v-list density="compact">
+          <v-list-item v-for="notification in notifications" :key="notification.id">
+            <v-list-item-content>
+              <v-list-item-title>{{ notification.title }}</v-list-item-title>
+              <v-list-item-subtitle>{{ notification.time }}</v-list-item-subtitle>
+            </v-list-item-content>
+          </v-list-item>
+          <v-divider></v-divider>
+          <v-list-item>
+            <v-list-item-title class="text-center">
+              <v-btn text small @click="notifications = []">Clear All</v-btn>
+            </v-list-item-title>
+          </v-list-item>
+        </v-list>
+      </v-card>
+    </v-menu>
         <!-- Spacer after center links -->
         <v-spacer />
 
+      
         <div class="d-flex align-center gap-2">
           <!-- Mobile Menu Button -->
           <v-menu transition="scale-transition" offset-y>
@@ -206,80 +232,80 @@ const sendMessage = () => {
               <v-app-bar-nav-icon v-bind="props" class="d-md-none" />
             </template>
             <v-list>
-              <v-list-item link>
-                <RouterLink
-                  to="/"
-                  :class="[
-                    'active-click text-decoration-none',
-                    currentTheme === 'dark' ? 'text-white' : 'text-black',
-                  ]"
-                >
-                  Home
-                </RouterLink>
-              </v-list-item>
+                  <v-list-item link>
+                    <RouterLink
+                      to="/"
+                      :class="[
+                        'active-click text-decoration-none',
+                        currentTheme === 'dark' ? 'text-white' : 'text-black',
+                      ]"
+                    >
+                      Home
+                    </RouterLink>
+                  </v-list-item>
 
-              <v-list-item link>
-                <RouterLink
-                  to="/profile"
-                  :class="[
-                    'active-click text-decoration-none',
-                    currentTheme === 'dark' ? 'text-white' : 'text-black',
-                  ]"
-                >
-                  My Profile
-                </RouterLink>
-              </v-list-item>
+                  <v-list-item link>
+                    <RouterLink
+                      to="/profile"
+                      :class="[
+                        'active-click text-decoration-none',
+                        currentTheme === 'dark' ? 'text-white' : 'text-black',
+                      ]"
+                    >
+                      My Profile
+                    </RouterLink>
+                  </v-list-item>
 
-              <v-list-item link>
-                <RouterLink
-                  to="/appointments"
-                  :class="[
-                    'active-click text-decoration-none',
-                    currentTheme === 'dark' ? 'text-white' : 'text-black',
-                  ]"
-                >
-                  My Appointment
-                </RouterLink>
-              </v-list-item>
+                  <v-list-item link>
+                    <RouterLink
+                      to="/appointments"
+                      :class="[
+                        'active-click text-decoration-none',
+                        currentTheme === 'dark' ? 'text-white' : 'text-black',
+                      ]"
+                    >
+                      My Appointment
+                    </RouterLink>
+                  </v-list-item>
 
-              <v-list-item link>
-                <RouterLink
-                  to="/about"
-                  :class="[
-                    'active-click text-decoration-none',
-                    currentTheme === 'dark' ? 'text-white' : 'text-black',
-                  ]"
-                >
-                  About Us
-                </RouterLink>
-              </v-list-item>
+                  <v-list-item link>
+                    <RouterLink
+                      to="/about"
+                      :class="[
+                        'active-click text-decoration-none',
+                        currentTheme === 'dark' ? 'text-white' : 'text-black',
+                      ]"
+                    >
+                      About Us
+                    </RouterLink>
+                  </v-list-item>
 
-              <v-list-item link>
-                <RouterLink
-                  to="/contact"
-                  :class="[
-                    'active-click text-decoration-none',
-                    currentTheme === 'dark' ? 'text-white' : 'text-black',
-                  ]"
-                >
-                  Contact Us
-                </RouterLink>
-              </v-list-item>
+                  <v-list-item link>
+                    <RouterLink
+                      to="/contact"
+                      :class="[
+                        'active-click text-decoration-none',
+                        currentTheme === 'dark' ? 'text-white' : 'text-black',
+                      ]"
+                    >
+                      Contact Us
+                    </RouterLink>
+                  </v-list-item>
 
-              <v-divider></v-divider>
+                  <v-divider></v-divider>
 
-              <v-list-item link>
-                <RouterLink
-                  to="/"
-                  :class="[
-                    'active-click text-decoration-none',
-                    currentTheme === 'dark' ? 'text-white' : 'text-black',
-                  ]"
-                >
-                  Logout
-                </RouterLink>
-              </v-list-item>
-            </v-list>
+                  <v-list-item link>
+                    <RouterLink
+                      to="/"
+                      :class="[
+                        'active-click text-decoration-none',
+                        currentTheme === 'dark' ? 'text-white' : 'text-black',
+                      ]"
+                    >
+                      Logout
+                    </RouterLink>
+                  </v-list-item>
+                </v-list>
           </v-menu>
         </div>
       </v-container>

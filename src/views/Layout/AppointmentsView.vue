@@ -38,20 +38,57 @@ watch(currentTheme, (val) => {
       :color="currentTheme === 'light' ? '#1565c0' : 'grey-darken-4'"
       class="px-2 px-md-4"
     >
-      <v-container fluid class="d-flex align-center justify-space-between pa-0">
+    <v-container fluid class="d-flex align-center justify-space-between pa-0">
         <!-- Logo -->
-        <v-avatar color="#fff" size="44" class="ms-2">
+        <v-avatar color="#fff" size="44" class="mr-2">
           <v-img src="image/Teach&Learn.png" alt="Logo" />
         </v-avatar>
 
         <!-- Desktop Navigation -->
-        <div class="d-none d-md-flex align-center" style="gap: 20px">
-          <router-link to="/home" class="text-white font-weight-medium">Home</router-link>
-          <router-link to="/about" class="text-white font-weight-medium">About Us</router-link>
-          <router-link to="/contact" class="text-white font-weight-medium">Contact Us</router-link>
-        </div>
+        <v-spacer />
 
-        <!-- Mobile Search and Menu -->
+        <!-- Centered Navigation Links (Desktop only) -->
+        <div class="d-none d-md-flex align-center me-5" style="gap: 24px">
+          <RouterLink to="/home" class="text-white text-decoration-none font-weight-medium"
+            >Home</RouterLink
+          >
+          <RouterLink to="/about" class="text-white text-decoration-none font-weight-medium"
+            >About Us</RouterLink
+          >
+          <RouterLink to="/contact" class="text-white text-decoration-none font-weight-medium"
+            >Contact Us</RouterLink
+          >
+        </div>
+     
+<!--for notification bell-->
+
+  <v-menu v-model="notificationMenu" offset-y close-on-content-click transition="scale-transition">
+      <template #activator="{ props }">
+        <v-btn icon v-bind="props" @click="toggleMenu">
+          <v-icon>mdi-bell</v-icon>
+        </v-btn>
+      </template>
+      <v-card min-width="300">
+        <v-list density="compact">
+          <v-list-item v-for="notification in notifications" :key="notification.id">
+            <v-list-item-content>
+              <v-list-item-title>{{ notification.title }}</v-list-item-title>
+              <v-list-item-subtitle>{{ notification.time }}</v-list-item-subtitle>
+            </v-list-item-content>
+          </v-list-item>
+          <v-divider></v-divider>
+          <v-list-item>
+            <v-list-item-title class="text-center">
+              <v-btn text small @click="notifications = []">Clear All</v-btn>
+            </v-list-item-title>
+          </v-list-item>
+        </v-list>
+      </v-card>
+    </v-menu>
+        <!-- Spacer after center links -->
+        <v-spacer />
+
+      
         <div class="d-flex align-center gap-2">
           <!-- Mobile Menu Button -->
           <v-menu transition="scale-transition" offset-y>
