@@ -27,9 +27,7 @@ const snackbarMsg = ref('')
 
 // NOTIFICATIONS (for bell)
 const notificationMenu = ref(false)
-const notifications = ref([
-  { id: 1, title: 'No new notifications', time: '' }
-])
+const notifications = ref([{ id: 1, title: 'No new notifications', time: '' }])
 const toggleMenu = () => {
   notificationMenu.value = !notificationMenu.value
 }
@@ -37,9 +35,10 @@ const toggleMenu = () => {
 // APPOINTMENTS FETCHING
 const currentUserId = ref(null)
 const appointments = ref([])
-
 const fetchAppointments = async () => {
-  const { data: { user } } = await supabase.auth.getUser()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
   if (!user) return
 
   currentUserId.value = user.id
@@ -48,7 +47,7 @@ const fetchAppointments = async () => {
     .from('appointments')
     .select('*')
     .eq('student_id', currentUserId.value)
-    .eq('status', 'accepted')
+    // 👉 Remove .eq('status', 'accepted')
     .order('appointment_date', { ascending: true })
 
   if (data) {
@@ -68,9 +67,7 @@ const filteredAppointments = computed(() => {
 
   if (searchQuery.value) {
     const query = searchQuery.value.toLowerCase()
-    temp = temp.filter(appointment =>
-      appointment.student_name.toLowerCase().includes(query)
-    )
+    temp = temp.filter((appointment) => appointment.student_name.toLowerCase().includes(query))
   }
 
   if (selectedSort.value === 'A-Z') {
@@ -93,7 +90,11 @@ function performSearch() {
 <template>
   <v-app id="inspire">
     <!-- APP BAR -->
-    <v-app-bar flat :color="currentTheme === 'light' ? '#1565c0' : 'grey-darken-4'" class="px-2 px-md-4">
+    <v-app-bar
+      flat
+      :color="currentTheme === 'light' ? '#1565c0' : 'grey-darken-4'"
+      class="px-2 px-md-4"
+    >
       <v-container fluid class="d-flex align-center justify-space-between pa-0">
         <!-- Logo -->
         <v-avatar color="#fff" size="44" class="mr-2">
@@ -104,9 +105,15 @@ function performSearch() {
 
         <!-- Desktop Links -->
         <div class="d-none d-md-flex align-center me-5" style="gap: 24px">
-          <RouterLink to="/home" class="text-white text-decoration-none font-weight-medium">Home</RouterLink>
-          <RouterLink to="/about" class="text-white text-decoration-none font-weight-medium">About Us</RouterLink>
-          <RouterLink to="/contact" class="text-white text-decoration-none font-weight-medium">Contact Us</RouterLink>
+          <RouterLink to="/home" class="text-white text-decoration-none font-weight-medium"
+            >Home</RouterLink
+          >
+          <RouterLink to="/about" class="text-white text-decoration-none font-weight-medium"
+            >About Us</RouterLink
+          >
+          <RouterLink to="/contact" class="text-white text-decoration-none font-weight-medium"
+            >Contact Us</RouterLink
+          >
         </div>
 
         <v-spacer />
@@ -114,7 +121,12 @@ function performSearch() {
         <!-- Bell + Mobile Menu -->
         <div class="d-flex align-center gap-2">
           <!-- Notification Bell -->
-          <v-menu v-model="notificationMenu" offset-y close-on-content-click transition="scale-transition">
+          <v-menu
+            v-model="notificationMenu"
+            offset-y
+            close-on-content-click
+            transition="scale-transition"
+          >
             <template #activator="{ props }">
               <v-btn icon v-bind="props" @click="toggleMenu">
                 <v-icon>mdi-bell</v-icon>
@@ -144,13 +156,47 @@ function performSearch() {
               <v-app-bar-nav-icon v-bind="props" class="d-md-none" />
             </template>
             <v-list>
-              <v-list-item link><RouterLink to="/home" :class="[currentTheme === 'dark' ? 'text-white' : 'text-black']">Home</RouterLink></v-list-item>
-              <v-list-item link><RouterLink to="/profile" :class="[currentTheme === 'dark' ? 'text-white' : 'text-black']">My Profile</RouterLink></v-list-item>
-              <v-list-item link><RouterLink to="/appointments" :class="[currentTheme === 'dark' ? 'text-white' : 'text-black']">My Appointment</RouterLink></v-list-item>
-              <v-list-item link><RouterLink to="/about" :class="[currentTheme === 'dark' ? 'text-white' : 'text-black']">About Us</RouterLink></v-list-item>
-              <v-list-item link><RouterLink to="/contact" :class="[currentTheme === 'dark' ? 'text-white' : 'text-black']">Contact Us</RouterLink></v-list-item>
+              <v-list-item link
+                ><RouterLink
+                  to="/home"
+                  :class="[currentTheme === 'dark' ? 'text-white' : 'text-black']"
+                  >Home</RouterLink
+                ></v-list-item
+              >
+              <v-list-item link
+                ><RouterLink
+                  to="/profile"
+                  :class="[currentTheme === 'dark' ? 'text-white' : 'text-black']"
+                  >My Profile</RouterLink
+                ></v-list-item
+              >
+              <v-list-item link
+                ><RouterLink
+                  to="/appointments"
+                  :class="[currentTheme === 'dark' ? 'text-white' : 'text-black']"
+                  >My Appointment</RouterLink
+                ></v-list-item
+              >
+              <v-list-item link
+                ><RouterLink
+                  to="/about"
+                  :class="[currentTheme === 'dark' ? 'text-white' : 'text-black']"
+                  >About Us</RouterLink
+                ></v-list-item
+              >
+              <v-list-item link
+                ><RouterLink
+                  to="/contact"
+                  :class="[currentTheme === 'dark' ? 'text-white' : 'text-black']"
+                  >Contact Us</RouterLink
+                ></v-list-item
+              >
               <v-divider></v-divider>
-              <v-list-item link><RouterLink to="/" :class="[currentTheme === 'dark' ? 'text-white' : 'text-black']">Logout</RouterLink></v-list-item>
+              <v-list-item link
+                ><RouterLink to="/" :class="[currentTheme === 'dark' ? 'text-white' : 'text-black']"
+                  >Logout</RouterLink
+                ></v-list-item
+              >
             </v-list>
           </v-menu>
         </div>
@@ -162,7 +208,17 @@ function performSearch() {
       <v-container fluid class="py-2 px-2">
         <v-row justify="center">
           <v-col cols="12" sm="11" md="8">
-            <v-sheet :class="currentTheme === 'dark' ? 'bg-grey-darken-4 text-white' : 'bg-white text-grey-darken-4'" class="pa-3 pa-sm-4 text-center" elevation="1" rounded="lg" style="max-width: 1200px; min-height: 90vh;">
+            <v-sheet
+              :class="
+                currentTheme === 'dark'
+                  ? 'bg-grey-darken-4 text-white'
+                  : 'bg-white text-grey-darken-4'
+              "
+              class="pa-3 pa-sm-4 text-center"
+              elevation="1"
+              rounded="lg"
+              style="max-width: 1200px; min-height: 90vh"
+            >
               <!-- Title -->
               <h1 class="text-h6 text-sm-h5 font-weight-bold mb-3">Appointments</h1>
 
@@ -200,29 +256,27 @@ function performSearch() {
               </v-row>
 
               <!-- Appointment Results -->
-              <div v-if="filteredAppointments.length > 0">
-                <v-list>
-                  <v-list-item
-                    v-for="appointment in filteredAppointments"
-                    :key="appointment.id"
-                  >
-                    <v-list-item-content>
-                      <v-list-item-title>
-                        Appointment with {{ appointment.student_name }}
-                      </v-list-item-title>
-                      <v-list-item-subtitle>
-                        {{ appointment.appointment_date }} at {{ appointment.appointment_time }}
-                      </v-list-item-subtitle>
-                    </v-list-item-content>
-                  </v-list-item>
-                </v-list>
-              </div>
+              <div v-if="appointments.length > 0">
+  <v-list>
+    <v-list-item v-for="appointment in appointments" :key="appointment.id">
+      <v-list-item-title>
+        Appointment with mentor ID {{ appointment.mentor_id }}
+      </v-list-item-title>
+      <v-list-item-subtitle>
+        {{ appointment.appointment_date }} - {{ appointment.appointment_time }}
+      </v-list-item-subtitle>
+    </v-list-item>
+  </v-list>
+</div>
+
+<div v-else>
+  <p>No appointments found.</p>
+</div>
 
               <!-- If No Appointments -->
               <v-alert v-else type="info" variant="tonal" border="start" density="compact">
                 No appointments found. Try searching or adjusting the sort option.
               </v-alert>
-
             </v-sheet>
           </v-col>
         </v-row>
