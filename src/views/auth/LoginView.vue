@@ -70,11 +70,14 @@ const onLogin = async () => {
 
   // If login is successful, navigate to home
   if (data) {
-    formAction.value.formSuccessMessage = 'Successfully Logged In!'
+  formAction.value.formSuccessMessage = 'Successfully Logged In!';
+  
+  // Wait for a bit so the user can see the alert
+  setTimeout(() => {
     router.replace('/home')
-  }
+  }, 1500); // 1.5 seconds
 }
-
+}
 // Form submission handler
 const onFormSubmit = () => {
   refVForm.value?.validate().then(({ valid }) => {
