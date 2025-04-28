@@ -31,16 +31,22 @@ const currentUserProfile = ref({ firstName: '', lastName: '', avatarUrl: '', isP
 const performSearch = () => {}
 
 const fetchCurrentUser = async () => {
-  const { data: { user } } = await supabase.auth.getUser()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
   if (user) {
     currentUserId.value = user.id
-    const { data } = await supabase.from('profiles').select('first_name, last_name, avatar_url, is_public_tutor').eq('id', user.id).single()
+    const { data } = await supabase
+      .from('profiles')
+      .select('first_name, last_name, avatar_url, is_public_tutor')
+      .eq('id', user.id)
+      .single()
     if (data) {
       currentUserProfile.value = {
         firstName: data.first_name || '',
         lastName: data.last_name || '',
         avatarUrl: data.avatar_url || '',
-        isPublicTutor: data.is_public_tutor || false
+        isPublicTutor: data.is_public_tutor || false,
       }
     }
   }
@@ -53,7 +59,10 @@ const fetchTutors = async () => {
 
 const applyOrCancelTutor = async () => {
   const newStatus = !currentUserProfile.value.isPublicTutor
-  await supabase.from('profiles').update({ is_public_tutor: newStatus }).eq('id', currentUserId.value)
+  await supabase
+    .from('profiles')
+    .update({ is_public_tutor: newStatus })
+    .eq('id', currentUserId.value)
   currentUserProfile.value.isPublicTutor = newStatus
   await fetchTutors()
 }
@@ -72,109 +81,185 @@ onMounted(async () => {
   await fetchCurrentUser()
   await fetchTutors()
 })
+
+//for nitification alert
+const snackbar = ref(false)
+const snackbarMsg = ref('')
+const snackbarColor = ref('success') // default color green
+
+const saveAppointment = async () => {
+  try {
+    if (!selectedTutor.value || !selectedDate.value || !selectedTime.value) {
+      snackbarMsg.value = 'Please fill all fields!'
+      snackbarColor.value = 'error' // 🔥 RED if incomplete
+      snackbar.value = true
+      return
+    }
+
+    const { error } = await supabase.from('appointments').insert([
+      {
+        mentor_id: selectedTutor.value.id,
+        student_id: currentUserId.value,
+        student_name: currentUserProfile.firstName + ' ' + currentUserProfile.lastName,
+        message: messageInput.value,
+        appointment_date: selectedDate.value,
+        appointment_time: selectedTime.value,
+        status: 'pending',
+        created_at: new Date(),
+      },
+    ])
+
+    if (error) throw error
+
+    appointmentDialog.value = false
+    selectedDate.value = null
+    selectedTime.value = null
+    messageInput.value = ''
+
+    snackbarMsg.value = 'Appointment request sent successfully!'
+    snackbarColor.value = 'success' // ✅ GREEN if successful
+    snackbar.value = true
+  } catch (err) {
+    console.error('Error saving appointment:', err)
+    snackbarMsg.value = 'Failed to send appointment. Try again.'
+    snackbarColor.value = 'error' // 🔥 RED if failed
+    snackbar.value = true
+  }
+}
 </script>
 <template>
   <v-app id="inspire">
     <!-- App Bar -->
     <v-app-bar flat :color="currentTheme === 'light' ? '#1565c0' : 'grey-darken-4'">
       <v-container class="d-flex align-center justify-space-between">
+        <!-- Logo -->
+        <div class="d-flex align-center gap-4">
+          <v-avatar color="#fff" size="50">
+            <v-img src="image/Teach&Learn.png" alt="Logo" />
+          </v-avatar>
+        </div>
 
-<!-- Logo -->
-<div class="d-flex align-center gap-4">
-  <v-avatar color="#fff" size="50">
-    <v-img src="image/Teach&Learn.png" alt="Logo" />
-  </v-avatar>
-</div>
+        <v-spacer />
 
-<v-spacer />
+        <!-- Desktop Links -->
+        <div class="d-none d-md-flex align-center" style="gap: 24px">
+          <RouterLink to="/home" class="text-white text-decoration-none font-weight-medium"
+            >Home</RouterLink
+          >
+          <RouterLink to="/about" class="text-white text-decoration-none font-weight-medium"
+            >About Us</RouterLink
+          >
+          <RouterLink to="/contact" class="text-white text-decoration-none font-weight-medium"
+            >Contact Us</RouterLink
+          >
+        </div>
 
-<!-- Desktop Links -->
-<div class="d-none d-md-flex align-center" style="gap: 24px">
-  <RouterLink to="/home" class="text-white text-decoration-none font-weight-medium">Home</RouterLink>
-  <RouterLink to="/about" class="text-white text-decoration-none font-weight-medium">About Us</RouterLink>
-  <RouterLink to="/contact" class="text-white text-decoration-none font-weight-medium">Contact Us</RouterLink>
-</div>
+        <v-spacer />
 
-<v-spacer />
+        <!-- Responsive Search + Notification + Mobile Menu -->
+        <v-responsive max-width="320">
+          <div class="d-flex align-center gap-2">
+            <!-- Search Bar -->
+            <v-text-field
+              v-model="searchQuery"
+              placeholder="Search..."
+              variant="solo-filled"
+              density="compact"
+              rounded="lg"
+              flat
+              hide-details
+              single-line
+              class="search-input flex-grow-1"
+              @keydown.enter="performSearch"
+              append-inner-icon="mdi-magnify"
+              @click:append-inner="performSearch"
+            />
 
-<!-- Responsive Search + Notification + Mobile Menu -->
-<v-responsive max-width="320">
-  <div class="d-flex align-center gap-2">
-    
-    <!-- Search Bar -->
-    <v-text-field
-      v-model="searchQuery"
-      placeholder="Search..."
-      variant="solo-filled"
-      density="compact"
-      rounded="lg"
-      flat
-      hide-details
-      single-line
-      class="search-input flex-grow-1"
-      @keydown.enter="performSearch"
-      append-inner-icon="mdi-magnify"
-      @click:append-inner="performSearch"
-    />
+            <!-- Notification Bell -->
+            <v-menu
+              v-model="notificationMenu"
+              offset-y
+              close-on-content-click
+              transition="scale-transition"
+            >
+              <template #activator="{ props }">
+                <v-btn icon v-bind="props" @click="toggleMenu">
+                  <v-icon>mdi-bell</v-icon>
+                </v-btn>
+              </template>
+              <v-card min-width="300">
+                <v-list density="compact">
+                  <v-list-item v-for="notification in notifications" :key="notification.id">
+                    <v-list-item-content>
+                      <v-list-item-title>{{ notification.title }}</v-list-item-title>
+                      <v-list-item-subtitle>{{ notification.time }}</v-list-item-subtitle>
+                    </v-list-item-content>
+                  </v-list-item>
+                  <v-divider></v-divider>
+                  <v-list-item>
+                    <v-list-item-title class="text-center">
+                      <v-btn text small @click="notifications = []">Clear All</v-btn>
+                    </v-list-item-title>
+                  </v-list-item>
+                </v-list>
+              </v-card>
+            </v-menu>
 
-    <!-- Notification Bell -->
-    <v-menu v-model="notificationMenu" offset-y close-on-content-click transition="scale-transition">
-      <template #activator="{ props }">
-        <v-btn icon v-bind="props" @click="toggleMenu">
-          <v-icon>mdi-bell</v-icon>
-        </v-btn>
-      </template>
-      <v-card min-width="300">
-        <v-list density="compact">
-          <v-list-item v-for="notification in notifications" :key="notification.id">
-            <v-list-item-content>
-              <v-list-item-title>{{ notification.title }}</v-list-item-title>
-              <v-list-item-subtitle>{{ notification.time }}</v-list-item-subtitle>
-            </v-list-item-content>
-          </v-list-item>
-          <v-divider></v-divider>
-          <v-list-item>
-            <v-list-item-title class="text-center">
-              <v-btn text small @click="notifications = []">Clear All</v-btn>
-            </v-list-item-title>
-          </v-list-item>
-        </v-list>
-      </v-card>
-    </v-menu>
-
-    <!-- Mobile Hamburger Menu -->
-    <v-menu transition="scale-transition" offset-y>
-      <template #activator="{ props }">
-        <v-app-bar-nav-icon v-bind="props" class="d-md-none" />
-      </template>
-      <v-list>
-        <v-list-item link>
-          <RouterLink to="/" :class="[currentTheme === 'dark' ? 'text-white' : 'text-black']">Home</RouterLink>
-        </v-list-item>
-        <v-list-item link>
-          <RouterLink to="/profile" :class="[currentTheme === 'dark' ? 'text-white' : 'text-black']">My Profile</RouterLink>
-        </v-list-item>
-        <v-list-item link>
-          <RouterLink to="/appointments" :class="[currentTheme === 'dark' ? 'text-white' : 'text-black']">My Appointment</RouterLink>
-        </v-list-item>
-        <v-list-item link>
-          <RouterLink to="/about" :class="[currentTheme === 'dark' ? 'text-white' : 'text-black']">About Us</RouterLink>
-        </v-list-item>
-        <v-list-item link>
-          <RouterLink to="/contact" :class="[currentTheme === 'dark' ? 'text-white' : 'text-black']">Contact Us</RouterLink>
-        </v-list-item>
-        <v-divider></v-divider>
-        <v-list-item link>
-          <RouterLink to="/" :class="[currentTheme === 'dark' ? 'text-white' : 'text-black']">Logout</RouterLink>
-        </v-list-item>
-      </v-list>
-    </v-menu>
-
-  </div> <!-- End of flex -->
-</v-responsive>
-
-</v-container>
-
+            <!-- Mobile Hamburger Menu -->
+            <v-menu transition="scale-transition" offset-y>
+              <template #activator="{ props }">
+                <v-app-bar-nav-icon v-bind="props" class="d-md-none" />
+              </template>
+              <v-list>
+                <v-list-item link>
+                  <RouterLink
+                    to="/"
+                    :class="[currentTheme === 'dark' ? 'text-white' : 'text-black']"
+                    >Home</RouterLink
+                  >
+                </v-list-item>
+                <v-list-item link>
+                  <RouterLink
+                    to="/profile"
+                    :class="[currentTheme === 'dark' ? 'text-white' : 'text-black']"
+                    >My Profile</RouterLink
+                  >
+                </v-list-item>
+                <v-list-item link>
+                  <RouterLink
+                    to="/appointments"
+                    :class="[currentTheme === 'dark' ? 'text-white' : 'text-black']"
+                    >My Appointment</RouterLink
+                  >
+                </v-list-item>
+                <v-list-item link>
+                  <RouterLink
+                    to="/about"
+                    :class="[currentTheme === 'dark' ? 'text-white' : 'text-black']"
+                    >About Us</RouterLink
+                  >
+                </v-list-item>
+                <v-list-item link>
+                  <RouterLink
+                    to="/contact"
+                    :class="[currentTheme === 'dark' ? 'text-white' : 'text-black']"
+                    >Contact Us</RouterLink
+                  >
+                </v-list-item>
+                <v-divider></v-divider>
+                <v-list-item link>
+                  <RouterLink
+                    to="/"
+                    :class="[currentTheme === 'dark' ? 'text-white' : 'text-black']"
+                    >Logout</RouterLink
+                  >
+                </v-list-item>
+              </v-list>
+            </v-menu>
+          </div>
+          <!-- End of flex -->
+        </v-responsive>
+      </v-container>
     </v-app-bar>
 
     <!-- Main -->
@@ -269,7 +354,7 @@ onMounted(async () => {
                 <v-divider></v-divider>
 
                 <!-- Profile Container -->
-                <div class="profile-container" >
+                <div class="profile-container">
                   <div
                     v-if="tutors.length"
                     class="profile-container"
@@ -280,7 +365,12 @@ onMounted(async () => {
                         <div
                           class="mentor-card pa-4 d-flex flex-column align-center"
                           style="border: 1px solid #ccc; border-radius: 12px; width: 250px"
-                          :class="currentTheme === 'dark' ? 'bg-grey-darken-3 text-white' : 'bg-white text-black'">
+                          :class="
+                            currentTheme === 'dark'
+                              ? 'bg-grey-darken-3 text-white'
+                              : 'bg-white text-black'
+                          "
+                        >
                           <!-- Your card content here -->
                           <v-avatar size="100" class="mb-3">
                             <v-img :src="tutor.avatar_url" v-if="tutor.avatar_url" cover>
@@ -330,100 +420,159 @@ onMounted(async () => {
                   </div>
 
                   <v-container>
-          <!-- View More (Profile Details) Dialog -->
-<v-dialog v-model="profileDialog" max-width="500px" transition="scale-transition">
-  <v-card :class="currentTheme === 'dark' ? 'bg-grey-darken-3 text-white' : 'bg-white text-black'">
-    <v-card-text class="text-center py-6 px-4">
-      <h2 class="font-weight-bold mb-4">
-        {{ selectedTutor?.first_name }} {{ selectedTutor?.middle_initial }} {{ selectedTutor?.last_name }}
-      </h2>
+                    <!-- View More (Profile Details) Dialog -->
+                    <v-dialog
+                      v-model="profileDialog"
+                      max-width="500px"
+                      transition="scale-transition"
+                    >
+                      <v-card
+                        :class="
+                          currentTheme === 'dark'
+                            ? 'bg-grey-darken-3 text-white'
+                            : 'bg-white text-black'
+                        "
+                      >
+                        <v-card-text class="text-center py-6 px-4">
+                          <h2 class="font-weight-bold mb-4">
+                            {{ selectedTutor?.first_name }} {{ selectedTutor?.middle_initial }}
+                            {{ selectedTutor?.last_name }}
+                          </h2>
 
-      <v-avatar size="120" class="mb-4 mx-auto">
-        <v-img
-          v-if="selectedTutor?.avatar_url"
-          :src="selectedTutor?.avatar_url"
-          cover
-        >
-          <template #error>
-            <v-icon size="80" color="grey-darken-1">mdi-account</v-icon>
-          </template>
-        </v-img>
-        <v-icon v-else size="80" color="grey-darken-1">mdi-account</v-icon>
-      </v-avatar>
+                          <v-avatar size="120" class="mb-4 mx-auto">
+                            <v-img
+                              v-if="selectedTutor?.avatar_url"
+                              :src="selectedTutor?.avatar_url"
+                              cover
+                            >
+                              <template #error>
+                                <v-icon size="80" color="grey-darken-1">mdi-account</v-icon>
+                              </template>
+                            </v-img>
+                            <v-icon v-else size="80" color="grey-darken-1">mdi-account</v-icon>
+                          </v-avatar>
 
-      <div class="text-start" style="margin: 0 auto; max-width: 300px;">
-        <p><strong>Expertise:</strong> {{ selectedTutor?.expertise || 'No expertise listed' }}</p>
-        <p><strong>Email:</strong> {{ selectedTutor?.email || 'No email provided' }}</p>
-        <p><strong>Phone:</strong> {{ selectedTutor?.phone || 'No phone number' }}</p>
-        <p><strong>About:</strong> {{ selectedTutor?.about || 'No description' }}</p>
-        <p><strong>School:</strong> {{ selectedTutor?.school || 'No school listed' }}</p>
-        <p><strong>Degree:</strong> {{ selectedTutor?.degree || 'No degree listed' }}</p>
-        <p><strong>Year:</strong> {{ selectedTutor?.year || 'No year provided' }}</p>
-      </div>
-    </v-card-text>
+                          <div class="text-start" style="margin: 0 auto; max-width: 300px">
+                            <p>
+                              <strong>Expertise:</strong>
+                              {{ selectedTutor?.expertise || 'No expertise listed' }}
+                            </p>
+                            <p>
+                              <strong>Email:</strong>
+                              {{ selectedTutor?.email || 'No email provided' }}
+                            </p>
+                            <p>
+                              <strong>Phone:</strong>
+                              {{ selectedTutor?.phone || 'No phone number' }}
+                            </p>
+                            <p>
+                              <strong>About:</strong> {{ selectedTutor?.about || 'No description' }}
+                            </p>
+                            <p>
+                              <strong>School:</strong>
+                              {{ selectedTutor?.school || 'No school listed' }}
+                            </p>
+                            <p>
+                              <strong>Degree:</strong>
+                              {{ selectedTutor?.degree || 'No degree listed' }}
+                            </p>
+                            <p>
+                              <strong>Year:</strong> {{ selectedTutor?.year || 'No year provided' }}
+                            </p>
+                          </div>
+                        </v-card-text>
 
-    <v-card-actions class="justify-center pb-4">
-      <v-btn color="primary" @click="profileDialog = false" class="font-weight-bold">CLOSE</v-btn>
-    </v-card-actions>
-  </v-card>
-</v-dialog>
+                        <v-card-actions class="justify-center pb-4">
+                          <v-btn
+                            color="primary"
+                            @click="profileDialog = false"
+                            class="font-weight-bold"
+                            >CLOSE</v-btn
+                          >
+                        </v-card-actions>
+                      </v-card>
+                    </v-dialog>
 
+                    <!-- Appointment Dialog -->
+                    <v-dialog
+                      v-model="appointmentDialog"
+                      max-width="500px"
+                      transition="scale-transition"
+                    >
+                      <v-card
+                        :class="
+                          currentTheme === 'dark'
+                            ? 'bg-grey-darken-3 text-white'
+                            : 'bg-white text-black'
+                        "
+                      >
+                        <v-card-text class="text-center py-6 px-4">
+                          <h2 class="font-weight-bold mb-4">
+                            Appointment with {{ selectedTutor?.first_name || 'Mentor' }}
+                          </h2>
 
-                <!-- Appointment Dialog -->
-<v-dialog v-model="appointmentDialog" max-width="500px" transition="scale-transition">
-  <v-card :class="currentTheme === 'dark' ? 'bg-grey-darken-3 text-white' : 'bg-white text-black'">
-    <v-card-text class="text-center py-6 px-4">
-      <h2 class="font-weight-bold mb-4">
-        Appointment with {{ selectedTutor?.first_name || 'Mentor' }}
-      </h2>
+                          <div class="d-flex flex-column align-center" style="gap: 20px">
+                            <!-- Date Picker -->
+                            <v-date-picker
+                              v-model="selectedDate"
+                              color="primary"
+                              class="mx-auto"
+                              style="max-width: 300px"
+                              @input="onDateSelect"
+                            ></v-date-picker>
 
-      <div class="d-flex flex-column align-center" style="gap: 20px;">
-        <!-- Date Picker -->
-        <v-date-picker
-          v-model="selectedDate"
-          color="primary"
-          class="mx-auto"
-          style="max-width: 300px;"
-          @input="onDateSelect"
-        ></v-date-picker>
+                            <!-- Time Picker (only after date selected) -->
+                            <v-time-picker
+                              v-if="selectedDate"
+                              v-model="selectedTime"
+                              format="12hr"
+                              color="primary"
+                              class="mx-auto"
+                              style="max-width: 300px"
+                              :disabled="!selectedDate"
+                              @change="onTimeSelect"
+                            ></v-time-picker>
 
-        <!-- Time Picker (only after date selected) -->
-        <v-time-picker
-          v-if="selectedDate"
-          v-model="selectedTime"
-          format="12hr"
-          color="primary"
-          class="mx-auto"
-          style="max-width: 300px;"
-          :disabled="!selectedDate"
-          @change="onTimeSelect"
-        ></v-time-picker>
+                            <!-- Message Input -->
+                            <v-textarea
+                              v-if="selectedDate"
+                              v-model="messageInput"
+                              label="Your Message"
+                              placeholder="Type your message here..."
+                              rows="3"
+                              density="compact"
+                              hide-details
+                              style="max-width: 300px"
+                            ></v-textarea>
+                          </div>
+                        </v-card-text>
 
-        <!-- Message Input -->
-        <v-textarea
-          v-if="selectedDate"
-          v-model="messageInput"
-          label="Your Message"
-          placeholder="Type your message here..."
-          rows="3"
-          density="compact"
-          hide-details
-          style="max-width: 300px;"
-        ></v-textarea>
-      </div>
-    </v-card-text>
-
-    <v-card-actions class="justify-center pb-4">
-      <v-btn color="grey" variant="outlined" @click="appointmentDialog = false" class="font-weight-bold">
-        CANCEL
-      </v-btn>
-      <v-btn color="primary" @click="saveAppointment" class="font-weight-bold">
-        SAVE
-      </v-btn>
-    </v-card-actions>
-  </v-card>
-</v-dialog>
-
+                        <v-card-actions class="justify-center pb-4">
+                          <v-btn
+                            color="grey"
+                            variant="outlined"
+                            @click="appointmentDialog = false"
+                            class="font-weight-bold"
+                          >
+                            CANCEL
+                          </v-btn>
+                          <v-btn color="primary" @click="saveAppointment" class="font-weight-bold">
+                            SAVE
+                          </v-btn>
+                        </v-card-actions>
+                      </v-card>
+                    </v-dialog>
+                    <v-snackbar
+                      v-model="snackbar"
+                      :color="snackbarColor"
+                      timeout="3000"
+                      location="top"
+                    >
+                      {{ snackbarMsg }}
+                      <template #actions>
+                        <v-btn icon="mdi-close" variant="text" @click="snackbar = false" />
+                      </template>
+                    </v-snackbar>
                   </v-container>
                 </div>
               </v-sheet>
