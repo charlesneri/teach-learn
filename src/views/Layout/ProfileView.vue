@@ -300,62 +300,84 @@ const applyAsTutor = async () => {
   <v-app id="inspire">
     <!-- APP BAR -->
     <v-app-bar flat :color="currentTheme === 'light' ? '#1565c0' : 'grey-darken-4'">
-      <v-container class="d-flex align-center justify-space-between pa-2">
-        <v-avatar color="#fff" size="44">
-          <v-img src="/image/Teach&Learn.png" alt="Logo" />
-        </v-avatar>
+      <v-container fluid class="d-flex align-center justify-space-between pa-0">
+  <!-- Logo -->
+  <v-avatar color="#fff" size="44" class="mr-2">
+    <v-img src="image/Teach&Learn.png" alt="Logo" />
+  </v-avatar>
 
-        <v-spacer />
+  <!-- Spacer -->
+  <v-spacer />
 
-        <div class="d-none d-md-flex align-center" style="gap: 24px">
-          <RouterLink to="/home" class="text-white text-decoration-none font-weight-medium"
-            >Home</RouterLink
-          >
-          <RouterLink to="/about" class="text-white text-decoration-none font-weight-medium"
-            >About Us</RouterLink
-          >
-          <RouterLink to="/contact" class="text-white text-decoration-none font-weight-medium"
-            >Contact Us</RouterLink
-          >
-        </div>
+  <!-- Centered Desktop Links -->
+  <div class="d-none d-md-flex align-center me-5" style="gap: 24px">
+    <RouterLink to="/home" class="text-white text-decoration-none font-weight-medium">Home</RouterLink>
+    <RouterLink to="/about" class="text-white text-decoration-none font-weight-medium">About Us</RouterLink>
+    <RouterLink to="/contact" class="text-white text-decoration-none font-weight-medium">Contact Us</RouterLink>
+  </div>
 
-        <v-spacer />
+  <!-- Spacer -->
+  <v-spacer />
 
-        <v-menu transition="scale-transition" offset-y>
-          <template #activator="{ props }">
-            <v-app-bar-nav-icon v-bind="props" class="d-md-none" />
-          </template>
-          <v-list>
-            <v-list-item
-              ><RouterLink to="/home" class="text-decoration-none">Home</RouterLink></v-list-item
-            >
-            <v-list-item
-              ><RouterLink to="/profile" class="text-decoration-none"
-                >My Profile</RouterLink
-              ></v-list-item
-            >
-            <v-list-item
-              ><RouterLink to="/appointments" class="text-decoration-none"
-                >My Appointments</RouterLink
-              ></v-list-item
-            >
-            <v-list-item
-              ><RouterLink to="/about" class="text-decoration-none"
-                >About Us</RouterLink
-              ></v-list-item
-            >
-            <v-list-item
-              ><RouterLink to="/contact" class="text-decoration-none"
-                >Contact Us</RouterLink
-              ></v-list-item
-            >
-            <v-divider></v-divider>
-            <v-list-item link @click="onLogout">
-              <v-btn text class="text-decoration-none">Logout</v-btn>
-            </v-list-item>
-          </v-list>
-        </v-menu>
-      </v-container>
+  <!-- Notification Bell + Mobile Menu together -->
+  <div class="d-flex align-center gap-2">
+    
+    <!-- Notification Bell -->
+    <v-menu v-model="notificationMenu" offset-y close-on-content-click transition="scale-transition">
+      <template #activator="{ props }">
+        <v-btn icon v-bind="props" @click="toggleMenu">
+          <v-icon>mdi-bell</v-icon>
+        </v-btn>
+      </template>
+      <v-card min-width="300">
+        <v-list density="compact">
+          <v-list-item v-for="notification in notifications" :key="notification.id">
+            <v-list-item-content>
+              <v-list-item-title>{{ notification.title }}</v-list-item-title>
+              <v-list-item-subtitle>{{ notification.time }}</v-list-item-subtitle>
+            </v-list-item-content>
+          </v-list-item>
+          <v-divider></v-divider>
+          <v-list-item>
+            <v-list-item-title class="text-center">
+              <v-btn text small @click="notifications = []">Clear All</v-btn>
+            </v-list-item-title>
+          </v-list-item>
+        </v-list>
+      </v-card>
+    </v-menu>
+
+    <!-- Mobile Menu (only shows in mobile) -->
+    <v-menu transition="scale-transition" offset-y>
+      <template #activator="{ props }">
+        <v-app-bar-nav-icon v-bind="props" class="d-md-none" />
+      </template>
+      <v-list>
+        <v-list-item link>
+          <RouterLink to="/" :class="[currentTheme === 'dark' ? 'text-white' : 'text-black']">Home</RouterLink>
+        </v-list-item>
+        <v-list-item link>
+          <RouterLink to="/profile" :class="[currentTheme === 'dark' ? 'text-white' : 'text-black']">My Profile</RouterLink>
+        </v-list-item>
+        <v-list-item link>
+          <RouterLink to="/appointments" :class="[currentTheme === 'dark' ? 'text-white' : 'text-black']">My Appointment</RouterLink>
+        </v-list-item>
+        <v-list-item link>
+          <RouterLink to="/about" :class="[currentTheme === 'dark' ? 'text-white' : 'text-black']">About Us</RouterLink>
+        </v-list-item>
+        <v-list-item link>
+          <RouterLink to="/contact" :class="[currentTheme === 'dark' ? 'text-white' : 'text-black']">Contact Us</RouterLink>
+        </v-list-item>
+        <v-divider></v-divider>
+        <v-list-item link>
+          <RouterLink to="/" :class="[currentTheme === 'dark' ? 'text-white' : 'text-black']">Logout</RouterLink>
+        </v-list-item>
+      </v-list>
+    </v-menu>
+
+  </div>
+</v-container>
+
     </v-app-bar>
 
     <!-- MAIN CONTENT -->
@@ -426,15 +448,16 @@ const applyAsTutor = async () => {
               </div>
 
               <!-- button for apply as tutor or cancel -->
-              <v-btn
-  :color="profile.isPublicTutor ? 'red' : 'primary'"
-  class="mb-3"
-  @click="dialog = true"
-  :loading="loading"
->
-  {{ profile.isPublicTutor ? 'Cancel Apply' : 'Apply as Tutor?' }}
-</v-btn>
-              <!-- Confirm Dialog: Apply as Tutor -->
+              <div class="d-flex justify-center mb-3">
+  <v-btn
+    :color="profile.isPublicTutor ? 'red' : 'primary'"
+    @click="dialog = true"
+    :loading="loading"
+  >
+    {{ profile.isPublicTutor ? 'Cancel Apply' : 'Apply as Tutor?' }}
+  </v-btn>
+</div>
+           
               <!-- Confirm Dialog: Apply as Tutor -->
               <v-dialog v-model="dialog" max-width="500" persistent>
                 <v-card>
