@@ -3,12 +3,6 @@ import { ref, onMounted, watch, computed } from 'vue'
 import { useTheme } from 'vuetify'
 import { supabase } from '@/utils/supabase'
 
-<<<<<<< HEAD
-// THEME
-const theme = useTheme()
-const currentTheme = ref(localStorage.getItem('theme') || 'light')
-
-=======
 // THEME SETUP
 const theme = useTheme()
 const currentTheme = ref(localStorage.getItem('theme') || 'light')
@@ -18,31 +12,24 @@ const toggleTheme = () => {
   theme.global.name.value = currentTheme.value
   localStorage.setItem('theme', currentTheme.value)
 }
-<<<<<<< HEAD
->>>>>>> feat/supabase
-=======
 
->>>>>>> development2
 watch(currentTheme, (val) => {
   theme.global.name.value = val
   localStorage.setItem('theme', val)
 })
 
-<<<<<<< HEAD
-const toggleTheme = () => {
-  currentTheme.value = currentTheme.value === 'light' ? 'dark' : 'light'
-  theme.global.name.value = currentTheme.value
-  localStorage.setItem('theme', currentTheme.value)
-}
-
 // STATES
+const searchQuery = ref('')
+const selectedSort = ref('Date')
+const notificationMenu = ref(false)
+const notifications = ref([{ id: 1, title: 'No new notifications', time: '' }])
+
 const currentUserId = ref(null)
 const appointments = ref([])
+const snackbar = ref(false)
+const snackbarMsg = ref('')
 
-const searchQuery = ref('')
-const selectedSort = ref('Date') // Default sort
-
-// Fetch current user
+// Fetch Current User
 const fetchCurrentUser = async () => {
   const { data: { user } } = await supabase.auth.getUser()
   if (user) {
@@ -50,181 +37,38 @@ const fetchCurrentUser = async () => {
   }
 }
 
-// Fetch accepted appointments where user is the student
+// Fetch Appointments (accepted only)
 const fetchAppointments = async () => {
   if (!currentUserId.value) return
 
-  const { data } = await supabase
+  const { data, error } = await supabase
     .from('appointments')
     .select('*')
     .eq('student_id', currentUserId.value)
     .eq('status', 'accepted')
     .order('appointment_date', { ascending: true })
 
-  appointments.value = data || []
+  if (error) {
+    console.error('Error fetching appointments:', error)
+  } else {
+    appointments.value = data || []
+  }
 }
 
-// COMPUTED: Filtered and Sorted Appointments
+// Computed: Filtered + Sorted Appointments
 const filteredAppointments = computed(() => {
-  let filtered = [...appointments.value]
+  let temp = [...appointments.value]
 
   if (searchQuery.value.trim()) {
     const term = searchQuery.value.toLowerCase()
-    filtered = filtered.filter((a) =>
-      a.student_name.toLowerCase().includes(term) ||
+    temp = temp.filter(a =>
+      a.student_name?.toLowerCase().includes(term) ||
       a.message?.toLowerCase().includes(term)
     )
   }
 
   if (selectedSort.value === 'A-Z') {
-    filtered.sort((a, b) => a.student_name.localeCompare(b.student_name))
-  } else if (selectedSort.value === 'Date') {
-    filtered.sort((a, b) => new Date(a.appointment_date) - new Date(b.appointment_date))
-  }
-
-  return filtered
-})
-
-// Cancel appointment
-const cancelAppointment = async (appointmentId) => {
-  try {
-    const { error } = await supabase
-      .from('appointments')
-      .update({ status: 'cancelled' })
-      .eq('id', appointmentId)
-
-    if (error) throw error
-
-    await fetchAppointments()
-  } catch (error) {
-    console.error('Error cancelling appointment:', error)
-  }
-}
-
-// MOUNT
-onMounted(async () => {
-  theme.global.name.value = currentTheme.value
-  await fetchCurrentUser()
-  await fetchAppointments()
-})
-</script>
-
-
-<template>
-  <v-app id="inspire">
-
-     <!-- App Bar -->
-     <v-app-bar
-=======
-// SEARCH + SORT
-const searchQuery = ref('')
-const selectedSort = ref('')
-
-// SNACKBAR
-const snackbar = ref(false)
-const snackbarMsg = ref('')
-
-// NOTIFICATIONS
-const notificationMenu = ref(false)
-const notifications = ref([{ id: 1, title: 'No new notifications', time: '' }])
-
-const toggleMenu = () => {
-  notificationMenu.value = !notificationMenu.value
-}
-
-// USER + APPOINTMENTS
-const currentUserId = ref(null)
-const appointments = ref([])
-
-// Fetch Student Appointments
-const fetchStudentAppointments = async () => {
-  const { data, error } = await supabase
-    .from('appointments')
-    .select(
-      `
-      id,
-      appointment_date,
-      appointment_time,
-      message,
-      status,
-      mentor:mentor_id(id, first_name, last_name),
-      student:student_id(id, first_name, last_name)
-    `,
-    )
-    .eq('student_id', currentUserId.value)
-    .order('appointment_date', { ascending: true })
-
-  if (error) {
-    console.error('Error fetching student appointments:', error)
-    return []
-  }
-  return data || []
-}
-
-// Fetch Mentor Appointments
-const fetchMentorAppointments = async () => {
-  const { data, error } = await supabase
-    .from('appointments')
-    .select(
-      `
-      id,
-      appointment_date,
-      appointment_time,
-      message,
-      status,
-      mentor:mentor_id(id, first_name, last_name),
-      student:student_id(id, first_name, last_name)
-    `,
-    )
-    .eq('mentor_id', currentUserId.value)
-    .order('appointment_date', { ascending: true })
-
-  if (error) {
-    console.error('Error fetching mentor appointments:', error)
-    return []
-  }
-  return data || []
-}
-
-// Fetch Both (Student and Mentor) Appointments
-const fetchAppointments = async () => {
-  const { data: userData, error: userError } = await supabase.auth.getUser()
-  if (userError || !userData?.user) {
-    console.error('Error fetching user:', userError)
-    return
-  }
-
-  currentUserId.value = userData.user.id
-
-  const [studentAppointments, mentorAppointments] = await Promise.all([
-    fetchStudentAppointments(),
-    fetchMentorAppointments(),
-  ])
-
-  appointments.value = [...studentAppointments, ...mentorAppointments]
-}
-
-// Computed: Sorted and Filtered Appointments
-const filteredAppointments = computed(() => {
-  let temp = [...appointments.value]
-
-  if (searchQuery.value.trim()) {
-    const query = searchQuery.value.toLowerCase()
-    temp = temp.filter((appointment) => {
-      const studentName =
-        `${appointment.student?.first_name || ''} ${appointment.student?.last_name || ''}`.toLowerCase()
-      const mentorName =
-        `${appointment.mentor?.first_name || ''} ${appointment.mentor?.last_name || ''}`.toLowerCase()
-      return studentName.includes(query) || mentorName.includes(query)
-    })
-  }
-
-  if (selectedSort.value === 'A-Z') {
-    temp.sort((a, b) => {
-      const nameA = `${a.student?.first_name || ''} ${a.student?.last_name || ''}`.toLowerCase()
-      const nameB = `${b.student?.first_name || ''} ${b.student?.last_name || ''}`.toLowerCase()
-      return nameA.localeCompare(nameB)
-    })
+    temp.sort((a, b) => (a.student_name || '').localeCompare(b.student_name || ''))
   } else if (selectedSort.value === 'Date') {
     temp.sort((a, b) => new Date(a.appointment_date) - new Date(b.appointment_date))
   }
@@ -232,528 +76,173 @@ const filteredAppointments = computed(() => {
   return temp
 })
 
-// Perform Search
-const performSearch = () => {
-  if (searchQuery.value.trim()) {
-    snackbarMsg.value = `You searched for: "${searchQuery.value}"`
+// Cancel Appointment
+const cancelAppointment = async (id) => {
+  try {
+    const { error } = await supabase
+      .from('appointments')
+      .update({ status: 'cancelled' })
+      .eq('id', id)
+
+    if (error) throw error
+
+    snackbarMsg.value = 'Appointment cancelled.'
+    snackbar.value = true
+    await fetchAppointments()
+  } catch (error) {
+    console.error('Error cancelling:', error)
+    snackbarMsg.value = 'Failed to cancel.'
     snackbar.value = true
   }
 }
 
-// LIFECYCLE: Mounted
-onMounted(() => {
-  fetchAppointments()
-})
-
-//clickable view more button
-// Add these states
-const selectedAppointment = ref(null)
-const selectedStudentProfile = ref(null)
-const detailsDialog = ref(false)
-
-// When you click "View Details"
-const openAppointmentDetails = async (appointment) => {
-  selectedAppointment.value = appointment
-  selectedStudentProfile.value = null // reset first
-
-  // Fetch student profile from Supabase
-  const { data, error } = await supabase
-    .from('profiles')
-    .select(
-      'first_name, last_name, email, phone, about, school, degree, year, expertise, avatar_url',
-    )
-    .eq('id', appointment.student?.id)
-    .single()
-
-  if (error) {
-    console.error('Error fetching student profile:', error)
-  } else {
-    selectedStudentProfile.value = data
-  }
-
-  detailsDialog.value = true
+// Perform search manually
+const performSearch = () => {
+  snackbarMsg.value = `You searched: "${searchQuery.value}"`
+  snackbar.value = true
 }
-</script>
 
+// ON MOUNT
+onMounted(async () => {
+  theme.global.name.value = currentTheme.value
+  await fetchCurrentUser()
+  await fetchAppointments()
+})
+</script>
 <template>
   <v-app id="inspire">
-    <!-- APP BAR -->
-    <v-app-bar
->>>>>>> feat/supabase
-      flat
-      :color="currentTheme === 'light' ? '#1565c0' : 'grey-darken-4'"
-      class="px-2 px-md-4"
-    >
-      <v-container fluid class="d-flex align-center justify-space-between pa-0">
-        <!-- Logo -->
-        <v-avatar color="#fff" size="44" class="mr-2">
+    <!-- App Bar -->
+    <v-app-bar flat :color="currentTheme === 'light' ? '#1565c0' : 'grey-darken-4'" class="px-4">
+      <v-container class="d-flex align-center justify-space-between pa-0">
+        <v-avatar color="white" size="44">
           <v-img src="image/Teach&Learn.png" alt="Logo" />
         </v-avatar>
 
         <v-spacer />
 
-        <!-- Desktop Links -->
-        <div class="d-none d-md-flex align-center me-5" style="gap: 24px">
-          <RouterLink
-            to="/home"
-            class="active-click text-white text-decoration-none font-weight-medium"
-            >Home</RouterLink
-          >
-          <RouterLink
-            to="/about"
-            class="active-click text-white text-decoration-none font-weight-medium"
-            >About Us</RouterLink
-          >
-          <RouterLink
-            to="/contact"
-            class="active-click text-white text-decoration-none font-weight-medium"
-            >Contact Us</RouterLink
-          >
+        <div class="d-none d-md-flex align-center" style="gap: 24px">
+          <RouterLink to="/home" class="nav-link">Home</RouterLink>
+          <RouterLink to="/about" class="nav-link">About Us</RouterLink>
+          <RouterLink to="/contact" class="nav-link">Contact Us</RouterLink>
         </div>
 
         <v-spacer />
 
-<<<<<<< HEAD
-  <!-- Notification Bell + Mobile Menu together -->
-  <div class="d-flex align-center gap-2 ">
-    
-    <!-- Notification Bell -->
-    <v-menu v-model="notificationMenu" offset-y close-on-content-click transition="scale-transition">
-    <template #activator="{ props }">
-      <v-btn icon v-bind="props" @click="toggleMenu">
-        <v-icon>mdi-bell</v-icon>
-      </v-btn>
-    </template>
-    <v-card min-width="300">
-      <v-list density="compact">
-        <v-list-item v-for="notification in notifications" :key="notification.id">
-          <v-list-item-content>
-            <v-list-item-title>{{ notification.title }}</v-list-item-title>
-            <v-list-item-subtitle>{{ notification.time }}</v-list-item-subtitle>
-          </v-list-item-content>
-        </v-list-item>
-        <v-divider></v-divider>
-        <v-list-item>
-          <v-list-item-title class="text-center">
-            <v-btn text small @click="notifications = []">Clear All</v-btn>
-          </v-list-item-title>
-        </v-list-item>
-      </v-list>
-    </v-card>
-  </v-menu>
-    <!-- Mobile Menu (only shows in mobile) -->
-    <v-menu transition="scale-transition" offset-y>
-      <template #activator="{ props }">
-        <v-app-bar-nav-icon v-bind="props" class="d-md-none" />
-      </template>
-      <v-list>
-        <v-list-item link>
-          <RouterLink to="/home" :class="[currentTheme === 'dark' ? 'text-white' : 'text-black']">Home</RouterLink>
-        </v-list-item>
-        <v-list-item link>
-          <RouterLink to="/profile" :class="[currentTheme === 'dark' ? 'text-white' : 'text-black']">My Profile</RouterLink>
-        </v-list-item>
-        <v-list-item link>
-          <RouterLink to="/appointments" :class="[currentTheme === 'dark' ? 'text-white' : 'text-black']">My Appointment</RouterLink>
-        </v-list-item>
-        <v-list-item link>
-          <RouterLink to="/about" :class="[currentTheme === 'dark' ? 'text-white' : 'text-black']">About Us</RouterLink>
-        </v-list-item>
-        <v-list-item link>
-          <RouterLink to="/contact" :class="[currentTheme === 'dark' ? 'text-white' : 'text-black']">Contact Us</RouterLink>
-        </v-list-item>
-        <v-divider></v-divider>
-        <v-list-item link>
-          <RouterLink to="/" :class="[currentTheme === 'dark' ? 'text-white' : 'text-black']">Logout</RouterLink>
-        </v-list-item>
-      </v-list>
-    </v-menu>
-
-  </div>
-</v-container>
-=======
-        <!-- Bell + Mobile Menu -->
-        <div class="d-flex align-center gap-2">
-          <!-- Notification Bell -->
-          <v-menu
-            v-model="notificationMenu"
-            offset-y
-            close-on-content-click
-            transition="scale-transition"
-          >
-            <template #activator="{ props }">
-              <v-btn icon v-bind="props" @click="toggleMenu">
-                <v-icon>mdi-bell</v-icon>
-              </v-btn>
-            </template>
-            <v-card min-width="300">
-              <v-list density="compact">
-                <v-list-item v-for="notification in notifications" :key="notification.id">
-                  <v-list-item-content>
-                    <v-list-item-title>{{ notification.title }}</v-list-item-title>
-                    <v-list-item-subtitle>{{ notification.time }}</v-list-item-subtitle>
-                  </v-list-item-content>
-                </v-list-item>
-                <v-divider></v-divider>
-                <v-list-item>
-                  <v-list-item-title class="text-center">
-                    <v-btn text small @click="notifications = []">Clear All</v-btn>
-                  </v-list-item-title>
-                </v-list-item>
-              </v-list>
-            </v-card>
-          </v-menu>
->>>>>>> feat/supabase
-
-          <!-- Mobile Hamburger Menu -->
-          <v-menu transition="scale-transition" offset-y>
-            <template #activator="{ props }">
-              <v-app-bar-nav-icon v-bind="props" class="d-md-none" />
-            </template>
-            <v-list>
-              <v-list-item link
-                ><RouterLink
-                  to="/home"
-                  :class="[currentTheme === 'dark' ? 'text-white' : 'text-black']"
-                  >Home</RouterLink
-                ></v-list-item
-              >
-              <v-list-item link
-                ><RouterLink
-                  to="/profile"
-                  :class="[currentTheme === 'dark' ? 'text-white' : 'text-black']"
-                  >My Profile</RouterLink
-                ></v-list-item
-              >
-              <v-list-item link
-                ><RouterLink
-                  to="/appointments"
-                  :class="[currentTheme === 'dark' ? 'text-white' : 'text-black']"
-                  >My Appointment</RouterLink
-                ></v-list-item
-              >
-              <v-list-item link
-                ><RouterLink
-                  to="/about"
-                  :class="[currentTheme === 'dark' ? 'text-white' : 'text-black']"
-                  >About Us</RouterLink
-                ></v-list-item
-              >
-              <v-list-item link
-                ><RouterLink
-                  to="/contact"
-                  :class="[currentTheme === 'dark' ? 'text-white' : 'text-black']"
-                  >Contact Us</RouterLink
-                ></v-list-item
-              >
-              <v-divider></v-divider>
-              <v-list-item link
-                ><RouterLink to="/" :class="[currentTheme === 'dark' ? 'text-white' : 'text-black']"
-                  >Logout</RouterLink
-                ></v-list-item
-              >
+        <!-- Notifications + Mobile Menu -->
+        <v-menu v-model="notificationMenu" offset-y>
+          <template #activator="{ props }">
+            <v-btn icon v-bind="props">
+              <v-icon>mdi-bell</v-icon>
+            </v-btn>
+          </template>
+          <v-card min-width="300">
+            <v-list density="compact">
+              <v-list-item v-for="notif in notifications" :key="notif.id">
+                <v-list-item-content>
+                  <v-list-item-title>{{ notif.title }}</v-list-item-title>
+                  <v-list-item-subtitle>{{ notif.time }}</v-list-item-subtitle>
+                </v-list-item-content>
+              </v-list-item>
             </v-list>
-          </v-menu>
-        </div>
+          </v-card>
+        </v-menu>
+
+        <v-menu transition="scale-transition" offset-y>
+          <template #activator="{ props }">
+            <v-app-bar-nav-icon v-bind="props" class="d-md-none" />
+          </template>
+          <v-list>
+            <v-list-item link><RouterLink to="/home" class="nav-link">Home</RouterLink></v-list-item>
+            <v-list-item link><RouterLink to="/profile" class="nav-link">Profile</RouterLink></v-list-item>
+            <v-list-item link><RouterLink to="/appointments" class="nav-link">Appointments</RouterLink></v-list-item>
+            <v-list-item link><RouterLink to="/about" class="nav-link">About Us</RouterLink></v-list-item>
+            <v-list-item link><RouterLink to="/contact" class="nav-link">Contact Us</RouterLink></v-list-item>
+            <v-divider />
+            <v-list-item link><RouterLink to="/" class="nav-link">Logout</RouterLink></v-list-item>
+          </v-list>
+        </v-menu>
       </v-container>
     </v-app-bar>
-<<<<<<< HEAD
+
+    <!-- Main Content -->
     <v-main :class="currentTheme === 'dark' ? 'bg-grey-darken-4 text-white' : 'bg-grey-lighten-3'">
       <v-container fluid class="py-6 px-4">
         <v-row justify="center">
-          <v-col cols="12" sm="11" md="8">
-            <v-sheet
-              :class="currentTheme === 'dark' ? 'bg-grey-darken-3 text-white' : 'bg-white text-black'"
-              class="pa-4 text-center"
-              elevation="1"
-              rounded="lg"
-              style="max-width: 1200px; min-height: 90vh;"
-            >
-              <h1 class="text-h6 text-sm-h5 font-weight-bold mb-4">My Appointments</h1>
-  
-              <!-- Search and Sort -->
-              <v-row class="mb-4" dense>
-=======
+          <v-col cols="12" md="10" lg="8">
+            <v-sheet class="pa-4" rounded="lg" elevation="2">
+              <h2 class="font-weight-bold mb-4 text-center">My Appointments</h2>
 
-    <!-- MAIN CONTENT -->
-    <v-main :class="currentTheme === 'dark' ? 'bg-grey-darken-4 text-white' : 'bg-grey-lighten-3'">
-      <v-container fluid class="py-2 px-2">
-        <v-row justify="center">
-          <v-col cols="12" sm="11" md="8">
-            <v-sheet
-              :class="
-                currentTheme === 'dark'
-                  ? 'bg-grey-darken-4 text-white'
-                  : 'bg-white text-grey-darken-4'
-              "
-              class="pa-3 pa-sm-4 text-center"
-              elevation="1"
-              rounded="lg"
-              style="max-width: 1200px; min-height: 90vh"
-            >
-              <!-- Title -->
-              <h1 class="text-h6 text-sm-h5 font-weight-bold mb-3">Appointments</h1>
-
-              <!-- Search & Sort -->
-              <v-row class="mb-3" dense>
->>>>>>> feat/supabase
-                <v-col cols="12" sm="6">
+              <!-- Search + Sort -->
+              <v-row dense class="mb-4">
+                <v-col cols="12" md="6">
                   <v-text-field
                     v-model="searchQuery"
-                    placeholder="Search"
-                    variant="solo-filled"
-                    density="comfortable"
-                    rounded="lg"
-                    flat
-                    hide-details
-                    single-line
+                    placeholder="Search..."
                     append-inner-icon="mdi-magnify"
-<<<<<<< HEAD
-                    @keydown.enter.prevent
-=======
                     @keydown.enter="performSearch"
                     @click:append-inner="performSearch"
->>>>>>> feat/supabase
-                    class="elevation-0"
+                    solo-filled
+                    rounded
+                    dense
                   />
                 </v-col>
-                <v-col cols="12" sm="6">
+                <v-col cols="12" md="6">
                   <v-select
                     v-model="selectedSort"
                     :items="['A-Z', 'Date']"
-                    label="Sort"
-                    variant="solo-filled"
-                    density="comfortable"
-                    rounded="lg"
-                    flat
-                    hide-details
-                    class="elevation-0"
+                    label="Sort by"
+                    solo-filled
+                    rounded
+                    dense
                   />
                 </v-col>
               </v-row>
-<<<<<<< HEAD
-  
-              <!-- Appointments Cards -->
-              <v-row v-if="filteredAppointments.length > 0" dense>
-                <v-col
-                  v-for="appointment in filteredAppointments"
-                  :key="appointment.id"
-                  cols="12" sm="6" md="4"
-                >
-                  <v-card
-                    elevation="2"
-                    class="pa-4 d-flex flex-column justify-space-between"
-                    :class="currentTheme === 'dark' ? 'bg-grey-darken-3 text-white' : 'bg-white text-black'"
-                  >
-                    <div>
-                      <v-card-title class="text-h6">{{ appointment.student_name }}</v-card-title>
-                      <v-card-subtitle>{{ appointment.appointment_date }} at {{ appointment.appointment_time }}</v-card-subtitle>
-                      <v-card-text>
-                        <p v-if="appointment.message"><strong>Message:</strong> {{ appointment.message }}</p>
-                      </v-card-text>
-                    </div>
-                    <v-card-actions class="justify-center mt-4">
-                      <v-btn
-                        color="red"
-                        variant="outlined"
-                        size="small"
-                        @click="cancelAppointment(appointment.id)"
-                      >
-                        Cancel Appointment
-                      </v-btn>
-                    </v-card-actions>
-                  </v-card>
-                </v-col>
-              </v-row>
-  
-              <!-- If No Appointments -->
-              <v-row v-else>
-                <v-col cols="12" class="text-center">
-                  <v-alert
-                    type="info"
-                    variant="tonal"
-                    border="start"
-                    density="compact"
-                    class="mt-6"
-                  >
-                    No accepted appointments found. Book an appointment or wait for approval.
-                  </v-alert>
-                </v-col>
-              </v-row>
-  
-=======
 
-              <!-- Appointment Results -->
-              <div v-if="filteredAppointments.length > 0" class="appointments-container">
-                <v-list class="appointments-list">
-                  <v-list-item
+              <!-- Appointment Cards -->
+              <v-row dense>
+                <template v-if="filteredAppointments.length > 0">
+                  <v-col
                     v-for="appointment in filteredAppointments"
                     :key="appointment.id"
-                    class="appointment-item"
-                    :class="
-                      currentTheme === 'dark'
-                        ? 'bg-grey-darken-3 text-white'
-                        : 'bg-white text-black'
-                    "
+                    cols="12"
+                    sm="6"
+                    md="4"
                   >
-                    <v-list-item-title class="appointment-title">
-                      Appointment between
-                      <br />
-                      <strong
-                        >{{ appointment.student?.first_name }}
-                        {{ appointment.student?.last_name }}</strong
-                      >
-                      <br />
-                      and
-                      <br />
-                      <strong
-                        >{{ appointment.mentor?.first_name }}
-                        {{ appointment.mentor?.last_name }}</strong
-                      >
-                    </v-list-item-title>
+                    <v-card class="pa-4" :class="currentTheme === 'dark' ? 'bg-grey-darken-2' : ''" outlined>
+                      <v-card-title>{{ appointment.student_name }}</v-card-title>
+                      <v-card-subtitle>{{ appointment.appointment_date }} at {{ appointment.appointment_time }}</v-card-subtitle>
+                      <v-card-text>
+                        <div><strong>Message:</strong> {{ appointment.message || 'No message' }}</div>
+                      </v-card-text>
+                      <v-card-actions>
+                        <v-btn color="red" variant="outlined" size="small" @click="cancelAppointment(appointment.id)">
+                          Cancel
+                        </v-btn>
+                      </v-card-actions>
+                    </v-card>
+                  </v-col>
+                </template>
 
-                    <v-list-item-subtitle class="appointment-subtitle">
-                      Date: {{ appointment.appointment_date }} at {{ appointment.appointment_time }}
-                      <br />
-                      Status: {{ appointment.status }}
-                    </v-list-item-subtitle>
-
-                    <!-- View Details -->
-                    <div >
-                      <span
-  @click="openAppointmentDetails(appointment)"
-  class="text-center text-decoration-none text-primary cursor-pointer"
->
-  View Details
-</span>
-   <v-spacer></v-spacer>
-<span
-  @click="openAppointmentDetails(appointment)"
-  class="text-center text-decoration-none text-primary cursor-pointer"
->
-  Delete Appointment
-</span>
-                    </div>
-                
-                 
-                  </v-list-item>
-                </v-list>
-                <v-dialog v-model="detailsDialog" max-width="600px" transition="scale-transition">
-                  <v-card
-                    :class="
-                      currentTheme === 'dark'
-                        ? 'bg-grey-darken-3 text-white'
-                        : 'bg-white text-black'
-                    "
-                  >
-                    <v-card-title class="text-h6 font-weight-bold text-center">
-                      Appointment & Student Details
-                    </v-card-title>
-
-                    <v-card-text class="text-start">
-                    
-
-
-                      <div v-if="selectedStudentProfile">
-                        <h3 class="font-weight-bold mb-2 text-center mt-5 mb-10">Student Profile</h3>
-
-                        <!-- Avatar -->
-                        <div class="text-center mb-4">
-                          <v-avatar size="100">
-                            <v-img
-                              v-if="selectedStudentProfile.avatar_url"
-                              :src="selectedStudentProfile.avatar_url"
-                              cover
-                            >
-                              <template #error>
-                                <v-icon size="80" color="grey-darken-1">mdi-account</v-icon>
-                              </template>
-                            </v-img>
-                            <v-icon v-else size="80" color="grey-darken-1">mdi-account</v-icon>
-                          </v-avatar>
-                        </div>
-
-                        <!-- Profile Info -->
-                        <p class="text-center">
-                          <strong >Name:</strong><br> {{ selectedStudentProfile.first_name }}
-                          {{ selectedStudentProfile.last_name }}
-                        </p class="text-center">
-                        <p class="text-center"><strong >Email:</strong><br> {{ selectedStudentProfile.email }}</p>
-                        <p class="text-center">
-                          <strong>Phone:</strong><br>
-                          {{ selectedStudentProfile.phone || 'No phone number' }}
-                        </p>
-                        <p class="text-center">
-                          <strong>Expertise:</strong><br>
-                          {{ selectedStudentProfile.expertise || 'Not specified' }}
-                        </p>
-                        <p class="text-center">
-                          <strong>School:</strong><br>
-                          {{ selectedStudentProfile.school || 'No school listed' }}
-                        </p>
-                        <p class="text-center">
-                          <strong class="text-center">Degree:</strong><br>
-                          {{ selectedStudentProfile.degree || 'No degree listed' }}
-                        </p>
-                        <p class="text-center">
-                          <strong class="text-center">Year:</strong><br>
-                          {{ selectedStudentProfile.year || 'No year listed' }}
-                        </p>
-                        <p class="text-center">
-                          <strong class="text-center">About:</strong><br>
-                          {{ selectedStudentProfile.about || 'No about info' }}
-                        </p>
-                      </div>
-
-                      <div v-else class="text-center">
-                        <v-progress-circular indeterminate color="primary"></v-progress-circular>
-                        <p>Loading student profile...</p>
-                      </div>
-                      <v-divider class="my-10 wakana"></v-divider>
-
-                      <div v-if="selectedAppointment">
-                        <h3 class="font-weight-bold text-center mt-5 mb-10">Appointment Information</h3>
-                        <p class="text-center"><strong>Date:</strong> <br>{{ selectedAppointment.appointment_date }}</p>
-                        <p class="text-center"><strong>Time:</strong> <br>{{ selectedAppointment.appointment_time }}</p>
-                        <p class="text-center"><strong>Status:</strong><br> {{ selectedAppointment.status }}</p>
-                        <p class="text-center">
-                          <strong>Message:</strong><br>
-                          {{ selectedAppointment.message || 'No message provided' }}
-                        </p>
-                      </div>
-                    </v-card-text>
-
-                    
-                    <v-card-actions class="justify-center">
-                      <v-btn color="primary" @click="detailsDialog = false">Close</v-btn>
-                    </v-card-actions>
-                  </v-card>
-                </v-dialog>
-                <v-divider></v-divider>
-              </div>
-
-              <div v-else class="no-appointments">
-                <p>No appointments found.</p>
-              </div>
-
-              <!-- If No Appointments -->
-              <v-alert v-else type="info" variant="tonal" border="start" density="compact">
-                No appointments found. Try searching or adjusting the sort option.
-              </v-alert>
->>>>>>> feat/supabase
+                <template v-else>
+                  <v-col cols="12" class="text-center">
+                    <v-alert type="info" variant="tonal">
+                      No appointments found.
+                    </v-alert>
+                  </v-col>
+                </template>
+              </v-row>
             </v-sheet>
           </v-col>
         </v-row>
       </v-container>
     </v-main>
+
+    <!-- Snackbar -->
+    <v-snackbar v-model="snackbar" timeout="3000" color="info">
+      {{ snackbarMsg }}
+    </v-snackbar>
   </v-app>
-<<<<<<< HEAD
-  </template>
-  
-<style scoped>
-=======
 </template>
->>>>>>> feat/supabase
 
 <style scoped>
 /* Links */
