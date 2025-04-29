@@ -14,7 +14,7 @@ const props = defineProps(['formSuccessMessage','formErrorMessage']);
                     variant="submit"
                     density="compact"
                     border="start"
-                    closable
+                    closable="start"
                   >
                   </v-alert>
                   <v-alert
@@ -25,7 +25,7 @@ const props = defineProps(['formSuccessMessage','formErrorMessage']);
                     type="error"
                     density="compact"
                     border="start"
-                    closable
+                    closable="start"
                   >
                   </v-alert>
 </template>

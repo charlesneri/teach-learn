@@ -68,7 +68,6 @@ const onLogin = async () => {
     return
   }
 
-  // If login is successful, navigate to home
   if (data) {
   formAction.value.formSuccessMessage = 'Successfully Logged In!';
   
@@ -87,6 +86,8 @@ const onFormSubmit = () => {
     }
   })
 }
+const showSuccess = ref(true)
+
 </script>
 
 <template>
