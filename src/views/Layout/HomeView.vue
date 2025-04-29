@@ -173,7 +173,7 @@ onMounted(async () => {
                   <v-app-bar-nav-icon v-bind="props" class="d-md-none" />
                 </template>
                 <v-list>
-                  <v-list-item link>
+                  <v-list-item >
                     <RouterLink
                       to="/"
                       :class="[
@@ -185,7 +185,7 @@ onMounted(async () => {
                     </RouterLink>
                   </v-list-item>
 
-                  <v-list-item link>
+                  <v-list-item >
                     <RouterLink
                       to="/profile"
                       :class="[
@@ -197,7 +197,7 @@ onMounted(async () => {
                     </RouterLink>
                   </v-list-item>
 
-                  <v-list-item link>
+                  <v-list-item >
                     <RouterLink
                       to="/appointments"
                       :class="[
@@ -208,19 +208,9 @@ onMounted(async () => {
                       My Appointment
                     </RouterLink>
                   </v-list-item>
-                  <v-list-item link>
-                    <RouterLink
-                      to="/appointments"
-                      :class="[
-                        'active-click text-decoration-none',
-                        currentTheme === 'dark' ? 'text-white' : 'text-black',
-                      ]"
-                    >
-                     Deleted Appointments
-                    </RouterLink>
-                  </v-list-item>
+                
 
-                  <v-list-item link>
+                  <v-list-item >
                     <RouterLink
                       to="/about"
                       :class="[
@@ -336,17 +326,7 @@ onMounted(async () => {
                   >
                     <v-list-item-title>My Appointments</v-list-item-title>
                   </v-list-item>
-                  <v-list-item
-                    link
-                    :to="'/DeletedAppointments'"
-                    tag="RouterLink"
-                    :class="[
-                      'active-click text-decoration-none',
-                      currentTheme === 'dark' ? 'text-white' : 'text-black',
-                    ]"
-                  >
-                    <v-list-item-title>Deleted Apointments</v-list-item-title>
-                  </v-list-item>
+                 
 
                   <v-divider class="my-2" />
 
