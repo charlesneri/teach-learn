@@ -1,11 +1,16 @@
 <script setup>
 import { ref, onMounted, watch } from 'vue'
 import { useTheme } from 'vuetify'
+import { useRouter, RouterLink } from 'vue-router'
 import { supabase } from '@/utils/supabase'
 
-// THEME
+const datePickerOpen = ref(false)
+const timePickerOpen = ref(false)
+
+// THEME SETUP
 const theme = useTheme()
 const currentTheme = ref(localStorage.getItem('theme') || 'light')
+
 const toggleTheme = () => {
   currentTheme.value = currentTheme.value === 'light' ? 'dark' : 'light'
   theme.global.name.value = currentTheme.value
@@ -16,10 +21,22 @@ watch(currentTheme, (val) => {
   localStorage.setItem('theme', val)
 })
 
-// USER
+// STATES
+const searchQuery = ref('')
+const tutors = ref([])
+const selectedTutor = ref(null)
+const profileDialog = ref(false)
+const appointmentDialog = ref(false)
+const selectedDate = ref('')
+const selectedTime = ref('')
+const messageInput = ref('')
+const snackbar = ref(false)
+const snackbarMsg = ref('')
+const snackbarColor = ref('')
 const currentUserId = ref(null)
 const currentUserProfile = ref({ firstName: '', lastName: '', avatarUrl: '', isPublicTutor: false })
 
+// FETCH USER
 const fetchCurrentUser = async () => {
   const {
     data: { user },
@@ -42,80 +59,13 @@ const fetchCurrentUser = async () => {
   }
 }
 
-// SEARCH
-const searchQuery = ref('')
-const performSearch = () => {}
-
-// SNACKBAR
-const snackbar = ref(false)
-const snackbarMsg = ref('')
-const snackbarColor = ref('success')
-
-// NOTIFICATIONS
-const notificationMenu = ref(false)
-const notifications = ref([])
-
-const fetchNotifications = async () => {
-  if (!currentUserId.value) return
-  const { data } = await supabase
-    .from('notifications')
-    .select('*, appointments(student_name, appointment_date, appointment_time)')
-    .eq('mentor_id', currentUserId.value)
-    .eq('status', 'pending')
-  if (data) notifications.value = data
-}
-
-const acceptAppointment = async (notif) => {
-  try {
-    await supabase
-      .from('appointments')
-      .update({ status: 'accepted' })
-      .eq('id', notif.appointment_id)
-    await supabase.from('notifications').update({ status: 'accepted' }).eq('id', notif.id)
-    snackbarMsg.value = 'Appointment accepted!'
-    snackbarColor.value = 'success'
-    snackbar.value = true
-    await fetchNotifications()
-  } catch (error) {
-    snackbarMsg.value = 'Failed to accept appointment.'
-    snackbarColor.value = 'error'
-    snackbar.value = true
-  }
-}
-
-const rejectAppointment = async (notif) => {
-  try {
-    await supabase
-      .from('appointments')
-      .update({ status: 'rejected' })
-      .eq('id', notif.appointment_id)
-    await supabase.from('notifications').update({ status: 'rejected' }).eq('id', notif.id)
-    snackbarMsg.value = 'Appointment rejected!'
-    snackbarColor.value = 'success'
-    snackbar.value = true
-    await fetchNotifications()
-  } catch (error) {
-    snackbarMsg.value = 'Failed to reject appointment.'
-    snackbarColor.value = 'error'
-    snackbar.value = true
-  }
-}
-
-// MENTORS (TUTORS)
-const tutors = ref([])
+// FETCH TUTORS
 const fetchTutors = async () => {
   const { data } = await supabase.from('profiles').select('*').eq('is_public_tutor', true)
   tutors.value = data || []
 }
 
-// APPOINTMENT BOOKING
-const selectedTutor = ref(null)
-const profileDialog = ref(false)
-const appointmentDialog = ref(false)
-const selectedDate = ref(null)
-const selectedTime = ref(null)
-const messageInput = ref('')
-
+// ACTIONS
 const viewTutor = (tutor) => {
   selectedTutor.value = tutor
   profileDialog.value = true
@@ -125,91 +75,54 @@ const openAppointment = (tutor) => {
   selectedTutor.value = tutor
   appointmentDialog.value = true
 }
-
-const onDateSelect = () => {}
-const onTimeSelect = () => {}
-
 const saveAppointment = async () => {
-  try {
-    if (!selectedTutor.value || !selectedDate.value || !selectedTime.value) {
-      snackbarMsg.value = 'Please fill all fields!'
-      snackbarColor.value = 'error'
-      snackbar.value = true
-      return
-    }
+  if (!selectedDate.value || !selectedTime.value || !selectedTutor.value || !currentUserId.value) {
+    snackbarMsg.value = 'Please complete all fields before booking.'
+    snackbarColor.value = 'red'
+    snackbar.value = true
+    return
+  }
 
-    // Step 1: Check if there is an existing appointment for this mentor at same date/time
-    const { data: existingAppointment, error: checkError } = await supabase
-      .from('appointments')
-      .select('*')
-      .eq('mentor_id', selectedTutor.value.id)
-      .eq('appointment_date', selectedDate.value)
-      .eq('appointment_time', selectedTime.value)
-      .maybeSingle()
+  const { error } = await supabase.from('appointments').insert({
+    student_id: currentUserId.value,
+    mentor_id: selectedTutor.value.id,
+    student_name: `${currentUserProfile.firstName} ${currentUserProfile.lastName}`,
+    appointment_date: selectedDate.value,
+    appointment_time: selectedTime.value,
+    message: messageInput.value,
+    status: 'Pending',
+  })
 
-    if (existingAppointment) {
-      // Mentor is already booked at this time
-      snackbarMsg.value = 'This mentor is already booked at that time!'
-      snackbarColor.value = 'error'
-      snackbar.value = true
-      return
-    }
+  snackbar.value = true
+  if (error) {
+    console.error('Error saving appointment:', error)
+    snackbarMsg.value = 'Failed to book appointment. Try again.'
+    snackbarColor.value = 'red'
+  } else {
+    snackbarMsg.value = 'Appointment booked successfully!'
+    snackbarColor.value = 'green'
 
-    // Step 2: If no conflict, proceed with booking
-    const { data: appointmentData, error: appointmentError } = await supabase
-      .from('appointments')
-      .insert([
-        {
-          mentor_id: selectedTutor.value.id,
-          student_id: currentUserId.value,
-          student_name: currentUserProfile.firstName + ' ' + currentUserProfile.lastName,
-          message: messageInput.value,
-          appointment_date: selectedDate.value,
-          appointment_time: selectedTime.value,
-          status: 'pending',
-          created_at: new Date(),
-        },
-      ])
-      .select('*')
-      .single()
-
-    if (appointmentError) throw appointmentError
-
-    // Step 3: Insert notification
-    await supabase.from('notifications').insert([
-      {
-        mentor_id: selectedTutor.value.id,
-        student_id: currentUserId.value,
-        appointment_id: appointmentData.id,
-        type: 'appointment_request',
-        status: 'pending',
-        created_at: new Date(),
-      },
-    ])
-
-    // Reset form and success snackbar
     appointmentDialog.value = false
-    selectedDate.value = null
-    selectedTime.value = null
-    messageInput.value = ''
 
-    snackbarMsg.value = 'Appointment request sent successfully!'
-    snackbarColor.value = 'success'
-    snackbar.value = true
-  } catch (error) {
-    console.error(error)
-    snackbarMsg.value = 'Failed to send appointment.'
-    snackbarColor.value = 'error'
-    snackbar.value = true
+    setTimeout(() => {
+      selectedDate.value = ''
+      selectedTime.value = ''
+      messageInput.value = ''
+      datePickerOpen.value = false
+      timePickerOpen.value = false
+    }, 300)
   }
 }
 
+
+
+// MOUNT
 onMounted(async () => {
+  theme.global.name.value = currentTheme.value
   await fetchCurrentUser()
   await fetchTutors()
-  await fetchNotifications()
-  await fetchAppointments() // <-- ADD THIS!
 })
+<<<<<<< HEAD
 <<<<<<< HEAD
 //for alert
 const snackbar = ref(false)
@@ -284,7 +197,11 @@ const fetchAppointments = async () => {
 }
 
 >>>>>>> feat/supabase
+=======
+>>>>>>> development2
 </script>
+
+<!-- Your existing template and styles remain unchanged -->
 
 <template>
   <v-app id="inspire">
@@ -392,16 +309,12 @@ const fetchAppointments = async () => {
 
 =======
       <v-container class="d-flex align-center justify-space-between">
-        <!-- Logo -->
         <div class="d-flex align-center gap-4">
           <v-avatar color="#fff" size="50">
             <v-img src="image/Teach&Learn.png" alt="Logo" />
           </v-avatar>
         </div>
-
         <v-spacer />
-
-        <!-- Desktop Links -->
         <div class="d-none d-md-flex align-center" style="gap: 24px">
           <RouterLink to="/home" class="text-white text-decoration-none font-weight-medium"
             >Home</RouterLink
@@ -413,13 +326,10 @@ const fetchAppointments = async () => {
             >Contact Us</RouterLink
           >
         </div>
-
         <v-spacer />
-
-        <!-- Responsive Search + Notification + Mobile Menu -->
-        <v-responsive max-width="320">
-          <div class="d-flex align-center gap-2">
-            <!-- Search Bar -->
+        <!-- Search & Mobile Menu -->
+        <v-responsive max-width="240">
+          <div class="d-flex">
             <v-text-field
               v-model="searchQuery"
               placeholder="Search..."
@@ -430,112 +340,121 @@ const fetchAppointments = async () => {
               hide-details
               single-line
               class="search-input flex-grow-1"
-              @keydown.enter="performSearch"
               append-inner-icon="mdi-magnify"
-              @click:append-inner="performSearch"
             />
 
-            <!-- Notification Bell -->
-            <v-menu
-              v-model="notificationMenu"
-              offset-y
-              close-on-content-click
-              transition="scale-transition"
-            >
-              <template #activator="{ props }">
-                <v-btn icon v-bind="props">
-                  <v-icon>mdi-bell</v-icon>
-                </v-btn>
-              </template>
-              <v-card min-width="300">
-                <v-list density="compact">
-                  <v-list-item v-for="notification in notifications" :key="notification.id">
-                    <v-list-item-content>
-                      <v-list-item-title> New Appointment Request </v-list-item-title>
-                      <v-list-item-subtitle class="text-wrap">
-                        {{ notification.appointments.student_name }} -
-                        {{ notification.appointments.appointment_date }}
-                        {{ notification.appointments.appointment_time }}
-                      </v-list-item-subtitle>
+            <!-- Mobile Search and Menu -->
+            <div class="d-flex align-center gap-2">
+              <!-- Mobile Menu Button -->
+              <v-menu transition="scale-transition" offset-y>
+                <template #activator="{ props }">
+                  <v-app-bar-nav-icon v-bind="props" class="d-md-none" />
+                </template>
+                <v-list>
+                  <v-list-item link>
+                    <RouterLink
+                      to="/"
+                      :class="[
+                        'active-click text-decoration-none',
+                        currentTheme === 'dark' ? 'text-white' : 'text-black',
+                      ]"
+                    >
+                      Home
+                    </RouterLink>
+                  </v-list-item>
 
-                      <div class="d-flex gap-2 mt-2">
-                        <v-btn small color="primary" @click="acceptAppointment(notification)"
-                          >Accept</v-btn
-                        >
-                        <v-btn small color="error" @click="rejectAppointment(notification)"
-                          >Reject</v-btn
-                        >
-                      </div>
-                    </v-list-item-content>
+                  <v-list-item link>
+                    <RouterLink
+                      to="/profile"
+                      :class="[
+                        'active-click text-decoration-none',
+                        currentTheme === 'dark' ? 'text-white' : 'text-black',
+                      ]"
+                    >
+                      My Profile
+                    </RouterLink>
+                  </v-list-item>
+
+                  <v-list-item link>
+                    <RouterLink
+                      to="/appointments"
+                      :class="[
+                        'active-click text-decoration-none',
+                        currentTheme === 'dark' ? 'text-white' : 'text-black',
+                      ]"
+                    >
+                      My Appointment
+                    </RouterLink>
+                  </v-list-item>
+                  <v-list-item link>
+                    <RouterLink
+                      to="/appointments"
+                      :class="[
+                        'active-click text-decoration-none',
+                        currentTheme === 'dark' ? 'text-white' : 'text-black',
+                      ]"
+                    >
+                     Deleted Appointments
+                    </RouterLink>
+                  </v-list-item>
+
+                  <v-list-item link>
+                    <RouterLink
+                      to="/about"
+                      :class="[
+                        'active-click text-decoration-none',
+                        currentTheme === 'dark' ? 'text-white' : 'text-black',
+                      ]"
+                    >
+                      About Us
+                    </RouterLink>
+                  </v-list-item>
+
+                  <v-list-item link>
+                    <RouterLink
+                      to="/contact"
+                      :class="[
+                        'active-click text-decoration-none',
+                        currentTheme === 'dark' ? 'text-white' : 'text-black',
+                      ]"
+                    >
+                      Contact Us
+                    </RouterLink>
                   </v-list-item>
 
                   <v-divider></v-divider>
-                  <v-list-item>
-                    <v-list-item-title class="text-center">
-                      <v-btn text small @click="notifications = []">Clear All</v-btn>
-                    </v-list-item-title>
+
+                  <v-list-item link>
+                    <RouterLink
+                      to="/"
+                      :class="[
+                        'active-click text-decoration-none',
+                        currentTheme === 'dark' ? 'text-white' : 'text-black',
+                      ]"
+                    >
+                      Logout
+                    </RouterLink>
                   </v-list-item>
                 </v-list>
-              </v-card>
-            </v-menu>
-
-            <!-- Mobile Hamburger Menu -->
-            <v-menu transition="scale-transition" offset-y>
-              <template #activator="{ props }">
-                <v-app-bar-nav-icon v-bind="props" class="d-md-none" />
-              </template>
-              <v-list>
-                <v-list-item link>
-                  <RouterLink
-                    to="/"
-                    :class="[currentTheme === 'dark' ? 'text-white' : 'text-black']"
-                    >Home</RouterLink
-                  >
-                </v-list-item>
-                <v-list-item link>
-                  <RouterLink
-                    to="/profile"
-                    :class="[currentTheme === 'dark' ? 'text-white' : 'text-black']"
-                    >My Profile</RouterLink
-                  >
-                </v-list-item>
-                <v-list-item link>
-                  <RouterLink
-                    to="/appointments"
-                    :class="[currentTheme === 'dark' ? 'text-white' : 'text-black']"
-                    >My Appointment</RouterLink
-                  >
-                </v-list-item>
-                <v-list-item link>
-                  <RouterLink
-                    to="/about"
-                    :class="[currentTheme === 'dark' ? 'text-white' : 'text-black']"
-                    >About Us</RouterLink
-                  >
-                </v-list-item>
-                <v-list-item link>
-                  <RouterLink
-                    to="/contact"
-                    :class="[currentTheme === 'dark' ? 'text-white' : 'text-black']"
-                    >Contact Us</RouterLink
-                  >
-                </v-list-item>
-                <v-divider></v-divider>
-                <v-list-item link>
-                  <RouterLink
-                    to="/"
-                    :class="[currentTheme === 'dark' ? 'text-white' : 'text-black']"
-                    >Logout</RouterLink
-                  >
-                </v-list-item>
-              </v-list>
-            </v-menu>
+              </v-menu>
+            </div>
           </div>
-          <!-- End of flex -->
         </v-responsive>
       </v-container>
     </v-app-bar>
+<<<<<<< HEAD
 >>>>>>> feat/supabase
+=======
+    <v-snackbar
+      v-model="snackbar"
+      timeout="3000"
+      :color="snackbarColor"
+      location="top center"
+      style="top: 80px"
+    >
+      {{ snackbarMsg }}
+    </v-snackbar>
+>>>>>>> development2
 
     <!-- Main -->
     <transition name="fade-slide-up">
@@ -598,6 +517,17 @@ const fetchAppointments = async () => {
                     ]"
                   >
                     <v-list-item-title>My Appointments</v-list-item-title>
+                  </v-list-item>
+                  <v-list-item
+                    link
+                    :to="'/DeletedAppointments'"
+                    tag="RouterLink"
+                    :class="[
+                      'active-click text-decoration-none',
+                      currentTheme === 'dark' ? 'text-white' : 'text-black',
+                    ]"
+                  >
+                    <v-list-item-title>Deleted Apointments</v-list-item-title>
                   </v-list-item>
 
                   <v-divider class="my-2" />
@@ -788,25 +718,27 @@ const fetchAppointments = async () => {
 
                           <div class="d-flex flex-column align-center" style="gap: 20px">
                             <!-- Date Picker -->
-                            <v-date-picker
-                              v-model="selectedDate"
-                              color="primary"
-                              class="mx-auto"
-                              style="max-width: 300px"
-                              @input="onDateSelect"
-                            ></v-date-picker>
+                     
+<v-date-picker
+  v-model="selectedDate"
+  v-model:dialog="datePickerOpen"
+  color="primary"
+  class="mx-auto"
+  style="max-width: 300px"
+/>
 
-                            <!-- Time Picker (only after date selected) -->
-                            <v-time-picker
-                              v-if="selectedDate"
-                              v-model="selectedTime"
-                              format="12hr"
-                              color="primary"
-                              class="mx-auto"
-                              style="max-width: 300px"
-                              :disabled="!selectedDate"
-                              @change="onTimeSelect"
-                            ></v-time-picker>
+<!-- Time Picker -->
+<v-time-picker
+  v-if="selectedDate"
+  v-model="selectedTime"
+  v-model:dialog="timePickerOpen"
+  format="12hr"
+  color="primary"
+  class="mx-auto"
+  style="max-width: 300px"
+  :disabled="!selectedDate"
+/>
+
 
 <<<<<<< HEAD
         <!-- Time Picker (only after date selected) -->
@@ -883,17 +815,6 @@ const fetchAppointments = async () => {
                         </v-card-actions>
                       </v-card>
                     </v-dialog>
-                    <v-snackbar
-                      v-model="snackbar"
-                      :color="snackbarColor"
-                      timeout="3000"
-                      location="top"
-                    >
-                      {{ snackbarMsg }}
-                      <template #actions>
-                        <v-btn icon="mdi-close" variant="text" @click="snackbar = false" />
-                      </template>
-                    </v-snackbar>
                   </v-container>
                 </div>
               </v-sheet>
@@ -903,6 +824,7 @@ const fetchAppointments = async () => {
       </v-main>
     </transition>
   </v-app>
+
 </template>
 <style scoped>
 .profile-container {
