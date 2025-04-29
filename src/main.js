@@ -13,14 +13,30 @@ import * as directives from 'vuetify/directives'
 import App from './App.vue'
 import router from './router'
 
+//for date and time
+
+import DayJsAdapter from '@date-io/dayjs'
+//import { VTimePicker } from 'vuetify/labs/VTimePicker'
+import { VTimePicker } from 'vuetify/labs/VTimePicker'
+
+//til herre
+
 const app = createApp(App)
 
 const vuetify = createVuetify({
   icons: {
     defaultSet: 'mdi', // This is already the default value - only for display purposes
   },
-  components,
+ components,
   directives,
+  date: {
+    adapter: DayJsAdapter,
+  },
+  components: {
+    ...components, // Register Vuetify core components
+    VTimePicker,   // Register VTimePicker from Vuetify Labs
+  },
+  directives, // Register Vuetify directives
 })
 
 app.use(createPinia())

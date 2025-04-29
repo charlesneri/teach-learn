@@ -130,84 +130,212 @@ function getEducationPlaceholder(index) {
       :color="currentTheme === 'light' ? '#1565c0' : 'grey-darken-4'"
       class="px-2 px-md-4"
     >
-      <v-container fluid class="d-flex align-center justify-space-between pa-0">
-        <!-- Logo -->
-        <v-avatar color="#fff" size="44" class="mr-2">
-          <v-img src="image/Teach&Learn.png" alt="Logo" />
-        </v-avatar>
+    <v-container fluid class="d-flex align-center justify-space-between pa-0">
+  <!-- Logo -->
+  <v-avatar color="#fff" size="44" class="mr-2">
+    <v-img src="image/Teach&Learn.png" alt="Logo" />
+  </v-avatar>
 
-        <!-- Desktop Navigation -->
-        <v-spacer />
+  <!-- Spacer -->
+  <v-spacer />
 
-        <!-- Centered Navigation Links (Desktop only) -->
-        <div class="d-none d-md-flex align-center" style="gap: 24px">
-          <RouterLink to="/home" class="text-white text-decoration-none font-weight-medium"
-            >Home</RouterLink
-          >
-          <RouterLink to="/about" class="text-white text-decoration-none font-weight-medium"
-            >About Us</RouterLink
-          >
-          <RouterLink to="/contact" class="text-white text-decoration-none font-weight-medium"
-            >Contact Us</RouterLink
-          >
-        </div>
+  <!-- Centered Desktop Links -->
+  <div class="d-none d-md-flex align-center me-5" style="gap: 24px">
+    <RouterLink to="/home" class="text-white text-decoration-none font-weight-medium">Home</RouterLink>
+    <RouterLink to="/about" class="text-white text-decoration-none font-weight-medium">About Us</RouterLink>
+    <RouterLink to="/contact" class="text-white text-decoration-none font-weight-medium">Contact Us</RouterLink>
+  </div>
 
-        <!-- Spacer after center links -->
-        <v-spacer />
+  <!-- Spacer -->
+  <v-spacer />
 
-        <!-- Mobile Search and Menu -->
-        <div class="d-flex align-center gap-2">
-          <!-- Mobile Menu Button -->
-          <v-menu transition="scale-transition" offset-y>
-            <template #activator="{ props }">
-              <v-app-bar-nav-icon v-bind="props" class="d-md-none" />
-            </template>
-            <v-list>
-              <v-list-item>
-                <router-link to="/home" class="text-decoration-none">Home</router-link>
-              </v-list-item>
-              <v-list-item>
-                <router-link to="/profile" class="text-decoration-none">My Profile</router-link>
-              </v-list-item>
-              <v-list-item>
-                <router-link to="/appointments" class="text-decoration-none"
-                  >My Appointments</router-link
-                >
-              </v-list-item>
-              <v-list-item>
-                <router-link to="/about" class="text-decoration-none">About Us</router-link>
-              </v-list-item>
-              <v-list-item>
-                <router-link to="/contact" class="text-decoration-none">Contact Us</router-link>
-              </v-list-item>
-              <v-divider></v-divider>
-              <v-list-item>
-                <router-link to="/" class="text-decoration-none">Logout</router-link>
-              </v-list-item>
-            </v-list>
-          </v-menu>
-        </div>
-      </v-container>
+  <!-- Notification Bell + Mobile Menu together -->
+  <div class="d-flex align-center gap-2">
+    
+    <!-- Notification Bell -->
+    <v-menu v-model="notificationMenu" offset-y close-on-content-click transition="scale-transition">
+      <template #activator="{ props }">
+        <v-btn icon v-bind="props" @click="toggleMenu">
+          <v-icon>mdi-bell</v-icon>
+        </v-btn>
+      </template>
+      <v-card min-width="300">
+        <v-list density="compact">
+          <v-list-item v-for="notification in notifications" :key="notification.id">
+            <v-list-item-content>
+              <v-list-item-title>{{ notification.title }}</v-list-item-title>
+              <v-list-item-subtitle>{{ notification.time }}</v-list-item-subtitle>
+            </v-list-item-content>
+          </v-list-item>
+          <v-divider></v-divider>
+          <v-list-item>
+            <v-list-item-title class="text-center">
+              <v-btn text small @click="notifications = []">Clear All</v-btn>
+            </v-list-item-title>
+          </v-list-item>
+        </v-list>
+      </v-card>
+    </v-menu>
+
+    <!-- Mobile Menu (only shows in mobile) -->
+    <v-menu transition="scale-transition" offset-y>
+      <template #activator="{ props }">
+        <v-app-bar-nav-icon v-bind="props" class="d-md-none" />
+      </template>
+      <v-list>
+        <v-list-item link>
+          <RouterLink to="/" :class="[currentTheme === 'dark' ? 'text-white' : 'text-black']">Home</RouterLink>
+        </v-list-item>
+        <v-list-item link>
+          <RouterLink to="/profile" :class="[currentTheme === 'dark' ? 'text-white' : 'text-black']">My Profile</RouterLink>
+        </v-list-item>
+        <v-list-item link>
+          <RouterLink to="/appointments" :class="[currentTheme === 'dark' ? 'text-white' : 'text-black']">My Appointment</RouterLink>
+        </v-list-item>
+        <v-list-item link>
+          <RouterLink to="/about" :class="[currentTheme === 'dark' ? 'text-white' : 'text-black']">About Us</RouterLink>
+        </v-list-item>
+        <v-list-item link>
+          <RouterLink to="/contact" :class="[currentTheme === 'dark' ? 'text-white' : 'text-black']">Contact Us</RouterLink>
+        </v-list-item>
+        <v-divider></v-divider>
+        <v-list-item link>
+          <RouterLink to="/" :class="[currentTheme === 'dark' ? 'text-white' : 'text-black']">Logout</RouterLink>
+        </v-list-item>
+      </v-list>
+    </v-menu>
+
+  </div>
+</v-container>
+
     </v-app-bar>
 
     <!-- Main Content -->
     <v-main :class="currentTheme === 'dark' ? 'bg-grey-darken-4 text-white' : 'bg-grey-lighten-3'">
-      <v-container fluid class="py-6 px-4 px-sm-6">
-        <v-row justify="center">
-          <v-col cols="12" sm="10" md="8">
-            <v-sheet
-              :class="currentTheme === 'dark' ? 'bg-grey-darken-3 text-white' : 'bg-white'"
-              class="pa-4 pa-sm-6 text-center"
-              elevation="2"
-              rounded="lg"
-            >
-              <!-- Title -->
-              <h1 class="text-h5 text-md-h4 font-weight-bold mb-4">About</h1>
-              <!-- Future content goes here -->
-            </v-sheet>
-          </v-col>
-        </v-row>
-      </v-container>
-    </v-main>
+    <v-container fluid class="py-10 px-4 px-sm-6">
+      <v-row justify="center">
+        <v-col cols="12" sm="10" md="10" lg="10">
+          <v-sheet
+            :class="currentTheme === 'dark' ? 'bg-grey-darken-3 text-white' : 'bg-white text-black'"
+            class="pa-6"
+            elevation="2"
+            rounded="lg"
+          >
+            <!-- Header -->
+            <div class="text-center mb-8">
+              <v-responsive class="mb-4">
+                <h1 class="text-h4 font-weight-bold">About Teach & Learn</h1>
+              </v-responsive>
+              <v-responsive>
+                <p class="text-body-1">
+                  It is a platform built to connect learners and educators in a simple, efficient, and inspiring way.
+                </p>
+              </v-responsive>
+            </div>
+
+            <!-- Divider -->
+            <div class="text-center mb-6">
+              <v-divider class="my-4"></v-divider>
+              <h2 class="text-h6 font-weight-medium">How It Works</h2>
+              <v-divider class="my-4"></v-divider>
+            </div>
+
+            <!-- Steps -->
+            <v-row dense>
+              <!-- Step 1 -->
+              <v-col cols="12" sm="6" md="4" class="mb-4 d-flex">
+                <v-card class="pa-4 flex-grow-1 fade-in" variant="outlined" rounded="lg">
+                  <v-icon size="32" class="mb-2" color="primary">mdi-account-plus</v-icon>
+                  <v-card-title class="text-subtitle-1 font-weight-bold">Step 1: Create Your Profile</v-card-title>
+                  <v-card-text class="text-body-2">
+                    Add your details and a profile photo to connect with tutors or learners.
+                  </v-card-text>
+                </v-card>
+              </v-col>
+
+              <!-- Step 2 -->
+              <v-col cols="12" sm="6" md="4" class="mb-4 d-flex">
+                <v-card class="pa-4 flex-grow-1 fade-in" variant="outlined" rounded="lg">
+                  <v-icon size="32" class="mb-2" color="primary">mdi-magnify</v-icon>
+                  <v-card-title class="text-subtitle-1 font-weight-bold">Step 2: Search and Connect</v-card-title>
+                  <v-card-text class="text-body-2">
+                    Find others by subject or expertise and start chatting.
+                  </v-card-text>
+                </v-card>
+              </v-col>
+
+              <!-- Step 3 -->
+              <v-col cols="12" sm="6" md="4" class="mb-4 d-flex">
+                <v-card class="pa-4 flex-grow-1 fade-in" variant="outlined" rounded="lg">
+                  <v-icon size="32" class="mb-2" color="primary">mdi-calendar-clock</v-icon>
+                  <v-card-title class="text-subtitle-1 font-weight-bold">Step 3: Book an Appointment</v-card-title>
+                  <v-card-text class="text-body-2">
+                    Pick a time and confirm your session. Get reminders automatically.
+                  </v-card-text>
+                </v-card>
+              </v-col>
+
+              <!-- Step 4 -->
+              <v-col cols="12" sm="6" md="4" class="mb-4 d-flex">
+                <v-card class="pa-4 flex-grow-1 fade-in" variant="outlined" rounded="lg">
+                  <v-icon size="32" class="mb-2" color="primary">mdi-school</v-icon>
+                  <v-card-title class="text-subtitle-1 font-weight-bold">Step 4: Attend & Learn</v-card-title>
+                  <v-card-text class="text-body-2">
+                    Join the session, engage actively, and take notes.
+                  </v-card-text>
+                </v-card>
+              </v-col>
+
+              <!-- Step 5 -->
+              <v-col cols="12" sm="6" md="4" class="mb-4 d-flex">
+                <v-card class="pa-4 flex-grow-1 fade-in" variant="outlined" rounded="lg">
+                  <v-icon size="32" class="mb-2" color="primary">mdi-star-check</v-icon>
+                  <v-card-title class="text-subtitle-1 font-weight-bold">Step 5: Review and Continue</v-card-title>
+                  <v-card-text class="text-body-2">
+                    Reflect on what you learned, give feedback, and book your next session.
+                  </v-card-text>
+                </v-card>
+              </v-col>
+            </v-row>
+
+            <!-- CTA Button -->
+            <div class="text-center mt-6">
+              <v-btn color="primary" size="large" elevation="1" class="text-none" to="/home">
+                Get Started Now
+              </v-btn>
+            </div>
+          </v-sheet>
+        </v-col>
+      </v-row>
+    </v-container>
+  </v-main>
   </v-app>
 </template>
+<style scoped>
+
+/* Remove underline on link */
+.active-click {
+  font-weight: 700;
+  text-decoration: none;
+  transition: color 0.3s;
+}
+.active-click:active {
+  color: #d34b4b;
+}
+.active-click:hover {
+  color: #2196f3;
+}
+.fade-in {
+  animation: fadeIn 0.6s ease-in;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}</style>

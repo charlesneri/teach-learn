@@ -1,29 +1,33 @@
 <script setup>
-import { ref, onMounted, watch, computed } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
+import { useRouter } from 'vue-router'
+import { supabase, formActionDefault } from '@/utils/supabase'
 import { useTheme } from 'vuetify'
 
+// THEME
 const theme = useTheme()
 const currentTheme = ref(localStorage.getItem('theme') || 'light')
+watch(currentTheme, (val) => {
+  theme.global.name.value = val
+  localStorage.setItem('theme', val)
+})
+const toggleTheme = () => {
+  currentTheme.value = currentTheme.value === 'light' ? 'dark' : 'light'
+}
 
+// ROUTER
+const router = useRouter()
+
+// UI STATES
 const dialog = ref(false)
-const loading = ref(false)
+const confirmRemove = ref(false)
 const snackbar = ref(false)
 const snackbarMsg = ref('')
 const isEditing = ref(false)
+const loading = ref(false)
+const imageLoading = ref(false)
 
-const profileImage = ref('')
-const selectedFile = ref(null)
-const maxSizeMB = 2
-
-const searchQuery = ref('')
-
-function performSearch() {
-  if (searchQuery.value.trim()) {
-    snackbarMsg.value = `You searched for: "${searchQuery.value}"`
-    snackbar.value = true
-  }
-}
-
+// PROFILE STATES
 const profile = ref({
   firstName: '',
   lastName: '',
@@ -34,208 +38,404 @@ const profile = ref({
   phone: '',
   about: '',
   education: ['', '', ''],
+  isPublicTutor: false, 
 })
+const profileImage = ref('')
+const selectedFile = ref(null)
 
-function toggleTheme() {
-  currentTheme.value = currentTheme.value === 'light' ? 'dark' : 'light'
-  theme.global.name.value = currentTheme.value
-  localStorage.setItem('theme', currentTheme.value)
+// FIELD MAPPING
+const fieldMappings = {
+  'Given Name': 'firstName',
+  'Last Name': 'lastName',
+  'Middle Initial': 'middleInitial',
+  Age: 'age',
+  Expertise: 'expertise',
+  Email: 'email',
+  Phone: 'phone',
 }
 
-watch(currentTheme, (val) => {
-  theme.global.name.value = val
-  localStorage.setItem('theme', val)
+// COMPUTED
+const fullName = computed(() => {
+  const mid = profile.value.middleInitial ? `${profile.value.middleInitial}. ` : ''
+  return `${profile.value.firstName} ${mid}${profile.value.lastName}`
 })
 
-onMounted(() => {
-  theme.global.name.value = currentTheme.value
-  const storedImage = localStorage.getItem('profileImage')
-  if (storedImage) profileImage.value = storedImage
-})
+// FUNCTIONS
+const checkAuth = async () => {
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+  if (!user) router.push('/login')
+}
 
-watch(profileImage, (newVal) => {
-  if (newVal) localStorage.setItem('profileImage', newVal)
-})
+const getUserProfile = async () => {
+  try {
+    const {
+      data: { user },
+    } = await supabase.auth.getUser()
+    if (!user) return
 
-function proceedWithApplication() {
+    const { data, error } = await supabase.from('profiles').select('*').eq('id', user.id).single()
+    if (error) throw error
+
+    profile.value = {
+      firstName: data.first_name || '',
+      lastName: data.last_name || '',
+      middleInitial: data.middle_initial || '',
+      age: data.age || '',
+      expertise: data.expertise || '',
+      email: data.email || user.email,
+      phone: data.phone || '',
+      about: data.about || '',
+      education: [data.school || '', data.degree || '', data.year || ''],
+      isPublicTutor: data.is_public_tutor || false, // <-- ADD THIS
+    }
+    profileImage.value = data.avatar_url || ''
+  } catch (error) {
+    console.error('Error fetching profile:', error)
+  }
+}
+
+const saveProfile = async () => {
+  isEditing.value = false
   loading.value = true
-  setTimeout(() => {
-    loading.value = false
-    dialog.value = false
-    snackbarMsg.value = 'Application submitted successfully!'
+
+  try {
+    const {
+      data: { user },
+    } = await supabase.auth.getUser()
+    if (!user) return
+
+    const { error } = await supabase
+      .from('profiles')
+      .update({
+        first_name: profile.value.firstName,
+        last_name: profile.value.lastName,
+        middle_initial: profile.value.middleInitial,
+        age: profile.value.age,
+        expertise: profile.value.expertise,
+        email: profile.value.email,
+        phone: profile.value.phone,
+        about: profile.value.about,
+        school: profile.value.education[0],
+        degree: profile.value.education[1],
+        year: profile.value.education[2],
+        avatar_url: profileImage.value,
+      })
+      .eq('id', user.id)
+
+    if (error) throw error
+
+    snackbarMsg.value = 'Profile saved successfully!'
     snackbar.value = true
-  }, 2000)
+  } catch (error) {
+    console.error('Error saving profile:', error)
+  } finally {
+    loading.value = false
+  }
 }
 
-function enableEdit() {
-  isEditing.value = true
-}
-function cancelEdit() {
-  isEditing.value = false
-}
-function saveProfile() {
-  isEditing.value = false
-  snackbarMsg.value = 'Profile saved!'
-  snackbar.value = true
-}
-
-function onImageSelected(event) {
+const onImageSelected = async (event) => {
   const file = event.target.files[0]
   if (!file) return
 
-  const allowedTypes = ['image/jpeg', 'image/png']
-  if (!allowedTypes.includes(file.type)) {
-    snackbarMsg.value = 'Only JPG and PNG files are allowed.'
-    snackbar.value = true
-    return
-  }
-
-  const sizeMB = file.size
-  if (sizeMB > maxSizeMB) {
-    snackbarMsg.value = `File size exceeds ${maxSizeMB}MB limit.`
-    snackbar.value = true
-    return
-  }
-
   selectedFile.value = file
+  imageLoading.value = true
 
-  const reader = new FileReader()
-  reader.onload = (e) => {
-    profileImage.value = e.target.result
+  try {
+    const {
+      data: { user },
+    } = await supabase.auth.getUser()
+    if (!user) throw new Error('User not authenticated')
+
+    const fileExt = file.name.split('.').pop()
+    const fileName = `${user.id}_${Date.now()}.${fileExt}`
+
+    const { error: uploadError } = await supabase.storage.from('avatars').upload(fileName, file, {
+      cacheControl: '3600',
+      upsert: true,
+    })
+    if (uploadError) throw uploadError
+
+    const { data: publicData, error: publicUrlError } = await supabase.storage
+      .from('avatars')
+      .getPublicUrl(fileName)
+    if (publicUrlError || !publicData?.publicUrl) throw publicUrlError
+
+    profileImage.value = publicData.publicUrl
+
+    const { error: updateError } = await supabase
+      .from('profiles')
+      .update({ avatar_url: profileImage.value })
+      .eq('id', user.id)
+    if (updateError) throw updateError
+
+    snackbarMsg.value = 'Profile picture updated!'
+    snackbar.value = true
+  } catch (error) {
+    console.error('Error uploading profile image:', error)
+  } finally {
+    imageLoading.value = false
   }
-  reader.readAsDataURL(file)
 }
 
-function removeProfileImage() {
-  profileImage.value = ''
-  localStorage.removeItem('profileImage')
+const confirmRemoveImage = () => {
+  confirmRemove.value = true
 }
 
-const fullName = computed(() => {
-  return `${profile.value.firstName} ${profile.value.middleInitial}. ${profile.value.lastName}`
-})
+const removeProfileImage = async () => {
+  if (!profileImage.value) return
 
-function getEducationPlaceholder(index) {
+  confirmRemove.value = false
+  imageLoading.value = true
+
+  try {
+    const {
+      data: { user },
+    } = await supabase.auth.getUser()
+    if (!user) throw new Error('User not authenticated')
+
+    const fileUrl = new URL(profileImage.value)
+    const filePath = decodeURIComponent(
+      fileUrl.pathname.replace('/storage/v1/object/public/avatars/', ''),
+    )
+
+    const { error: deleteError } = await supabase.storage.from('avatars').remove([filePath])
+    if (deleteError) throw deleteError
+
+    const { error: updateError } = await supabase
+      .from('profiles')
+      .update({ avatar_url: '' })
+      .eq('id', user.id)
+    if (updateError) throw updateError
+
+    profileImage.value = ''
+
+    snackbarMsg.value = 'Profile picture removed!'
+    snackbar.value = true
+  } catch (error) {
+    console.error('Error removing profile image:', error)
+  } finally {
+    imageLoading.value = false
+  }
+}
+
+// LOGOUT
+const onLogout = async () => {
+  formActionDefault.formProcess = true
+  try {
+    const { error } = await supabase.auth.signOut()
+    if (error) throw error
+    snackbarMsg.value = 'Logged out successfully!'
+    snackbar.value = true
+    setTimeout(() => router.push('/login'), 1000)
+  } catch (error) {
+    console.error('Error during logout:', error)
+  } finally {
+    formActionDefault.formProcess = false
+  }
+}
+
+// EDIT MODES
+const enableEdit = () => {
+  isEditing.value = true
+}
+const cancelEdit = () => {
+  isEditing.value = false
+}
+
+const getEducationPlaceholder = (index) => {
   if (index === 0) return 'Enter your school/university'
   if (index === 1) return 'Enter your course or degree'
   if (index === 2) return 'Enter your year level'
-  return 'Enter educational info'
+  return ''
 }
+
+// MOUNTED
+onMounted(() => {
+  theme.global.name.value = currentTheme.value
+  checkAuth()
+  getUserProfile()
+})
+
+//functional for public profile
+// Apply as Tutor
+const applyAsTutor = async () => {
+  loading.value = true
+  try {
+    const {
+      data: { user },
+    } = await supabase.auth.getUser()
+    if (!user) throw new Error('User not authenticated')
+
+    const { error } = await supabase
+      .from('profiles')
+      .update({ is_public_tutor: !profile.value.isPublicTutor }) // Toggle apply/cancel
+      .eq('id', user.id)
+
+    if (error) throw error
+
+    profile.value.isPublicTutor = !profile.value.isPublicTutor // Update frontend state
+
+    snackbarMsg.value = profile.value.isPublicTutor
+      ? 'You are now listed as a tutor!'
+      : 'You have canceled your tutor application.'
+
+    snackbar.value = true
+    dialog.value = false
+
+    await fetchTutors() // Refresh mentor list in HomeView
+  } catch (error) {
+    console.error('Error applying as tutor:', error)
+    snackbarMsg.value = 'Failed to apply/cancel. Please try again.'
+    snackbar.value = true
+  } finally {
+    loading.value = false
+  }
+}
+
 </script>
+
 <template>
   <v-app id="inspire">
-    <!-- App Bar -->
+    <!-- APP BAR -->
     <v-app-bar flat :color="currentTheme === 'light' ? '#1565c0' : 'grey-darken-4'">
-      <v-container class="d-flex align-center justify-space-between pa-2">
-        <!-- Logo -->
-        <div class="d-flex align-center gap-2">
-          <v-avatar color="#fff" size="44">
-            <v-img src="image/Teach&Learn.png" alt="Logo" />
-          </v-avatar>
-        </div>
+      <v-container fluid class="d-flex align-center justify-space-between pa-0">
+  <!-- Logo -->
+  <v-avatar color="#fff" size="44" class="mr-2">
+    <v-img src="image/Teach&Learn.png" alt="Logo" />
+  </v-avatar>
 
-        <!-- Desktop Navigation -->
-        <v-spacer />
+  <!-- Spacer -->
+  <v-spacer />
 
-        <!-- Centered Navigation Links (Desktop only) -->
-        <div class="d-none d-md-flex align-center" style="gap: 24px">
-          <RouterLink to="/home" class="text-white text-decoration-none font-weight-medium"
-            >Home</RouterLink
-          >
-          <RouterLink to="/about" class="text-white text-decoration-none font-weight-medium"
-            >About Us</RouterLink
-          >
-          <RouterLink to="/contact" class="text-white text-decoration-none font-weight-medium"
-            >Contact Us</RouterLink
-          >
-        </div>
+  <!-- Centered Desktop Links -->
+  <div class="d-none d-md-flex align-center me-5" style="gap: 24px">
+    <RouterLink to="/home" class="text-white text-decoration-none font-weight-medium">Home</RouterLink>
+    <RouterLink to="/about" class="text-white text-decoration-none font-weight-medium">About Us</RouterLink>
+    <RouterLink to="/contact" class="text-white text-decoration-none font-weight-medium">Contact Us</RouterLink>
+  </div>
 
-        <!-- Spacer after center links -->
-        <v-spacer />
+  <!-- Spacer -->
+  <v-spacer />
 
-        <!-- Mobile Menu -->
-        <v-menu transition="scale-transition" offset-y theme="light">
-          <template #activator="{ props }">
-            <v-app-bar-nav-icon v-bind="props" class="d-md-none" />
-          </template>
-          <v-list>
-            <v-list-item link
-              ><RouterLink to="/home" class="text-decoration-none">Home</RouterLink></v-list-item
-            >
-            <v-list-item link
-              ><RouterLink to="/profile" class="text-decoration-none"
-                >My Profile</RouterLink
-              ></v-list-item
-            >
-            <v-list-item link
-              ><RouterLink to="/appointments" class="text-decoration-none"
-                >My Appointments</RouterLink
-              ></v-list-item
-            >
-            <v-list-item link
-              ><RouterLink to="/about" class="text-decoration-none"
-                >About Us</RouterLink
-              ></v-list-item
-            >
-            <v-list-item link
-              ><RouterLink to="/contact" class="text-decoration-none"
-                >Contact Us</RouterLink
-              ></v-list-item
-            >
-            <v-divider></v-divider>
-            <v-list-item link
-              ><RouterLink to="/" class="text-decoration-none"
-                >Logout</RouterLink
-              ></v-list-item
-            >
-          </v-list>
-        </v-menu>
-      </v-container>
+  <!-- Notification Bell + Mobile Menu together -->
+  <div class="d-flex align-center gap-2">
+    
+    <!-- Notification Bell -->
+    <v-menu v-model="notificationMenu" offset-y close-on-content-click transition="scale-transition">
+      <template #activator="{ props }">
+        <v-btn icon v-bind="props" @click="toggleMenu">
+          <v-icon>mdi-bell</v-icon>
+        </v-btn>
+      </template>
+      <v-card min-width="300">
+        <v-list density="compact">
+          <v-list-item v-for="notification in notifications" :key="notification.id">
+            <v-list-item-content>
+              <v-list-item-title>{{ notification.title }}</v-list-item-title>
+              <v-list-item-subtitle>{{ notification.time }}</v-list-item-subtitle>
+            </v-list-item-content>
+          </v-list-item>
+          <v-divider></v-divider>
+          <v-list-item>
+            <v-list-item-title class="text-center">
+              <v-btn text small @click="notifications = []">Clear All</v-btn>
+            </v-list-item-title>
+          </v-list-item>
+        </v-list>
+      </v-card>
+    </v-menu>
+
+    <!-- Mobile Menu (only shows in mobile) -->
+    <v-menu transition="scale-transition" offset-y>
+      <template #activator="{ props }">
+        <v-app-bar-nav-icon v-bind="props" class="d-md-none" />
+      </template>
+      <v-list>
+        <v-list-item link>
+          <RouterLink to="/" :class="[currentTheme === 'dark' ? 'text-white' : 'text-black']">Home</RouterLink>
+        </v-list-item>
+        <v-list-item link>
+          <RouterLink to="/profile" :class="[currentTheme === 'dark' ? 'text-white' : 'text-black']">My Profile</RouterLink>
+        </v-list-item>
+        <v-list-item link>
+          <RouterLink to="/appointments" :class="[currentTheme === 'dark' ? 'text-white' : 'text-black']">My Appointment</RouterLink>
+        </v-list-item>
+        <v-list-item link>
+          <RouterLink to="/about" :class="[currentTheme === 'dark' ? 'text-white' : 'text-black']">About Us</RouterLink>
+        </v-list-item>
+        <v-list-item link>
+          <RouterLink to="/contact" :class="[currentTheme === 'dark' ? 'text-white' : 'text-black']">Contact Us</RouterLink>
+        </v-list-item>
+        <v-divider></v-divider>
+        <v-list-item link>
+          <RouterLink to="/" :class="[currentTheme === 'dark' ? 'text-white' : 'text-black']">Logout</RouterLink>
+        </v-list-item>
+      </v-list>
+    </v-menu>
+
+  </div>
+</v-container>
+
     </v-app-bar>
 
-    <!-- Main Content -->
+    <!-- MAIN CONTENT -->
     <v-main :class="currentTheme === 'dark' ? 'bg-grey-darken-4 text-white' : 'bg-grey-lighten-3'">
       <v-container fluid class="py-6 px-4 px-sm-6">
         <v-row justify="center">
-          <v-col cols="12" sm="10" md="8">
+          <v-col cols="12" sm="10" md="8" lg="8">
             <v-sheet
               :class="currentTheme === 'dark' ? 'bg-grey-darken-3 text-white' : 'bg-white'"
-              class="pa-4 pa-sm-6 text-sm-center"
+              class="fade-slide-up pa-4 pa-sm-6 text-sm-center"
               elevation="2"
               rounded="lg"
             >
-              <!-- Theme Toggle -->
+              <!-- Theme Toggle Button -->
               <v-btn
                 icon
                 size="small"
                 @click="toggleTheme"
                 class="position-absolute"
-                style="top: 16px; right: 16px; z-index: 10"
+                style="top: 16px; right: 16px"
               >
-                <v-icon>
-                  {{ currentTheme === 'light' ? 'mdi-weather-night' : 'mdi-white-balance-sunny' }}
-                </v-icon>
+                <v-icon>{{
+                  currentTheme === 'light' ? 'mdi-weather-night' : 'mdi-white-balance-sunny'
+                }}</v-icon>
               </v-btn>
 
-              <!-- Profile Image -->
+              <!-- Profile Avatar -->
               <div class="d-flex flex-column align-center mb-4">
-                <v-avatar :size="$vuetify.display.smAndDown ? 100 : 120" color="grey-lighten-2">
-                  <v-img v-if="profileImage" :src="profileImage" cover />
+                <v-avatar :size="$vuetify.display.smAndDown ? 100 : 120" class="bg-grey-lighten-2">
+                  <v-img v-if="profileImage" :src="profileImage" cover>
+                    <template #error>
+                      <v-icon size="80" color="grey-darken-1">mdi-account</v-icon>
+                    </template>
+                  </v-img>
                   <v-icon v-else size="80" color="grey-darken-1">mdi-account</v-icon>
                 </v-avatar>
 
+                <!-- Upload & Remove Buttons -->
                 <div class="mt-3 d-flex flex-wrap justify-center gap-2">
-                  <v-btn size="small" color="primary" @click="$refs.imageInput.click()">
-                    <v-icon start>mdi-upload</v-icon>
+                  <v-btn
+                    size="small"
+                    color="primary"
+                    @click="$refs.imageInput.click()"
+                    :loading="imageLoading"
+                    :disabled="imageLoading"
+                  >
+                    <v-icon start>mdi-upload</v-icon> Upload
                   </v-btn>
                   <v-btn
                     v-if="profileImage"
                     size="small"
                     color="red"
                     variant="outlined"
-                    @click="removeProfileImage"
+                    @click="confirmRemoveImage"
+                    :loading="imageLoading"
+                    :disabled="imageLoading"
                   >
-                    <v-icon start>mdi-delete</v-icon>
+                    <v-icon start>mdi-delete</v-icon> Remove
                   </v-btn>
                 </div>
                 <input
@@ -247,38 +447,58 @@ function getEducationPlaceholder(index) {
                 />
               </div>
 
-              <!-- Full Name -->
-              <div class="d-flex flex-column align-center">
-                <h3 class="font-weight-medium mb-4">{{ fullName }}</h3>
-                <v-btn color="primary" class="mb-3" @click="dialog = true"> Apply as Tutor? </v-btn>
-              </div>
-
-              <!-- Confirm Dialog -->
-              <v-dialog
-                v-model="dialog"
-                max-width="500"
-                scrollable
-                transition="dialog-bottom-transition"
-                persistent
-              >
+              <!-- button for apply as tutor or cancel -->
+              <div class="d-flex justify-center mb-3">
+  <v-btn
+    :color="profile.isPublicTutor ? 'red' : 'primary'"
+    @click="dialog = true"
+    :loading="loading"
+  >
+    {{ profile.isPublicTutor ? 'Cancel Apply' : 'Apply as Tutor?' }}
+  </v-btn>
+</div>
+           
+              <!-- Confirm Dialog: Apply as Tutor -->
+              <v-dialog v-model="dialog" max-width="500" persistent>
                 <v-card>
-                  <v-card-title class="text-h6 text-start">
-                    <v-icon class="me-2">mdi-alert-circle-outline</v-icon>
-                    Confirm Application
+                  <v-card-title class="text-h6">
+                    <v-icon class="me-2">mdi-alert-circle-outline</v-icon> Confirm Application
                   </v-card-title>
-                  <v-card-text class="text-start">
+                  <v-card-text>
                     Your personal information will be public. Do you still wish to proceed?
                   </v-card-text>
                   <v-card-actions class="justify-end">
                     <v-btn
-                      color="red"
+                      color="grey"
                       variant="outlined"
                       @click="dialog = false"
                       :disabled="loading"
                       >No</v-btn
                     >
-                    <v-btn color="green" @click="proceedWithApplication" :loading="loading"
-                      >Yes</v-btn
+                    <v-btn color="green" @click="applyAsTutor" :loading="loading">
+                      Yes, Apply
+                    </v-btn>
+                  </v-card-actions>
+                </v-card>
+              </v-dialog>
+
+              <!-- Confirm Dialog: Remove Profile Image -->
+              <v-dialog v-model="confirmRemove" max-width="400" persistent>
+                <v-card>
+                  <v-card-title class="text-h6">
+                    <v-icon class="me-2">mdi-alert</v-icon> Confirm Deletion
+                  </v-card-title>
+                  <v-card-text> Are you sure you want to delete your profile picture? </v-card-text>
+                  <v-card-actions class="justify-end">
+                    <v-btn
+                      color="grey"
+                      variant="outlined"
+                      @click="confirmRemove = false"
+                      :disabled="imageLoading"
+                      >Cancel</v-btn
+                    >
+                    <v-btn color="red" @click="removeProfileImage" :loading="imageLoading"
+                      >Delete</v-btn
                     >
                   </v-card-actions>
                 </v-card>
@@ -288,38 +508,30 @@ function getEducationPlaceholder(index) {
               <v-snackbar v-model="snackbar" timeout="3000" color="success" location="top">
                 {{ snackbarMsg }}
                 <template #actions>
-                  <v-btn variant="text" @click="snackbar = false" icon="mdi-close" />
+                  <v-btn icon="mdi-close" variant="text" @click="snackbar = false" />
                 </template>
               </v-snackbar>
 
               <v-divider class="my-4" />
 
-              <!-- Profile Form -->
+              <!-- Profile Fields -->
               <div class="text-start">
                 <v-row
-                  v-for="(label, key) in {
-                    'Given Name:': 'firstName',
-                    'Last Name:': 'lastName',
-                    'Middle Initial:': 'middleInitial',
-                    'Age:': 'age',
-                    'Expertise:': 'expertise',
-                    'Email:': 'email',
-                    'Phone:': 'phone',
-                  }"
-                  :key="key"
+                  v-for="(fieldKey, label) in fieldMappings"
+                  :key="fieldKey"
                   class="py-1"
                   dense
                 >
-                  <v-col cols="12" sm="6" class="font-weight-medium">{{ label }}</v-col>
+                  <v-col cols="12" sm="6" class="font-weight-medium">{{ label }}:</v-col>
                   <v-col cols="12" sm="6">
-                    <div v-if="!isEditing">{{ profile[key] }}</div>
+                    <div v-if="!isEditing">{{ profile[fieldKey] }}</div>
                     <v-text-field
                       v-else
-                      v-model="profile[key]"
-                      :placeholder="`Enter your ${label.toLowerCase().replace(':', '')}`"
+                      v-model="profile[fieldKey]"
+                      :placeholder="`Enter your ${label}`"
                       density="compact"
                       hide-details
-                      :type="key === 'age' ? 'number' : 'text'"
+                      :type="fieldKey === 'age' ? 'number' : 'text'"
                     />
                   </v-col>
                 </v-row>
@@ -341,12 +553,12 @@ function getEducationPlaceholder(index) {
                   </v-col>
                 </v-row>
 
-                <!-- Education -->
+                <!-- Educational Background -->
                 <v-row class="py-1" dense>
                   <v-col cols="12" sm="6" class="font-weight-medium">Educational Background:</v-col>
                   <v-col cols="12" sm="6">
                     <div v-if="!isEditing">
-                      <div v-for="item in profile.education" :key="item">{{ item }}</div>
+                      <div v-for="(item, index) in profile.education" :key="index">{{ item }}</div>
                     </div>
                     <div v-else>
                       <v-text-field
@@ -364,7 +576,7 @@ function getEducationPlaceholder(index) {
 
               <v-divider class="my-4" />
 
-              <!-- Edit / Save Buttons -->
+              <!-- Edit / Save / Cancel Buttons -->
               <div class="d-flex flex-wrap justify-center gap-2">
                 <v-btn
                   v-if="!isEditing"
@@ -372,11 +584,16 @@ function getEducationPlaceholder(index) {
                   variant="outlined"
                   color="blue"
                   @click="enableEdit"
-                  >Edit</v-btn
                 >
+                  Edit
+                </v-btn>
                 <template v-else>
-                  <v-btn size="small" variant="text" color="red" @click="cancelEdit">Cancel</v-btn>
-                  <v-btn size="small" color="green" @click="saveProfile">Save</v-btn>
+                  <v-btn size="small" variant="text" color="red" @click="cancelEdit">
+                    Cancel
+                  </v-btn>
+                  <v-btn size="small" color="green" @click="saveProfile" :loading="loading">
+                    Save
+                  </v-btn>
                 </template>
               </div>
             </v-sheet>
@@ -386,3 +603,20 @@ function getEducationPlaceholder(index) {
     </v-main>
   </v-app>
 </template>
+
+<style scoped>
+.fade-slide-up {
+  animation: fadeSlideUp 1.6s ease-in both;
+}
+
+@keyframes fadeSlideUp {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+</style>

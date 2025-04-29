@@ -1,5 +1,12 @@
 <script setup>
+import { requiredValidator, emailValidator } from '@/utils/validators.js'
 import { ref, onMounted, watch } from 'vue'
+import { supabase } from '@/utils/supabase.js'
+import { useRouter } from 'vue-router'
+import AlertNotification from '@/components/common/AlertNotification.vue'
+
+
+const visible = ref(false)
 
 // Get theme preference from localStorage or system
 const getPreferredTheme = () => {
@@ -29,17 +36,65 @@ onMounted(() => {
     }
   })
 })
+
+const refVForm = ref()
+const router = useRouter()
+
+// Reactive state for form data
+const formData = ref({
+  email: '',
+  password: '',
+})
+
+// Reactive state for form action (processing status)
+const formAction = ref({
+  formProcess: false,
+  formErrorMessage: '',
+  formSuccessMessage: '',
+})
+
+// Login function
+const onLogin = async () => {
+  formAction.value.formProcess = true
+  const { data, error } = await supabase.auth.signInWithPassword({
+    email: formData.value.email,
+    password: formData.value.password,
+  })
+
+  // Handle success and error responses
+  formAction.value.formProcess = false
+  if (error) {
+    formAction.value.formErrorMessage = error.message = 'Failed to login!'
+    return
+  }
+
+  if (data) {
+  formAction.value.formSuccessMessage = 'Successfully Logged In!';
+  
+  // Wait for a bit so the user can see the alert
+  setTimeout(() => {
+    router.replace('/home')
+  }, 1500); // 1.5 seconds
+}
+}
+
+// Form submission handler
+const onFormSubmit = () => {
+  refVForm.value?.validate().then(({ valid }) => {
+    if (valid) {
+      onLogin()
+    }
+  })
+}
+const showSuccess = ref(true)
+
 </script>
 
 <template>
   <v-responsive class="login-wrapper">
     <v-app :theme="theme">
       <v-main class="no-scroll">
-        <v-container
-          fluid
-          class="wrapper"
-          :style="{ background: theme === 'light' ? '#1565c0' : '#121212' }"
-        >
+        <v-container fluid class="wrapper" :style="{ background: theme === 'light' ? '#1565c0' : '#121212' }">
           <!-- Theme Toggle Button -->
           <v-btn
             :icon="true"
@@ -78,19 +133,28 @@ onMounted(() => {
                     <v-divider class="mb-5 mt-4" thickness="3" color="black" />
                     <span class="font-weight-black d-flex justify-center">Login</span>
                   </template>
-
+                  <AlertNotification
+                    :form-success-message="formAction.formSuccessMessage"
+                    :form-error-message="formAction.formErrorMessage"
+                  ></AlertNotification>
                   <v-card-text class="p-4">
-                    <v-form fast-fail @submit.prevent>
+                    <v-form ref="refVForm" @submit.prevent="onFormSubmit">
                       <v-text-field
                         label="Email"
                         variant="outlined"
                         :color="theme === 'dark' ? 'white' : 'primary'"
+                        :rules="[requiredValidator, emailValidator]"
+                        v-model="formData.email"
                       />
                       <v-text-field
+                        :append-inner-icon="visible ? 'mdi-eye-off' : 'mdi-eye'"
+                        :type="visible ? 'text' : 'password'"
                         label="Password"
-                        type="password"
+                        @click:append-inner="visible = !visible"
                         variant="outlined"
                         :color="theme === 'dark' ? 'white' : 'primary'"
+                        :rules="[requiredValidator]"
+                        v-model="formData.password"
                       />
                       <v-btn
                         color="light-blue-darken-2"
@@ -98,7 +162,6 @@ onMounted(() => {
                         type="submit"
                         prepend-icon="mdi-login"
                         block
-                        to="/home"
                       >
                         Login
                       </v-btn>
@@ -106,7 +169,7 @@ onMounted(() => {
                       <v-divider class="my-5" />
                       <p class="text-center text-primary">
                         Don’t have an account yet?
-                        <RouterLink class="link" to="/register">Register now!</RouterLink>
+                        <RouterLink class="active-click" to="/register">Register now!</RouterLink>
                       </p>
                     </v-form>
                   </v-card-text>
@@ -146,8 +209,10 @@ onMounted(() => {
     box-shadow 0.3s ease;
 }
 .hover-card:hover {
-  transform: scale(1.02);
-  box-shadow: 0 12px 24px rgba(40, 206, 244, 0.2);
+ 
+  transform: scale(1.05);
+  box-shadow: 0 6px 18px rgba(33, 150, 243, 0.6);
+
 }
 
 /* Theme toggle button */
@@ -203,11 +268,16 @@ onMounted(() => {
 }
 
 /* Remove underline on link */
-.link {
+
+.active-click {
+  color: #0d47a1;
   text-decoration: none;
 }
-.link:active {
-  color: #000;
+.active-click:active {
+  color: #ffffff19;
+}
+.active-click:hover {
+  color: #1c1717d1;
 }
 @media (max-width: 600px) {
   .wrapper {
@@ -242,5 +312,4 @@ onMounted(() => {
     max-width: 120px;
   }
 }
-
 </style>
