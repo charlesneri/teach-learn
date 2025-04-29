@@ -1,5 +1,6 @@
 <script setup>
 import { ref, onMounted, watch } from 'vue'
+<<<<<<< HEAD
 import { supabase, formActionDefault } from '@/utils/supabase'
 import AlertNotification from '@/components/common/AlertNotification.vue'
 import {
@@ -10,6 +11,10 @@ import {
 } from '@/utils/validators'
 
 import { useRouter } from 'vue-router'
+=======
+import { useRouter } from 'vue-router'
+
+>>>>>>> development
 const router = useRouter()
 
 // Theme setup
@@ -18,6 +23,11 @@ const toggleTheme = () => {
   theme.value = theme.value === 'light' ? 'dark' : 'light'
   localStorage.setItem('theme', theme.value)
 }
+<<<<<<< HEAD
+=======
+watch(theme, (val) => localStorage.setItem('theme', val))
+
+>>>>>>> development
 onMounted(() => {
   const media = window.matchMedia('(prefers-color-scheme: dark)')
   media.addEventListener('change', (e) => {
@@ -28,6 +38,7 @@ onMounted(() => {
 })
 watch(theme, (val) => localStorage.setItem('theme', val))
 
+<<<<<<< HEAD
 // Form State
 const visible = ref(false)
 const refVForm = ref()
@@ -35,6 +46,13 @@ const formData = ref({
   firstname: '',
   lastname: '',
   middleinitial: '',
+=======
+// Registration form data
+const userProfile = ref({
+  firstName: '',
+  lastName: '',
+  middleInitial: '',
+>>>>>>> development
   age: '',
   phone: '',
   expertise: '',
@@ -47,6 +65,7 @@ const formData = ref({
   confirm_password: '',
 })
 
+<<<<<<< HEAD
 const formAction = ref({ ...formActionDefault })
 
 // Submit Handler
@@ -119,6 +138,42 @@ const onSubmit = async () => {
   }
 
   formAction.value.formProcess = false
+=======
+// Form submit logic
+const handleSubmit = () => {
+  if (
+    userProfile.value.password !== userProfile.value.confirmPassword ||
+    !userProfile.value.firstName ||
+    !userProfile.value.lastName ||
+    !userProfile.value.email
+  ) {
+    alert('Please complete all required fields and ensure passwords match.')
+    return
+  }
+
+  // Save only the fields needed for profile
+  const formattedProfile = {
+    firstName: userProfile.value.firstName,
+    lastName: userProfile.value.lastName,
+    middleInitial: userProfile.value.middleInitial,
+    age: userProfile.value.age,
+    phone: userProfile.value.phone,
+    expertise: userProfile.value.expertise,
+    about: userProfile.value.about,
+    email: userProfile.value.email,
+    education: [
+      userProfile.value.school,
+      userProfile.value.course,
+      userProfile.value.yearLevel,
+    ],
+  }
+
+  localStorage.setItem('userProfile', JSON.stringify(formattedProfile))
+  alert('Registration successful!')
+
+  // Optional redirect to profile
+  // router.push('/profile')
+>>>>>>> development
 }
 </script>
 
@@ -196,6 +251,24 @@ const onSubmit = async () => {
                           variant="outlined"
                           :rules="[requiredValidator]"
                         />
+
+                        <!-- ✅ New Field: Phone Number -->
+                        <v-text-field
+                          v-model="userProfile.phone"
+                          label="Phone Number"
+                          type="tel"
+                          variant="outlined"
+                          :color="theme === 'dark' ? 'white' : 'primary'"
+                        />
+
+                        <!-- ✅ New Field: Expertise -->
+                        <v-text-field
+                          v-model="userProfile.expertise"
+                          label="Expertise / Field"
+                          variant="outlined"
+                          :color="theme === 'dark' ? 'white' : 'primary'"
+                        />
+
                         <v-text-field
                           v-model="formData.phone"
                           label="Phone"
