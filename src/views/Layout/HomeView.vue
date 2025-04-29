@@ -119,40 +119,43 @@ onMounted(async () => {
 </script>
 
 <template>
-<v-app id="inspire">
-  <!-- AppBar -->
-  <v-app-bar flat :color="currentTheme === 'light' ? '#1565c0' : 'grey-darken-4'">
-    <v-container class="d-flex align-center justify-space-between">
-      <div class="d-flex align-center gap-4">
-        <v-avatar color="#fff" size="50">
-          <v-img src="image/Teach&Learn.png" alt="Logo" />
-        </v-avatar>
-      </div>
-      <v-spacer />
-      <div class="d-none d-md-flex align-center" style="gap: 24px">
-        <RouterLink to="/home" class="text-white text-decoration-none font-weight-medium">Home</RouterLink>
-        <RouterLink to="/about" class="text-white text-decoration-none font-weight-medium">About Us</RouterLink>
-        <RouterLink to="/contact" class="text-white text-decoration-none font-weight-medium">Contact Us</RouterLink>
-      </div>
-      <v-spacer />
-      <v-responsive max-width="240">
-        <div class="d-flex">
-          <v-text-field
-            v-model="searchQuery"
-            placeholder="Search..."
-            variant="solo-filled"
-            density="compact"
-            rounded="lg"
-            flat
-            hide-details
-            single-line
-            class="search-input flex-grow-1"
-            append-inner-icon="mdi-magnify"
-          />
+  <v-app id="inspire">
+    <!-- App Bar -->
+    <v-app-bar flat :color="currentTheme === 'light' ? '#1565c0' : 'grey-darken-4'">
+      <v-container class="d-flex align-center justify-space-between">
+        <div class="d-flex align-center gap-4">
+          <v-avatar color="#fff" size="50">
+            <v-img src="image/Teach&Learn.png" alt="Logo" />
+          </v-avatar>
         </div>
-      </v-responsive>
-    </v-container>
-  </v-app-bar>
+        <v-spacer />
+        <div class="d-none d-md-flex align-center" style="gap: 24px">
+          <RouterLink to="/home" class="text-white text-decoration-none font-weight-medium"
+            >Home</RouterLink
+          >
+          <RouterLink to="/about" class="text-white text-decoration-none font-weight-medium"
+            >About Us</RouterLink
+          >
+          <RouterLink to="/contact" class="text-white text-decoration-none font-weight-medium"
+            >Contact Us</RouterLink
+          >
+        </div>
+        <v-spacer />
+        <!-- Search & Mobile Menu -->
+        <v-responsive max-width="240">
+          <div class="d-flex">
+            <v-text-field
+              v-model="searchQuery"
+              placeholder="Search..."
+              variant="solo-filled"
+              density="compact"
+              rounded="lg"
+              flat
+              hide-details
+              single-line
+              class="search-input flex-grow-1"
+              append-inner-icon="mdi-magnify"
+            />
 
             <!-- Mobile Search and Menu -->
             <div class="d-flex align-center gap-2">
