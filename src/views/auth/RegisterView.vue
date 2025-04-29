@@ -1,20 +1,7 @@
 <script setup>
 import { ref, onMounted, watch } from 'vue'
-<<<<<<< HEAD
-import { supabase, formActionDefault } from '@/utils/supabase'
-import AlertNotification from '@/components/common/AlertNotification.vue'
-import {
-  requiredValidator,
-  emailValidator,
-  passwordValidator,
-  confirmedValidator,
-} from '@/utils/validators'
-
-import { useRouter } from 'vue-router'
-=======
 import { useRouter } from 'vue-router'
 
->>>>>>> development
 const router = useRouter()
 
 // Theme setup
@@ -23,11 +10,8 @@ const toggleTheme = () => {
   theme.value = theme.value === 'light' ? 'dark' : 'light'
   localStorage.setItem('theme', theme.value)
 }
-<<<<<<< HEAD
-=======
 watch(theme, (val) => localStorage.setItem('theme', val))
 
->>>>>>> development
 onMounted(() => {
   const media = window.matchMedia('(prefers-color-scheme: dark)')
   media.addEventListener('change', (e) => {
@@ -38,21 +22,11 @@ onMounted(() => {
 })
 watch(theme, (val) => localStorage.setItem('theme', val))
 
-<<<<<<< HEAD
-// Form State
-const visible = ref(false)
-const refVForm = ref()
-const formData = ref({
-  firstname: '',
-  lastname: '',
-  middleinitial: '',
-=======
 // Registration form data
 const userProfile = ref({
   firstName: '',
   lastName: '',
   middleInitial: '',
->>>>>>> development
   age: '',
   phone: '',
   expertise: '',
@@ -65,80 +39,6 @@ const userProfile = ref({
   confirm_password: '',
 })
 
-<<<<<<< HEAD
-const formAction = ref({ ...formActionDefault })
-
-// Submit Handler
-const onFormSubmit = () => {
-  refVForm.value?.validate().then(({ valid }) => {
-    if (valid) {
-      onSubmit()
-    }
-  })
-}
-
-// Main Submit Function
-const onSubmit = async () => {
-  formAction.value = { ...formActionDefault }
-  formAction.value.formProcess = true
-
-  const { data, error } = await supabase.auth.signUp({
-    email: formData.value.email,
-    password: formData.value.password,
-    options: {
-      data: {
-        firstName: formData.value.firstname,
-        lastName: formData.value.lastname,
-        middleInitial: formData.value.middleinitial,
-        age: Number(formData.value.age),
-        phone: formData.value.phone,
-        expertise: formData.value.expertise,
-        about: formData.value.about,
-        school: formData.value.school,
-        course: formData.value.course,
-        yearLevel: Number(formData.value.yearLevel),
-      },
-    },
-  })
-
-  if (error) {
-    console.error(error)
-    formAction.value.formErrorMessage = error.message
-    formAction.value.formStatus = error.status
-  } else if (data && data.user) {
-    console.log('Auth signup success:', data.user)
-
-    // Insert into profiles table
-    const { error: profileError } = await supabase.from('profiles').insert({
-      id: data.user.id,
-      first_name: formData.value.firstname,
-      last_name: formData.value.lastname,
-      middle_initial: formData.value.middleinitial,
-      age: Number(formData.value.age),
-      email: formData.value.email,
-      phone: formData.value.phone,
-      expertise: formData.value.expertise,
-      about: formData.value.about,
-      school: formData.value.school,
-      degree: formData.value.course,
-      year: Number(formData.value.yearLevel),
-      avatar_url: '', // No image uploaded yet
-    })
-
-    if (profileError) {
-      console.error('Error inserting into profiles table:', profileError)
-      formAction.value.formErrorMessage = 'Profile creation failed!'
-      formAction.value.formStatus = 500
-    } else {
-      console.log('Profile inserted successfully')
-      formAction.value.formSuccessMessage = 'Successfully Registered!'
-      refVForm.value?.reset()
-      // Optionally: router.push('/login')
-    }
-  }
-
-  formAction.value.formProcess = false
-=======
 // Form submit logic
 const handleSubmit = () => {
   if (
@@ -173,7 +73,6 @@ const handleSubmit = () => {
 
   // Optional redirect to profile
   // router.push('/profile')
->>>>>>> development
 }
 </script>
 
