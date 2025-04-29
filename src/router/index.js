@@ -6,7 +6,6 @@ import ProfileView from '@/views/Layout/ProfileView.vue'
 import AboutView from '@/views/Layout/AboutView.vue'
 import ContactView from '@/views/Layout/ContactView.vue'
 import AppointmentsView from '@/views/Layout/AppointmentsView.vue'
-import DeletedAppointmentsView from '@/views/Layout/DeletedAppointmentsView.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -46,11 +45,7 @@ const router = createRouter({
       name: 'appointments',
       component: AppointmentsView,
     },
-    {
-    path: '/DeletedAppointments',
-    name: 'DeletedAppointments',
-    component: DeletedAppointmentsView,
-    },
+ 
   ],
 })
 
