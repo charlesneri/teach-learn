@@ -1,9 +1,13 @@
 <script setup>
 import { ref, onMounted, watch } from 'vue'
 import { useTheme } from 'vuetify'
-import { RouterLink } from 'vue-router'
+import { useRouter, RouterLink } from 'vue-router'
 import { supabase } from '@/utils/supabase'
 
+const datePickerOpen = ref(false)
+const timePickerOpen = ref(false)
+
+// THEME SETUP
 const theme = useTheme()
 const currentTheme = ref(localStorage.getItem('theme') || 'light')
 
@@ -17,19 +21,22 @@ watch(currentTheme, (val) => {
   localStorage.setItem('theme', val)
 })
 
+// STATES
 const searchQuery = ref('')
 const tutors = ref([])
 const selectedTutor = ref(null)
 const profileDialog = ref(false)
 const appointmentDialog = ref(false)
-const selectedDate = ref(null)
-const selectedTime = ref(null)
+const selectedDate = ref('')
+const selectedTime = ref('')
 const messageInput = ref('')
+const snackbar = ref(false)
+const snackbarMsg = ref('')
+const snackbarColor = ref('')
 const currentUserId = ref(null)
 const currentUserProfile = ref({ firstName: '', lastName: '', avatarUrl: '', isPublicTutor: false })
 
-const performSearch = () => {}
-
+// FETCH USER
 const fetchCurrentUser = async () => {
   const {
     data: { user },
@@ -52,36 +59,73 @@ const fetchCurrentUser = async () => {
   }
 }
 
+// FETCH TUTORS
 const fetchTutors = async () => {
   const { data } = await supabase.from('profiles').select('*').eq('is_public_tutor', true)
   tutors.value = data || []
 }
 
-const applyOrCancelTutor = async () => {
-  const newStatus = !currentUserProfile.value.isPublicTutor
-  await supabase
-    .from('profiles')
-    .update({ is_public_tutor: newStatus })
-    .eq('id', currentUserId.value)
-  currentUserProfile.value.isPublicTutor = newStatus
-  await fetchTutors()
-}
-
+// ACTIONS
 const viewTutor = (tutor) => {
   selectedTutor.value = tutor
   profileDialog.value = true
 }
+
 const openAppointment = (tutor) => {
   selectedTutor.value = tutor
   appointmentDialog.value = true
 }
+const saveAppointment = async () => {
+  if (!selectedDate.value || !selectedTime.value || !selectedTutor.value || !currentUserId.value) {
+    snackbarMsg.value = 'Please complete all fields before booking.'
+    snackbarColor.value = 'red'
+    snackbar.value = true
+    return
+  }
 
+  const { error } = await supabase.from('appointments').insert({
+    student_id: currentUserId.value,
+    mentor_id: selectedTutor.value.id,
+    student_name: `${currentUserProfile.firstName} ${currentUserProfile.lastName}`,
+    appointment_date: selectedDate.value,
+    appointment_time: selectedTime.value,
+    message: messageInput.value,
+    status: 'Pending',
+  })
+
+  snackbar.value = true
+  if (error) {
+    console.error('Error saving appointment:', error)
+    snackbarMsg.value = 'Failed to book appointment. Try again.'
+    snackbarColor.value = 'red'
+  } else {
+    snackbarMsg.value = 'Appointment booked successfully!'
+    snackbarColor.value = 'green'
+
+    appointmentDialog.value = false
+
+    setTimeout(() => {
+      selectedDate.value = ''
+      selectedTime.value = ''
+      messageInput.value = ''
+      datePickerOpen.value = false
+      timePickerOpen.value = false
+    }, 300)
+  }
+}
+
+
+
+// MOUNT
 onMounted(async () => {
   theme.global.name.value = currentTheme.value
   await fetchCurrentUser()
   await fetchTutors()
 })
 </script>
+
+<!-- Your existing template and styles remain unchanged -->
+
 <template>
   <v-app id="inspire">
     <!-- App Bar -->
@@ -118,10 +162,9 @@ onMounted(async () => {
               hide-details
               single-line
               class="search-input flex-grow-1"
-              @keydown.enter="performSearch"
               append-inner-icon="mdi-magnify"
-              @click:append-inner="performSearch"
             />
+
             <!-- Mobile Search and Menu -->
             <div class="d-flex align-center gap-2">
               <!-- Mobile Menu Button -->
@@ -163,6 +206,17 @@ onMounted(async () => {
                       ]"
                     >
                       My Appointment
+                    </RouterLink>
+                  </v-list-item>
+                  <v-list-item link>
+                    <RouterLink
+                      to="/appointments"
+                      :class="[
+                        'active-click text-decoration-none',
+                        currentTheme === 'dark' ? 'text-white' : 'text-black',
+                      ]"
+                    >
+                     Deleted Appointments
                     </RouterLink>
                   </v-list-item>
 
@@ -210,6 +264,15 @@ onMounted(async () => {
         </v-responsive>
       </v-container>
     </v-app-bar>
+    <v-snackbar
+      v-model="snackbar"
+      timeout="3000"
+      :color="snackbarColor"
+      location="top center"
+      style="top: 80px"
+    >
+      {{ snackbarMsg }}
+    </v-snackbar>
 
     <!-- Main -->
     <transition name="fade-slide-up">
@@ -272,6 +335,17 @@ onMounted(async () => {
                     ]"
                   >
                     <v-list-item-title>My Appointments</v-list-item-title>
+                  </v-list-item>
+                  <v-list-item
+                    link
+                    :to="'/DeletedAppointments'"
+                    tag="RouterLink"
+                    :class="[
+                      'active-click text-decoration-none',
+                      currentTheme === 'dark' ? 'text-white' : 'text-black',
+                    ]"
+                  >
+                    <v-list-item-title>Deleted Apointments</v-list-item-title>
                   </v-list-item>
 
                   <v-divider class="my-2" />
@@ -462,25 +536,27 @@ onMounted(async () => {
 
                           <div class="d-flex flex-column align-center" style="gap: 20px">
                             <!-- Date Picker -->
-                            <v-date-picker
-                              v-model="selectedDate"
-                              color="primary"
-                              class="mx-auto"
-                              style="max-width: 300px"
-                              @input="onDateSelect"
-                            ></v-date-picker>
+                     
+<v-date-picker
+  v-model="selectedDate"
+  v-model:dialog="datePickerOpen"
+  color="primary"
+  class="mx-auto"
+  style="max-width: 300px"
+/>
 
-                            <!-- Time Picker (only after date selected) -->
-                            <v-time-picker
-                              v-if="selectedDate"
-                              v-model="selectedTime"
-                              format="12hr"
-                              color="primary"
-                              class="mx-auto"
-                              style="max-width: 300px"
-                              :disabled="!selectedDate"
-                              @change="onTimeSelect"
-                            ></v-time-picker>
+<!-- Time Picker -->
+<v-time-picker
+  v-if="selectedDate"
+  v-model="selectedTime"
+  v-model:dialog="timePickerOpen"
+  format="12hr"
+  color="primary"
+  class="mx-auto"
+  style="max-width: 300px"
+  :disabled="!selectedDate"
+/>
+
 
                             <!-- Message Input -->
                             <v-textarea
@@ -520,6 +596,7 @@ onMounted(async () => {
       </v-main>
     </transition>
   </v-app>
+
 </template>
 <style scoped>
 .profile-container {
