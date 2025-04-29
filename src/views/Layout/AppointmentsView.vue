@@ -35,6 +35,51 @@ const toggleMenu = () => {
 // APPOINTMENTS FETCHING
 const currentUserId = ref(null)
 const appointments = ref([])
+
+const fetchStudentAppointments = async () => {
+  const { data, error } = await supabase
+    .from('appointments')
+    .select(`
+      id,
+      appointment_date,
+      appointment_time,
+      message,
+      status,
+      mentor:mentor_id(id, first_name, last_name),
+      student:student_id(id, first_name, last_name)
+    `)
+    .eq('student_id', currentUserId.value)
+    .order('appointment_date', { ascending: true })
+
+  if (error) {
+    console.error('Error fetching student appointments:', error)
+    return []
+  }
+  return data || []
+}
+
+const fetchMentorAppointments = async () => {
+  const { data, error } = await supabase
+    .from('appointments')
+    .select(`
+      id,
+      appointment_date,
+      appointment_time,
+      message,
+      status,
+      mentor:mentor_id(id, first_name, last_name),
+      student:student_id(id, first_name, last_name)
+    `)
+    .eq('mentor_id', currentUserId.value)
+    .order('appointment_date', { ascending: true })
+
+  if (error) {
+    console.error('Error fetching mentor appointments:', error)
+    return []
+  }
+  return data || []
+}
+
 const fetchAppointments = async () => {
   const {
     data: { user },
@@ -43,18 +88,12 @@ const fetchAppointments = async () => {
 
   currentUserId.value = user.id
 
-  const { data, error } = await supabase
-    .from('appointments')
-    .select('*')
-    .eq('student_id', currentUserId.value)
-    // 👉 Remove .eq('status', 'accepted')
-    .order('appointment_date', { ascending: true })
+  const [studentAppointments, mentorAppointments] = await Promise.all([
+    fetchStudentAppointments(),
+    fetchMentorAppointments(),
+  ])
 
-  if (data) {
-    appointments.value = data
-  } else {
-    console.error('Error fetching appointments:', error)
-  }
+  appointments.value = [...studentAppointments, ...mentorAppointments]
 }
 
 onMounted(() => {
@@ -67,11 +106,21 @@ const filteredAppointments = computed(() => {
 
   if (searchQuery.value) {
     const query = searchQuery.value.toLowerCase()
-    temp = temp.filter((appointment) => appointment.student_name.toLowerCase().includes(query))
+    temp = temp.filter((appointment) => {
+      const studentName =
+        `${appointment.student?.first_name || ''} ${appointment.student?.last_name || ''}`.toLowerCase()
+      const mentorName =
+        `${appointment.mentor?.first_name || ''} ${appointment.mentor?.last_name || ''}`.toLowerCase()
+      return studentName.includes(query) || mentorName.includes(query)
+    })
   }
 
   if (selectedSort.value === 'A-Z') {
-    temp.sort((a, b) => a.student_name.localeCompare(b.student_name))
+    temp.sort((a, b) => {
+      const nameA = `${a.student?.first_name || ''} ${a.student?.last_name || ''}`.toLowerCase()
+      const nameB = `${b.student?.first_name || ''} ${b.student?.last_name || ''}`.toLowerCase()
+      return nameA.localeCompare(nameB)
+    })
   } else if (selectedSort.value === 'Date') {
     temp.sort((a, b) => new Date(a.appointment_date) - new Date(b.appointment_date))
   }
@@ -256,22 +305,39 @@ function performSearch() {
               </v-row>
 
               <!-- Appointment Results -->
-              <div v-if="appointments.length > 0">
-  <v-list>
-    <v-list-item v-for="appointment in appointments" :key="appointment.id">
-      <v-list-item-title>
-        Appointment with mentor ID {{ appointment.mentor_id }}
-      </v-list-item-title>
-      <v-list-item-subtitle>
-        {{ appointment.appointment_date }} - {{ appointment.appointment_time }}
-      </v-list-item-subtitle>
-    </v-list-item>
-  </v-list>
-</div>
+              <div v-if="appointments.length > 0" class="appointments-container">
+                <v-list class="appointments-list">
+                  <v-list-item
+                    v-for="appointment in appointments"
+                    :key="appointment.id"
+                    class="appointment-item"
+                  >
+                    <v-list-item-title class="appointment-title">
+                      Appointment between
+                      <strong
+                        >{{ appointment.student?.first_name }}
+                        {{ appointment.student?.last_name }}</strong
+                      >
+                      and
+                      <strong
+                        >{{ appointment.mentor?.first_name }}
+                        {{ appointment.mentor?.last_name }}</strong
+                      >
+                    </v-list-item-title>
+                    <v-list-item-subtitle class="appointment-subtitle">
+                      Date: {{ appointment.appointment_date }} at {{ appointment.appointment_time }}
+                      <br />
+                      Message: "{{ appointment.message }}"
+                      <br />
+                      Status: {{ appointment.status }}
+                    </v-list-item-subtitle>
+                  </v-list-item>
+                </v-list>
+              </div>
 
-<div v-else>
-  <p>No appointments found.</p>
-</div>
+              <div v-else class="no-appointments">
+                <p>No appointments found.</p>
+              </div>
 
               <!-- If No Appointments -->
               <v-alert v-else type="info" variant="tonal" border="start" density="compact">
@@ -297,5 +363,64 @@ function performSearch() {
 }
 .active-click:hover {
   color: #2196f3;
+}
+/*appointment design*/
+.appointments-container {
+  width: 100%;
+  max-width: 960px; /* slightly larger for cleaner center */
+  margin: auto;
+  padding: 24px;
+}
+
+.appointments-list {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.appointment-item {
+  background-color: #ffffff;
+  border-radius: 16px;
+  padding: 28px;
+  min-height: 200px;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.1);
+  transition:
+    transform 0.3s,
+    box-shadow 0.3s;
+}
+
+.appointment-item:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+}
+
+.appointment-title {
+  font-size: 1.4rem;
+  font-weight: 800;
+  margin-bottom: 12px;
+  color: #1565c0;
+}
+
+.appointment-subtitle {
+  font-size: 1rem;
+  color: #555;
+  line-height: 1.6;
+}
+
+/* Responsive for mobile */
+@media (max-width: 600px) {
+  .appointments-container {
+    padding: 16px;
+  }
+  .appointment-item {
+    padding: 20px;
+    min-height: 160px;
+  }
+  .appointment-title {
+    font-size: 1.1rem;
+  }
+  .appointment-subtitle {
+    font-size: 0.95rem;
+  }
 }
 </style>

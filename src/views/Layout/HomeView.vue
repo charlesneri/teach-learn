@@ -215,24 +215,53 @@ onMounted(async () => {
 
 const appointments = ref([])
 
+
 const fetchAppointments = async () => {
-  const { data: { user } } = await supabase.auth.getUser()
+  const { data: { user }, error: userError } = await supabase.auth.getUser()
   if (!user) return
 
   currentUserId.value = user.id
 
-  const { data, error } = await supabase
+  // Fetch if the user is a mentor or student
+  const { data: profileData, error: profileError } = await supabase
+    .from('profiles')
+    .select('is_public_tutor')
+    .eq('id', user.id)
+    .single()
+
+  if (profileError || !profileData) {
+    console.error('Failed to fetch profile:', profileError)
+    return
+  }
+
+  let query = supabase
     .from('appointments')
-    .select('*')
-    .eq('student_id', user.id)
+    .select(`
+      id,
+      appointment_date,
+      appointment_time,
+      message,
+      status,
+      mentor:mentor_id ( id, first_name, last_name ),
+      student:student_id ( id, first_name, last_name )
+    `)
     .order('appointment_date', { ascending: true })
 
-  if (data) {
-    appointments.value = data
+  if (profileData.is_public_tutor) {
+    query = query.eq('mentor_id', user.id)
   } else {
-    console.error('Error fetching appointments:', error)
+    query = query.eq('student_id', user.id)
+  }
+
+  const { data: appointmentData, error: appointmentError } = await query
+
+  if (appointmentError) {
+    console.error('Error fetching appointments:', appointmentError)
+  } else {
+    appointments.value = appointmentData
   }
 }
+
 
 </script>
 
