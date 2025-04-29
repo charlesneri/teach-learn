@@ -114,156 +114,155 @@ const saveAppointment = async () => {
   }
 }
 
-
-
 // MOUNT
 onMounted(async () => {
   theme.global.name.value = currentTheme.value
   await fetchCurrentUser()
   await fetchTutors()
 })
+//for collapsable drawer
+
+const drawer = ref(true) // Controls open/close
+const mini = ref(false)  // Controls mini/full mode
+const toggleDrawer = () => {
+  drawer.value = !drawer.value
+}
 </script>
 
 <!-- Your existing template and styles remain unchanged -->
 
 <template>
   <v-app id="inspire">
-    <!-- App Bar -->
-    <v-app-bar flat :color="currentTheme === 'light' ? '#1565c0' : 'grey-darken-4'">
-      <v-container class="d-flex align-center justify-space-between">
-        <div class="d-flex align-center gap-4">
-          <v-avatar color="#fff" size="50">
-            <v-img src="image/Teach&Learn.png" alt="Logo" />
-          </v-avatar>
-        </div>
-        <v-spacer />
-        <div class="d-none d-md-flex align-center" style="gap: 24px">
-          <RouterLink to="/home" class="text-white text-decoration-none font-weight-medium"
-            >Home</RouterLink
-          >
-          <RouterLink to="/about" class="text-white text-decoration-none font-weight-medium"
-            >About Us</RouterLink
-          >
-          <RouterLink to="/contact" class="text-white text-decoration-none font-weight-medium"
-            >Contact Us</RouterLink
-          >
-        </div>
-        <v-spacer />
-        <!-- Search & Mobile Menu -->
-        <v-responsive max-width="240">
-          <div class="d-flex">
-            <v-text-field
-              v-model="searchQuery"
-              placeholder="Search..."
-              variant="solo-filled"
-              density="compact"
-              rounded="lg"
-              flat
-              hide-details
-              single-line
-              class="search-input flex-grow-1"
-              append-inner-icon="mdi-magnify"
-            />
+<!-- App Bar -->
+<v-app-bar flat :color="currentTheme === 'light' ? '#1565c0' : 'grey-darken-4'">
+  <!-- Menu Icon that toggles drawer size -->
+  <v-app-bar-nav-icon @click="toggleDrawer" class="ms-5" />
 
-            <!-- Mobile Search and Menu -->
-            <div class="d-flex align-center gap-2">
-              <!-- Mobile Menu Button -->
-              <v-menu transition="scale-transition" offset-y>
-                <template #activator="{ props }">
-                  <v-app-bar-nav-icon v-bind="props" class="d-md-none" />
-                </template>
-                <v-list>
-                  <v-list-item >
-                    <RouterLink
-                      to="/"
-                      :class="[
-                        'active-click text-decoration-none',
-                        currentTheme === 'dark' ? 'text-white' : 'text-black',
-                      ]"
-                    >
-                      Home
-                    </RouterLink>
-                  </v-list-item>
+  <v-container
+  class="d-flex align-center pa-0 transition-all"
+  :class="{ 'shift-app-bar': drawer && !mini, 'shift-mini': drawer && mini }">
+    <!-- Left Spacer -->
+    <v-spacer />
 
-                  <v-list-item >
-                    <RouterLink
-                      to="/profile"
-                      :class="[
-                        'active-click text-decoration-none',
-                        currentTheme === 'dark' ? 'text-white' : 'text-black',
-                      ]"
-                    >
-                      My Profile
-                    </RouterLink>
-                  </v-list-item>
+    <!-- Centered Logo + Search -->
+    <div class="d-flex align-center" style="gap: 25px">
+      <v-avatar color="#fff" size="50">
+        <v-img src="image/Teach&Learn.png" alt="Logo" />
+      </v-avatar>
 
-                  <v-list-item >
-                    <RouterLink
-                      to="/appointments"
-                      :class="[
-                        'active-click text-decoration-none',
-                        currentTheme === 'dark' ? 'text-white' : 'text-black',
-                      ]"
-                    >
-                      My Appointment
-                    </RouterLink>
-                  </v-list-item>
-                  <v-list-item >
-                    <RouterLink
-                      to="/appointments"
-                      :class="[
-                        'active-click text-decoration-none',
-                        currentTheme === 'dark' ? 'text-white' : 'text-black',
-                      ]"
-                    >
-                     Delete History
-                    </RouterLink>
-                  </v-list-item>
+      <v-responsive max-width="800">
+        <v-text-field
+          v-model="searchQuery"
+          placeholder="Search..."
+          variant="solo-filled"
+          density="compact"
+          rounded="lg"
+          flat
+          hide-details
+          single-line
+          append-inner-icon="mdi-magnify"
+          style="width: 400px"
+        />
+      </v-responsive>
+    </div>
 
-                  <v-list-item >
-                    <RouterLink
-                      to="/about"
-                      :class="[
-                        'active-click text-decoration-none',
-                        currentTheme === 'dark' ? 'text-white' : 'text-black',
-                      ]"
-                    >
-                      About Us
-                    </RouterLink>
-                  </v-list-item>
+    <!-- Right Spacer -->
+    <v-spacer />
+  </v-container>
+</v-app-bar>
 
-                  <v-list-item link>
-                    <RouterLink
-                      to="/contact"
-                      :class="[
-                        'active-click text-decoration-none',
-                        currentTheme === 'dark' ? 'text-white' : 'text-black',
-                      ]"
-                    >
-                      Contact Us
-                    </RouterLink>
-                  </v-list-item>
+<!-- Drawer Sidebar (right, collapsible) -->
+<v-navigation-drawer
+  v-model="drawer"
+  :mini-variant="mini"
+  :width="mini ? 72 : 280"
+  right
+  permanent
+  app
+>
+  <!-- Profile -->
+  <v-sheet
+    class="pa-4 text-center"
+    rounded="lg"
+    :style="{
+      backgroundColor: currentTheme === 'dark' ? '#424242' : '#FCFBF4',
+      color: currentTheme === 'dark' ? '#ffffff' : '#000000',
+    }"
+  >
+    <v-avatar size="100" class="mb-3">
+      <v-img v-if="currentUserProfile.avatarUrl" :src="currentUserProfile.avatarUrl" cover />
+      <v-icon v-else size="80">mdi-account</v-icon>
+    </v-avatar>
+    <h3 v-if="!mini">{{ currentUserProfile.firstName }} {{ currentUserProfile.lastName }}</h3>
+  </v-sheet>
 
-                  <v-divider></v-divider>
+  <v-divider class="my-2" />
 
-                  <v-list-item link>
-                    <RouterLink
-                      to="/"
-                      :class="[
-                        'active-click text-decoration-none',
-                        currentTheme === 'dark' ? 'text-white' : 'text-black',
-                      ]"
-                    >
-                      Logout
-                    </RouterLink>
-                  </v-list-item>
-                </v-list>
-              </v-menu>
-            </div>
-          </div>
-        </v-responsive>
-      </v-container>
-    </v-app-bar>
+  <v-list nav dense>
+    <v-list-item :to="'/home'" tag="RouterLink">
+    <div class="d-flex align-center" style="gap: 8px; width: 100%">
+      <v-icon size="24">mdi-home</v-icon>
+      <span v-if="!mini" style="font-size: 20px;">Home</span>
+    </div>
+  </v-list-item>
+
+  <v-list-item :to="'/about'" tag="RouterLink">
+    <div class="d-flex align-center" style="gap: 8px; width: 100%">
+      <v-icon size="24">mdi-information</v-icon>
+      <span v-if="!mini" style="font-size: 20px;">About Us</span>
+    </div>
+  </v-list-item>
+
+  <v-list-item :to="'/contact'" tag="RouterLink">
+    <div class="d-flex align-center" style="gap: 8px; width: 100%">
+      <v-icon size="24">mdi-phone</v-icon>
+      <span v-if="!mini" style="font-size: 20px;">Contact Us</span>
+    </div>
+  </v-list-item>
+
+  <v-divider class="my-2" />
+
+  <v-list-item :to="'/profile'" tag="RouterLink">
+    <div class="d-flex align-center" style="gap: 8px; width: 100%">
+      <v-icon size="24">mdi-account</v-icon>
+      <span v-if="!mini" style="font-size: 20px;">My Profile</span>
+    </div>
+  </v-list-item>
+
+  <v-list-item :to="'/appointments'" tag="RouterLink">
+    <div class="d-flex align-center" style="gap: 8px; width: 100%">
+      <v-icon size="24">mdi-calendar</v-icon>
+      <span v-if="!mini" style="font-size: 20px;">My Appointments</span>
+    </div>
+  </v-list-item>
+
+  <v-list-item :to="'/appointments'" tag="RouterLink">
+    <div class="d-flex align-center" style="gap: 8px; width: 100%">
+      <v-icon size="24">mdi-delete</v-icon>
+      <span v-if="!mini" style="font-size: 20px;">Delete History</span>
+    </div>
+  </v-list-item>
+
+  <v-divider class="my-2" />
+
+  <v-list-item :to="'/'" tag="RouterLink">
+    <div class="d-flex align-center" style="gap: 8px; width: 100%">
+      <v-icon size="24">mdi-logout</v-icon>
+      <span v-if="!mini" style="font-size: 20px;">Logout</span>
+    </div>
+  </v-list-item>
+  <!-- Theme toggle -->
+  <div class="text-center mt-4">
+    <v-btn icon @click="toggleTheme">
+      <v-icon>{{ currentTheme === 'light' ? 'mdi-weather-night' : 'mdi-white-balance-sunny' }}</v-icon>
+    </v-btn>
+  </div>
+</v-list>
+
+</v-navigation-drawer>
+
+
+    <!--pop up alert-->
     <v-snackbar
       v-model="snackbar"
       timeout="3000"
@@ -274,106 +273,28 @@ onMounted(async () => {
       {{ snackbarMsg }}
     </v-snackbar>
 
-    <!-- Main -->
-    <transition name="fade-slide-up">
+     <!-- Main -->
+     <transition name="fade-slide-up">
       <v-main
         :class="currentTheme === 'dark' ? 'bg-grey-darken-4 text-white' : 'bg-grey-lighten-3'"
       >
-        <v-container fluid class="pa-0" style="max-width: 95%; margin: auto">
-          <v-row>
-            <!-- Sidebar -->
-            <v-col cols="12" md="3" class="d-none d-md-flex">
-              <v-sheet
-                :class="currentTheme === 'dark' ? 'bg-grey-darken-3 text-white' : ''"
-                rounded="lg"
-                class="pa-4 text-center"
-                style="height: 100%; width: 100%"
-              >
-                <v-sheet
-                  class="pa-4 text-center"
-                  :class="currentTheme === 'dark' ? 'bg-grey-darken-3' : ''"
-                  rounded="lg"
-                >
-                  <v-avatar size="100" class="mb-3">
-                    <v-img
-                      v-if="currentUserProfile.avatarUrl"
-                      :src="currentUserProfile.avatarUrl"
-                      cover
-                    />
-                    <v-icon v-else size="80">mdi-account</v-icon>
-                  </v-avatar>
-                  <h3>{{ currentUserProfile.firstName }} {{ currentUserProfile.lastName }}</h3>
-                </v-sheet>
-                <v-divider> </v-divider>
-                <!-- Theme Toggle Button -->
-                <v-btn icon @click="toggleTheme" size="35" class="ma-3">
-                  <v-icon>{{
-                    currentTheme === 'light' ? 'mdi-weather-night' : 'mdi-white-balance-sunny'
-                  }}</v-icon>
-                </v-btn>
-                <!-- Sidebar Menu -->
-                <v-list density="compact" nav>
-                  <v-list-item
-                    link
-                    :to="'/profile'"
-                    tag="RouterLink"
-                    :class="[
-                      'active-click text-decoration-none',
-                      currentTheme === 'dark' ? 'text-white' : 'text-black',
-                    ]"
-                  >
-                    <v-list-item-title>My Profile</v-list-item-title>
-                  </v-list-item>
-
-                  <v-list-item
-                    link
-                    :to="'/appointments'"
-                    tag="RouterLink"
-                    :class="[
-                      'active-click text-decoration-none',
-                      currentTheme === 'dark' ? 'text-white' : 'text-black',
-                    ]"
-                  >
-                    <v-list-item-title>My Appointments</v-list-item-title>
-                  </v-list-item>
-                  <v-list-item
-                    link
-                    :to="'/appointments'"
-                    tag="RouterLink"
-                    :class="[
-                      'active-click text-decoration-none',
-                      currentTheme === 'dark' ? 'text-white' : 'text-black',
-                    ]"
-                  >
-                    <v-list-item-title>Delete History</v-list-item-title>
-                  </v-list-item>
-                 
-
-                  <v-divider class="my-2" />
-
-                  <v-list-item
-                    link
-                    :to="'/'"
-                    tag="RouterLink"
-                    :class="[
-                      'active-click text-decoration-none',
-                      currentTheme === 'dark' ? 'text-white' : 'text-black',
-                    ]"
-                  >
-                    <v-list-item-title>Logout</v-list-item-title>
-                  </v-list-item>
-                </v-list>
-              </v-sheet>
-            </v-col>
-
+        <v-container fluid class="pa-0" style="max-width: 100%; margin: auto">
+          <v-row justify="center">
+       
             <!-- Main Area -->
-            <v-col cols="12" md="9">
-              <v-sheet
-                min-height="100vh"
-                rounded="lg"
-                class="pa-4"
-                :class="currentTheme === 'dark' ? 'bg-grey-darken-2 text-white' : ''"
-              >
+            <v-col cols="12" md="10">
+              <div class="floating-wrapper">
+  <v-sheet
+    elevation="8"
+    max-width="1000"
+    width="100%"
+    rounded="lg"
+    class="pa-6"
+    :style="{
+      backgroundColor: currentTheme === 'dark' ? '#424242' : '#E3F2FD',
+      color: currentTheme === 'dark' ? '#ffffff' : '#000000',
+    }"
+  >
                 <h1>Mentors List</h1>
                 <v-divider></v-divider>
 
@@ -417,7 +338,7 @@ onMounted(async () => {
                           <!-- View More: always visible -->
                           <span
                             @click="viewTutor(tutor)"
-                            class="text-primary text-decoration-underline cursor-pointer mb-2"
+                            class="link-text cursor-pointer mb-2"
                           >
                             View More
                           </span>
@@ -426,7 +347,7 @@ onMounted(async () => {
                           <span
                             v-if="tutor.id !== currentUserId"
                             @click="openAppointment(tutor)"
-                            class="text-primary text-decoration-underline cursor-pointer"
+                            class="link-text cursor-pointer"
                           >
                             Set an Appointment
                           </span>
@@ -591,15 +512,26 @@ onMounted(async () => {
                   </v-container>
                 </div>
               </v-sheet>
+              </div>
             </v-col>
           </v-row>
         </v-container>
       </v-main>
     </transition>
   </v-app>
-
 </template>
 <style scoped>
+.floating-wrapper {
+  display: flex;
+  justify-content: center;
+  align-items: start; /* top aligned */
+  width: 100%;
+}
+.wrapper{
+  margin:0;
+
+}
+/* Container that holds the mentor cards centered */
 .profile-container {
   display: flex;
   flex-wrap: wrap;
@@ -608,6 +540,32 @@ onMounted(async () => {
   margin-top: 32px;
 }
 
+/* Card hover effect */
+.mentor-card {
+  transition:
+    transform 0.3s ease,
+    box-shadow 0.3s ease;
+}
+.mentor-card:hover {
+  transform: translateY(-8px);
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.15);
+}
+
+/* Animated transition */
+.fade-slide-up-enter-active {
+  animation: fadeSlideUp 0.6s ease;
+}
+
+@keyframes fadeSlideUp {
+  from {
+    opacity: 0;
+    transform: translateY(24px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
 .v-dialog__content {
   padding: 24px;
 }
@@ -624,7 +582,7 @@ h1 {
 }
 
 /* Dark mode heading */
-body[data-theme='dark'] h1 {
+/*body[data-theme='dark'] h1 {
   color: #e3f2fd;
 }
 
@@ -635,7 +593,7 @@ body[data-theme='dark'] h1 {
     box-shadow 0.3s ease;
   background-color: white;
   border: 1px solid #ddd;
-  border-radius: 12px;
+  border-radius: 8px;
   width: 260px;
 }
 .mentor-card:hover {
@@ -700,4 +658,32 @@ body[data-theme='dark'] h1 {
 .v-container {
   padding: 16px;
 }
+/* Smooth transition */
+.transition-all {
+  transition: margin-right 0.3s ease, transform 0.3s ease;
+}
+
+/* When full drawer is open (not mini) */
+.shift-app-bar {
+  margin-right: 72px;
+
+}
+
+/* When mini drawer is open */
+.shift-mini {
+  margin-right: 240px;
+
+}
+.v-main {
+  transition: margin-right 0.3s ease;
+}
+.link-text{
+  color: rgb(90, 90, 220);
+  font-family: 'Inter', 'Roboto', sans-serif;
+  font-size: 13px;
+}
+.link-text:hover, .link-text:active{
+  color: rgb(12, 11, 11);
+}
+
 </style>
