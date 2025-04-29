@@ -22,7 +22,6 @@ watch(currentTheme, (val) => {
 })
 
 // STATES
-const searchQuery = ref('')
 const tutors = ref([])
 const selectedTutor = ref(null)
 const profileDialog = ref(false)
@@ -125,10 +124,6 @@ const drawer = ref(true)
 const mini = ref(false)
 const isMobile = ref(false)
 
-const toggleMobileDrawer = () => {
-  drawer.value = !drawer.value
-}
-
 const toggleDrawer = () => {
   drawer.value = !drawer.value
 }
@@ -144,6 +139,19 @@ onMounted(() => {
 onBeforeUnmount(() => {
   window.removeEventListener('resize', checkMobile)
 })
+
+//searhc
+
+const showSearchBar = ref(false)
+const searchQuery = ref('')
+
+const toggleSearchBar = () => {
+  showSearchBar.value = true
+}
+
+const closeSearchBar = () => {
+  showSearchBar.value = false
+}
 </script>
 
 <!-- Your existing template and styles remain unchanged -->
@@ -153,8 +161,9 @@ onBeforeUnmount(() => {
     <!-- App Bar -->
     <v-app-bar flat :color="currentTheme === 'light' ? '#1565c0' : 'grey-darken-4'">
       <!-- Menu Icon that toggles drawer size -->
-      <v-app-bar-nav-icon @click="toggleDrawer" class="ms-5" />
-
+      <v-btn icon class="ms-5" @click="toggleDrawer">
+        <v-icon>mdi-menu</v-icon>
+      </v-btn>
       <v-container
         class="d-flex align-center pa-0"
         :class="{
@@ -162,33 +171,52 @@ onBeforeUnmount(() => {
           'no-transition': isMobile,
         }"
       >
-        <!-- Left Spacer -->
-        <v-spacer />
+        <!--     <div class="right-align-wrapper">
+  <v-responsive max-width="800" class="search-wrapper">
+    <v-text-field
+    v-model="searchQuery"
+      placeholder="Search..."
+      variant="solo-filled"
+      density="compact"
+      rounded="lg"
+      flat
+      hide-details
+      single-line
+      append-inner-icon="mdi-magnify"
+      class="search-input"
+    />
+  </v-responsive>
 
-        <!-- Centered Logo + Search -->
-        <div class="d-flex align-center" style="gap: 25px">
-          <v-avatar color="#fff" size="50">
-            <v-img src="image/Teach&Learn.png" alt="Logo" />
-          </v-avatar>
+  <v-avatar color="#fff" size="50" class="logo">
+    <v-img src="image/Teach&Learn.png" alt="Logo" />
+  </v-avatar>
+</div>
+-->
 
-          <v-responsive max-width="800">
+        <div class="d-flex align-center">
+          <template v-if="!showSearchBar">
+            <v-btn icon @click="toggleSearchBar">
+              <v-icon>mdi-magnify</v-icon>
+            </v-btn>
+          </template>
+
+          <template v-else>
             <v-text-field
               v-model="searchQuery"
               placeholder="Search..."
-              variant="solo-filled"
               density="compact"
-              rounded="lg"
-              flat
               hide-details
               single-line
-              append-inner-icon="mdi-magnify"
-              class="search-input"
+              flat
+              prepend-inner-icon="mdi-magnify"
+              clearable
+              class="search-expand"
+              style="max-width: 200px"
+              @blur="closeSearchBar"
+              autofocus
             />
-          </v-responsive>
+          </template>
         </div>
-
-        <!-- Right Spacer -->
-        <v-spacer />
       </v-container>
     </v-app-bar>
 
@@ -196,11 +224,12 @@ onBeforeUnmount(() => {
     <transition name="fade-slide-up">
       <v-navigation-drawer
         v-if="drawer"
-        :temporary="true"
-        :width="280"
+        :temporary="isMobile"
+        :permanent="!isMobile"
+        :width="isMobile ? '100%' : 280"
         right
         app
-        :scrim="false"
+        :scrim="isMobile"
         :style="{
           backgroundColor: currentTheme === 'dark' ? '#424242' : '',
           color: currentTheme === 'dark' ? '#ffffff' : '#000000',
@@ -692,6 +721,78 @@ h1.head {
 }
 .shift-mini {
   margin-right: 240px;
+}
+/*search */
+/* Default for desktop */
+.right-align-wrapper {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 16px;
+  width: 100%;
+  padding: 8px;
+  min-width: 0; /* Prevents overflow in flex container */
+  flex-wrap: wrap; /* Allows wrapping on small screens */
+}
+
+.search-input {
+  width: 100%;
+  max-width: 300px;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+.logo {
+  width: 50px;
+  height: 50px;
+}
+
+@media (max-width: 600px) {
+  .right-align-wrapper {
+    flex-direction: column;
+    align-items: flex-end;
+    justify-content: flex-start;
+    gap: 8px;
+    padding: 10px;
+    overflow-y: auto;
+    max-height: 100vh;
+  }
+
+  .search-input {
+    max-width: 90%;
+    margin: 0;
+  }
+
+  .logo {
+    width: 40px;
+    height: 40px;
+  }
+}
+
+/* Mobile responsiveness */
+@media (max-width: 600px) {
+  .right-align-wrapper {
+    flex-direction: column;
+    align-items: flex-end;
+    justify-content: flex-start;
+    gap: 12px;
+    padding: 12px 8px;
+    overflow-y: auto; /* Enable scroll if vertical space is too tight */
+    max-height: 100vh;
+    box-sizing: border-box;
+  }
+
+  .search-input {
+    width: 100%;
+    max-width: 90%;
+    margin: 0;
+    display: block;
+  }
+
+  .logo {
+    width: 40px;
+    height: 40px;
+  }
 }
 
 /* Animations */
