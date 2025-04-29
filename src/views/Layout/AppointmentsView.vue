@@ -387,14 +387,23 @@ const openAppointmentDetails = async (appointment) => {
                     </v-list-item-subtitle>
 
                     <!-- View Details -->
-                    <div class="text-end">
+                    <div >
                       <span
-                        @click="openAppointmentDetails(appointment)"
-                        class="text-primary text-decoration-underline cursor-pointer"
-                      >
-                        View Details
-                      </span>
+  @click="openAppointmentDetails(appointment)"
+  class="text-center text-decoration-none text-primary cursor-pointer"
+>
+  View Details
+</span>
+   <v-spacer></v-spacer>
+<span
+  @click="openAppointmentDetails(appointment)"
+  class="text-center text-decoration-none text-primary cursor-pointer"
+>
+  Delete Appointment
+</span>
                     </div>
+                
+                 
                   </v-list-item>
                 </v-list>
                 <v-dialog v-model="detailsDialog" max-width="600px" transition="scale-transition">
@@ -474,7 +483,7 @@ const openAppointmentDetails = async (appointment) => {
                         <h3 class="font-weight-bold text-center mt-5 mb-10">Appointment Information</h3>
                         <p class="text-center"><strong>Date:</strong> <br>{{ selectedAppointment.appointment_date }}</p>
                         <p class="text-center"><strong>Time:</strong> <br>{{ selectedAppointment.appointment_time }}</p>
-                        <p class="text-center"><strong>Status:</strong>class="text-center" {{ selectedAppointment.status }}</p>
+                        <p class="text-center"><strong>Status:</strong><br> {{ selectedAppointment.status }}</p>
                         <p class="text-center">
                           <strong>Message:</strong><br>
                           {{ selectedAppointment.message || 'No message provided' }}
