@@ -7,11 +7,12 @@ import { supabase } from '@/utils/supabase'
 const theme = useTheme()
 const currentTheme = ref(localStorage.getItem('theme') || 'light')
 
-function toggleTheme() {
+const toggleTheme = () => {
   currentTheme.value = currentTheme.value === 'light' ? 'dark' : 'light'
   theme.global.name.value = currentTheme.value
   localStorage.setItem('theme', currentTheme.value)
 }
+
 watch(currentTheme, (val) => {
   theme.global.name.value = val
   localStorage.setItem('theme', val)
@@ -25,21 +26,24 @@ const selectedSort = ref('')
 const snackbar = ref(false)
 const snackbarMsg = ref('')
 
-// NOTIFICATIONS (for bell)
+// NOTIFICATIONS
 const notificationMenu = ref(false)
 const notifications = ref([{ id: 1, title: 'No new notifications', time: '' }])
+
 const toggleMenu = () => {
   notificationMenu.value = !notificationMenu.value
 }
 
-// APPOINTMENTS FETCHING
+// USER + APPOINTMENTS
 const currentUserId = ref(null)
 const appointments = ref([])
 
+// Fetch Student Appointments
 const fetchStudentAppointments = async () => {
   const { data, error } = await supabase
     .from('appointments')
-    .select(`
+    .select(
+      `
       id,
       appointment_date,
       appointment_time,
@@ -47,7 +51,8 @@ const fetchStudentAppointments = async () => {
       status,
       mentor:mentor_id(id, first_name, last_name),
       student:student_id(id, first_name, last_name)
-    `)
+    `,
+    )
     .eq('student_id', currentUserId.value)
     .order('appointment_date', { ascending: true })
 
@@ -58,10 +63,12 @@ const fetchStudentAppointments = async () => {
   return data || []
 }
 
+// Fetch Mentor Appointments
 const fetchMentorAppointments = async () => {
   const { data, error } = await supabase
     .from('appointments')
-    .select(`
+    .select(
+      `
       id,
       appointment_date,
       appointment_time,
@@ -69,7 +76,8 @@ const fetchMentorAppointments = async () => {
       status,
       mentor:mentor_id(id, first_name, last_name),
       student:student_id(id, first_name, last_name)
-    `)
+    `,
+    )
     .eq('mentor_id', currentUserId.value)
     .order('appointment_date', { ascending: true })
 
@@ -80,13 +88,15 @@ const fetchMentorAppointments = async () => {
   return data || []
 }
 
+// Fetch Both (Student and Mentor) Appointments
 const fetchAppointments = async () => {
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
-  if (!user) return
+  const { data: userData, error: userError } = await supabase.auth.getUser()
+  if (userError || !userData?.user) {
+    console.error('Error fetching user:', userError)
+    return
+  }
 
-  currentUserId.value = user.id
+  currentUserId.value = userData.user.id
 
   const [studentAppointments, mentorAppointments] = await Promise.all([
     fetchStudentAppointments(),
@@ -96,15 +106,11 @@ const fetchAppointments = async () => {
   appointments.value = [...studentAppointments, ...mentorAppointments]
 }
 
-onMounted(() => {
-  fetchAppointments()
-})
-
-// SORTED + SEARCHED APPOINTMENTS (computed)
+// Computed: Sorted and Filtered Appointments
 const filteredAppointments = computed(() => {
   let temp = [...appointments.value]
 
-  if (searchQuery.value) {
+  if (searchQuery.value.trim()) {
     const query = searchQuery.value.toLowerCase()
     temp = temp.filter((appointment) => {
       const studentName =
@@ -128,11 +134,26 @@ const filteredAppointments = computed(() => {
   return temp
 })
 
-function performSearch() {
+// Perform Search
+const performSearch = () => {
   if (searchQuery.value.trim()) {
     snackbarMsg.value = `You searched for: "${searchQuery.value}"`
     snackbar.value = true
   }
+}
+
+// LIFECYCLE: Mounted
+onMounted(() => {
+  fetchAppointments()
+})
+
+//clickable view more button
+const selectedAppointment = ref(null)
+const detailsDialog = ref(false)
+
+const openAppointmentDetails = (appointment) => {
+  selectedAppointment.value = appointment
+  detailsDialog.value = true
 }
 </script>
 
@@ -305,10 +326,10 @@ function performSearch() {
               </v-row>
 
               <!-- Appointment Results -->
-              <div v-if="appointments.length > 0" class="appointments-container">
+              <div v-if="filteredAppointments.length > 0" class="appointments-container">
                 <v-list class="appointments-list">
                   <v-list-item
-                    v-for="appointment in appointments"
+                    v-for="appointment in filteredAppointments"
                     :key="appointment.id"
                     class="appointment-item"
                   >
@@ -324,15 +345,63 @@ function performSearch() {
                         {{ appointment.mentor?.last_name }}</strong
                       >
                     </v-list-item-title>
+
                     <v-list-item-subtitle class="appointment-subtitle">
                       Date: {{ appointment.appointment_date }} at {{ appointment.appointment_time }}
                       <br />
-                      Message: "{{ appointment.message }}"
-                      <br />
                       Status: {{ appointment.status }}
                     </v-list-item-subtitle>
+
+                    <!-- View Details -->
+                    <div class="text-end">
+                      <span
+                        @click="openAppointmentDetails(appointment)"
+                        class="text-primary text-decoration-underline cursor-pointer"
+                      >
+                        View Details
+                      </span>
+                    </div>
                   </v-list-item>
                 </v-list>
+                <v-dialog v-model="detailsDialog" max-width="500px" transition="scale-transition">
+                  <v-card
+                    :class="
+                      currentTheme === 'dark'
+                        ? 'bg-grey-darken-3 text-white'
+                        : 'bg-white text-black'
+                    "
+                  >
+                    <v-card-title class="text-h6 font-weight-bold">
+                      Appointment Details
+                    </v-card-title>
+
+                    <v-card-text>
+                      <div v-if="selectedAppointment" class="text-start">
+                        <p>
+                          <strong>Student Name:</strong>
+                          {{ selectedAppointment.student?.first_name }}
+                          {{ selectedAppointment.student?.last_name }}
+                        </p>
+                        <p>
+                          <strong>Mentor Name:</strong>
+                          {{ selectedAppointment.mentor?.first_name }}
+                          {{ selectedAppointment.mentor?.last_name }}
+                        </p>
+                        <p><strong>Date:</strong> {{ selectedAppointment.appointment_date }}</p>
+                        <p><strong>Time:</strong> {{ selectedAppointment.appointment_time }}</p>
+                        <p>
+                          <strong>Message:</strong>
+                          {{ selectedAppointment.message || 'No message provided' }}
+                        </p>
+                        <p><strong>Status:</strong> {{ selectedAppointment.status }}</p>
+                      </div>
+                    </v-card-text>
+
+                    <v-card-actions class="justify-center">
+                      <v-btn color="primary" @click="detailsDialog = false">Close</v-btn>
+                    </v-card-actions>
+                  </v-card>
+                </v-dialog>
               </div>
 
               <div v-else class="no-appointments">
