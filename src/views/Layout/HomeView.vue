@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted, watch } from 'vue'
+import { ref, onMounted, onBeforeUnmount, watch } from 'vue'
 import { useTheme } from 'vuetify'
 import { useRouter, RouterLink } from 'vue-router'
 import { supabase } from '@/utils/supabase'
@@ -121,12 +121,29 @@ onMounted(async () => {
   await fetchTutors()
 })
 //for collapsable drawer
+const drawer = ref(true)
+const mini = ref(false)
+const isMobile = ref(false)
 
-const drawer = ref(true) // Controls open/close
-const mini = ref(false) // Controls mini/full mode
+const toggleMobileDrawer = () => {
+  drawer.value = !drawer.value
+}
+
 const toggleDrawer = () => {
   drawer.value = !drawer.value
 }
+const checkMobile = () => {
+  isMobile.value = window.innerWidth <= 768
+}
+
+onMounted(() => {
+  checkMobile()
+  window.addEventListener('resize', checkMobile)
+})
+
+onBeforeUnmount(() => {
+  window.removeEventListener('resize', checkMobile)
+})
 </script>
 
 <!-- Your existing template and styles remain unchanged -->
@@ -139,8 +156,11 @@ const toggleDrawer = () => {
       <v-app-bar-nav-icon @click="toggleDrawer" class="ms-5" />
 
       <v-container
-        class="d-flex align-center pa-0 transition-all"
-        :class="{ 'shift-app-bar': drawer && !mini, 'shift-mini': drawer && mini }"
+        class="d-flex align-center pa-0"
+        :class="{
+          'transition-all': !isMobile,
+          'no-transition': isMobile,
+        }"
       >
         <!-- Left Spacer -->
         <v-spacer />
@@ -162,7 +182,7 @@ const toggleDrawer = () => {
               hide-details
               single-line
               append-inner-icon="mdi-magnify"
-              style="width: 400px"
+              class="search-input"
             />
           </v-responsive>
         </div>
@@ -173,100 +193,101 @@ const toggleDrawer = () => {
     </v-app-bar>
 
     <!-- Drawer Sidebar (right, collapsible) -->
-    <v-navigation-drawer
-      v-model="drawer"
-      :mini-variant="mini"
-      :width="mini ? 72 : 280"
-      right
-      permanent
-      app
-      :style="{
-        backgroundColor: currentTheme === 'dark' ? '#424242' : '',
-        color: currentTheme === 'dark' ? '#ffffff' : '#000000',
-      }"
-    >
-      <!-- Profile -->
-      <v-sheet
-        class="pa-4 text-center"
-        rounded="lg"
+    <transition name="fade-slide-up">
+      <v-navigation-drawer
+        v-if="drawer"
+        :temporary="true"
+        :width="280"
+        right
+        app
+        :scrim="false"
         :style="{
           backgroundColor: currentTheme === 'dark' ? '#424242' : '',
           color: currentTheme === 'dark' ? '#ffffff' : '#000000',
         }"
       >
-        <v-avatar size="100" class="mb-3">
-          <v-img v-if="currentUserProfile.avatarUrl" :src="currentUserProfile.avatarUrl" cover />
-          <v-icon v-else size="80">mdi-account</v-icon>
-        </v-avatar>
-        <h3 v-if="!mini">{{ currentUserProfile.firstName }} {{ currentUserProfile.lastName }}</h3>
-      </v-sheet>
-
-      <v-divider class="my-2" />
-
-      <v-list nav dense>
-        <v-list-item :to="'/home'" tag="RouterLink">
-          <div class="d-flex align-center" style="gap: 8px; width: 100%">
-            <v-icon size="30" style="margin-left: 15px">mdi-home-outline</v-icon>
-            <span v-if="!mini" class="icon-mdi">Home</span>
-          </div>
-        </v-list-item>
-
-        <v-list-item :to="'/about'" tag="RouterLink">
-          <div class="d-flex align-center" style="gap: 8px; width: 100%">
-            <v-icon size="30" style="margin-left: 15px">mdi-information-outline</v-icon>
-            <span v-if="!mini" class="icon-mdi">About Us</span>
-          </div>
-        </v-list-item>
-
-        <v-list-item :to="'/contact'" tag="RouterLink">
-          <div class="d-flex align-center" style="gap: 8px; width: 100%">
-            <v-icon size="30" style="margin-left: 15px">mdi-phone-outline</v-icon>
-            <span v-if="!mini" class="icon-mdi">Contact Us</span>
-          </div>
-        </v-list-item>
+        <!-- Profile -->
+        <v-sheet
+          class="pa-4 text-center"
+          rounded="lg"
+          :style="{
+            backgroundColor: currentTheme === 'dark' ? '#424242' : '',
+            color: currentTheme === 'dark' ? '#ffffff' : '#000000',
+          }"
+        >
+          <v-avatar size="100" class="mb-3">
+            <v-img v-if="currentUserProfile.avatarUrl" :src="currentUserProfile.avatarUrl" cover />
+            <v-icon v-else size="80">mdi-account</v-icon>
+          </v-avatar>
+          <h3 v-if="!mini">{{ currentUserProfile.firstName }} {{ currentUserProfile.lastName }}</h3>
+        </v-sheet>
 
         <v-divider class="my-2" />
 
-        <v-list-item :to="'/profile'" tag="RouterLink">
-          <div class="d-flex align-center" style="gap: 8px; width: 100%">
-            <v-icon size="30" style="margin-left: 15px">mdi-account-outline</v-icon>
-            <span v-if="!mini" class="icon-mdi">My Profile</span>
+        <v-list nav dense>
+          <v-list-item :to="'/home'" tag="RouterLink" @click="isMobile && (drawer = false)">
+            <div class="d-flex align-center" style="gap: 8px; width: 100%">
+              <v-icon size="30" style="margin-left: 15px">mdi-home-outline</v-icon>
+              <span v-if="!mini" class="icon-mdi">Home</span>
+            </div>
+          </v-list-item>
+
+          <v-list-item :to="'/about'" tag="RouterLink" @click="isMobile && (drawer = false)">
+            <div class="d-flex align-center" style="gap: 8px; width: 100%">
+              <v-icon size="30" style="margin-left: 15px">mdi-information-outline</v-icon>
+              <span v-if="!mini" class="icon-mdi">About Us</span>
+            </div>
+          </v-list-item>
+
+          <v-list-item :to="'/contact'" tag="RouterLink" @click="isMobile && (drawer = false)">
+            <div class="d-flex align-center" style="gap: 8px; width: 100%">
+              <v-icon size="30" style="margin-left: 15px">mdi-phone-outline</v-icon>
+              <span v-if="!mini" class="icon-mdi">Contact Us</span>
+            </div>
+          </v-list-item>
+
+          <v-divider class="my-2" />
+
+          <v-list-item :to="'/profile'" tag="RouterLink" @click="isMobile && (drawer = false)">
+            <div class="d-flex align-center" style="gap: 8px; width: 100%">
+              <v-icon size="30" style="margin-left: 15px">mdi-account-outline</v-icon>
+              <span v-if="!mini" class="icon-mdi">My Profile</span>
+            </div>
+          </v-list-item>
+
+          <v-list-item :to="'/appointments'" tag="RouterLink" @click="isMobile && (drawer = false)">
+            <div class="d-flex align-center" style="gap: 8px; width: 100%">
+              <v-icon size="30" style="margin-left: 15px">mdi-calendar</v-icon>
+              <span v-if="!mini" class="icon-mdi">My Appointments</span>
+            </div>
+          </v-list-item>
+
+          <v-list-item :to="'/appointments'" tag="RouterLink" @click="isMobile && (drawer = false)">
+            <div class="d-flex align-center" style="gap: 8px; width: 100%">
+              <v-icon size="30" style="margin-left: 15px"> mdi-delete-outline</v-icon>
+              <span v-if="!mini" class="icon-mdi">Delete History</span>
+            </div>
+          </v-list-item>
+
+          <v-divider class="my-2" />
+
+          <v-list-item :to="'/'" tag="RouterLink" @click="isMobile && (drawer = false)">
+            <div class="d-flex align-center" style="gap: 8px; width: 100%">
+              <v-icon size="30" style="margin-left: 15px" class="icon-mdi">mdi-logout</v-icon>
+              <span v-if="!mini" class="icon-mdi">Logout</span>
+            </div>
+          </v-list-item>
+          <!-- Theme toggle -->
+          <div class="text-center mt-4">
+            <v-btn icon @click="toggleTheme">
+              <v-icon>{{
+                currentTheme === 'light' ? 'mdi-weather-night' : 'mdi-white-balance-sunny'
+              }}</v-icon>
+            </v-btn>
           </div>
-        </v-list-item>
-
-        <v-list-item :to="'/appointments'" tag="RouterLink">
-          <div class="d-flex align-center" style="gap: 8px; width: 100%">
-            <v-icon size="30" style="margin-left: 15px">mdi-calendar</v-icon>
-            <span v-if="!mini" class="icon-mdi">My Appointments</span>
-          </div>
-        </v-list-item>
-
-        <v-list-item :to="'/appointments'" tag="RouterLink">
-          <div class="d-flex align-center" style="gap: 8px; width: 100%">
-            <v-icon size="30" style="margin-left: 15px"> mdi-delete-outline</v-icon>
-            <span v-if="!mini" class="icon-mdi">Delete History</span>
-          </div>
-        </v-list-item>
-
-        <v-divider class="my-2" />
-
-        <v-list-item :to="'/'" tag="RouterLink">
-          <div class="d-flex align-center" style="gap: 8px; width: 100%">
-            <v-icon size="30" style="margin-left: 15px" class="icon-mdi">mdi-logout</v-icon>
-            <span v-if="!mini" class="icon-mdi">Logout</span>
-          </div>
-        </v-list-item>
-        <!-- Theme toggle -->
-        <div class="text-center mt-4">
-          <v-btn icon @click="toggleTheme">
-            <v-icon>{{
-              currentTheme === 'light' ? 'mdi-weather-night' : 'mdi-white-balance-sunny'
-            }}</v-icon>
-          </v-btn>
-        </div>
-      </v-list>
-    </v-navigation-drawer>
-
+        </v-list>
+      </v-navigation-drawer>
+    </transition>
     <!--pop up alert-->
     <v-snackbar
       v-model="snackbar"
@@ -301,7 +322,7 @@ const toggleDrawer = () => {
                     color: currentTheme === 'dark' ? '#ffffff' : '#000000',
                   }"
                 >
-                  <h1 class="head">Mentors </h1>
+                  <h1 class="head">Mentors</h1>
                   <v-divider class="divider" :thickness="3"></v-divider>
 
                   <!-- Profile Container -->
@@ -311,58 +332,73 @@ const toggleDrawer = () => {
                       class="profile-container"
                       style="flex-wrap: wrap; gap: 24px"
                     >
-                      <div v-for="tutor in tutors" :key="tutor.id">
-                        <Transition name="fade-slide-up">
-                          <div
-                            class="mentor-card pa-4 d-flex flex-column align-center"
-                            style="border: 1px solid #ccc; border-radius: 12px; width: 250px"
-                            :class="
-                              currentTheme === 'dark'
-                                ? 'bg-grey-darken-3 text-white'
-                                : 'bg-white text-black'
-                            "
-                          >
-                            <!-- Your card content here -->
-                            <v-avatar size="100" class="mb-3">
-                              <v-img :src="tutor.avatar_url" v-if="tutor.avatar_url" cover>
-                                <template #error
-                                  ><v-icon size="60" color="grey-darken-1"
-                                    >mdi-account</v-icon
-                                  ></template
-                                >
-                              </v-img>
-                              <v-icon v-else size="60" color="grey-darken-1">mdi-account</v-icon>
-                            </v-avatar>
-
-                            <h3 class="user-name font-weight-medium mb-2">
-                              <b>
-                                {{ tutor.first_name }} {{ tutor.middle_initial }}
-                                {{ tutor.last_name }}</b
-                              >
-                            </h3>
-                            <p class="text-caption mb-3">
-                              {{ tutor.expertise || 'No expertise listed' }}
-                            </p>
-
-                            <!-- View More: always visible -->
-                            <span @click="viewTutor(tutor)" class="link-text cursor-pointer mb-2">
-                              View More
-                            </span>
-
-                            <!-- Set an Appointment: only if not your own profile -->
-                            <span
-                              v-if="tutor.id !== currentUserId"
-                              @click="openAppointment(tutor)"
-                              class="link-text cursor-pointer"
+                      <v-row>
+                        <v-col
+                          cols="12"
+                          sm="6"
+                          md="4"
+                          lg="3"
+                          v-for="tutor in tutors"
+                          :key="tutor.id"
+                          class="d-flex justify-center"
+                        >
+                          <v-fade-transition>
+                            <div
+                              class="mentor-card fade-in pa-4 d-flex flex-column align-center"
+                              style="
+                                border: 1px solid #ccc;
+                                border-radius: 12px;
+                                width: 100%;
+                                max-width: 250px;
+                              "
+                              :class="
+                                currentTheme === 'dark'
+                                  ? 'bg-grey-darken-3 text-white'
+                                  : 'bg-white text-black'
+                              "
                             >
-                              Set an Appointment
-                            </span>
+                              <!-- Avatar -->
+                              <v-avatar size="100" class="mb-3">
+                                <v-img v-if="tutor?.avatar_url" :src="tutor.avatar_url" cover>
+                                  <template #error>
+                                    <v-icon size="60" color="grey-darken-1">mdi-account</v-icon>
+                                  </template>
+                                </v-img>
+                                <v-icon v-else size="60" color="grey-darken-1">mdi-account</v-icon>
+                              </v-avatar>
 
-                            <!-- (Optional) Greyed text if it's your own profile -->
-                            <span v-else class="text-grey text-caption"> (My profile) </span>
-                          </div>
-                        </Transition>
-                      </div>
+                              <!-- Name -->
+                              <h3 class="user-name font-weight-medium mb-2">
+                                <b>
+                                  {{ tutor?.first_name || 'First' }}
+                                  {{ tutor?.middle_initial || '' }}
+                                  {{ tutor?.last_name || 'Last' }}
+                                </b>
+                              </h3>
+
+                              <!-- Expertise -->
+                              <p class="text-caption mb-3">
+                                {{ tutor?.expertise || 'No expertise listed' }}
+                              </p>
+
+                              <!-- View More -->
+                              <span @click="viewTutor(tutor)" class="link-text cursor-pointer mb-2">
+                                View More
+                              </span>
+
+                              <!-- Set Appointment -->
+                              <span
+                                v-if="tutor?.id !== currentUserId"
+                                @click="openAppointment(tutor)"
+                                class="link-text cursor-pointer"
+                              >
+                                Set an Appointment
+                              </span>
+                              <span v-else class="text-grey text-caption"> (My profile) </span>
+                            </div>
+                          </v-fade-transition>
+                        </v-col>
+                      </v-row>
                     </div>
 
                     <div v-else class="text-center mt-6">
@@ -532,16 +568,16 @@ const toggleDrawer = () => {
   </v-app>
 </template>
 <style scoped>
+/* Layout Wrappers */
 .floating-wrapper {
   display: flex;
   justify-content: center;
-  align-items: start; /* top aligned */
+  align-items: flex-start;
   width: 100%;
 }
 .wrapper {
   margin: 0;
 }
-/* Container that holds the mentor cards centered */
 .profile-container {
   display: flex;
   flex-wrap: wrap;
@@ -550,8 +586,12 @@ const toggleDrawer = () => {
   margin-top: 32px;
 }
 
-/* Card hover effect */
+/* Mentor Card */
 .mentor-card {
+  background-color: white;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  width: 260px;
   transition:
     transform 0.3s ease,
     box-shadow 0.3s ease;
@@ -561,27 +601,9 @@ const toggleDrawer = () => {
   box-shadow: 0 10px 20px rgba(0, 0, 0, 0.15);
 }
 
-/* Animated transition */
-.fade-slide-up-enter-active {
-  animation: fadeSlideUp 0.6s ease;
-}
-
-@keyframes fadeSlideUp {
-  from {
-    opacity: 0;
-    transform: translateY(24px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-.v-dialog__content {
-  padding: 24px;
-}
-
-/* Heading Style */
-h1 {
+/* Text Styles */
+h1.head {
+  font-family: 'Ubuntu', sans-serif;
   font-size: 2.4rem;
   font-weight: 800;
   color: #1565c0;
@@ -590,49 +612,25 @@ h1 {
   letter-spacing: 1px;
   text-transform: uppercase;
 }
-
-/* Dark mode heading */
-
-/* Mentor Card Hover */
-.mentor-card {
-  transition:
-    transform 0.3s ease,
-    box-shadow 0.3s ease;
-  background-color: white;
-  border: 1px solid #ddd;
-  border-radius: 8px;
-  width: 260px;
+.user-name {
+  font-family: 'Roboto', sans-serif;
+  letter-spacing: 1px;
+  font-size: 20px;
 }
-.mentor-card:hover {
-  transform: translateY(-8px);
-  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.15);
+.icon-mdi {
+  font-family: 'Roboto', sans-serif;
+  font-size: 14px;
 }
-
-/* Buttons */
-.v-btn {
-  transition: transform 0.3s ease;
+.link-text {
+  color: rgb(90, 90, 220);
+  font-family: 'Inter', 'Roboto', sans-serif;
+  font-size: 13px;
+  cursor: pointer;
 }
-.v-btn:hover {
-  transform: scale(1.05);
+.link-text:hover,
+.link-text:active {
+  color: rgb(12, 11, 11);
 }
-
-/* Fade and Slide Animation */
-.fade-slide-up-enter-active {
-  animation: fadeSlideUp 0.6s ease;
-}
-
-@keyframes fadeSlideUp {
-  0% {
-    opacity: 0;
-    transform: translateY(24px);
-  }
-  100% {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-/* Active Click */
 .active-click {
   font-weight: 700;
   text-decoration: none;
@@ -644,65 +642,103 @@ h1 {
 .active-click:hover {
   color: #2196f3;
 }
-
-/* Text Field Enhancement */
-.v-text-field {
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  border-radius: 10px;
+.drawer-hidden {
+  display: none !important;
 }
 
-/* Dialog Card */
-.v-card {
-  border-radius: 16px;
-}
-
-/* Dialog Transition */
-.v-dialog {
-  transition: all 0.3s ease;
-}
-
-/* Smooth layout padding */
-.v-container {
-  padding: 16px;
-}
-/* Smooth transition */
 .transition-all {
   transition:
     margin-right 0.3s ease,
     transform 0.3s ease;
 }
-
-/* When full drawer is open (not mini) */
-.shift-app-bar {
-  margin-right: 72px;
+.no-transition {
+  transition: none !important;
+}
+/* Components Enhancements */
+.v-text-field {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  border-radius: 10px;
+}
+.v-btn {
+  transition: transform 0.3s ease;
+}
+.v-btn:hover {
+  transform: scale(1.05);
+}
+.v-card {
+  border-radius: 16px;
+}
+.v-dialog {
+  transition: all 0.3s ease;
+}
+.v-dialog__content {
+  padding: 24px;
 }
 
-/* When mini drawer is open */
-.shift-mini {
-  margin-right: 240px;
+/* App Layout & Transitions */
+.v-container {
+  padding: 16px;
 }
 .v-main {
   transition: margin-right 0.3s ease;
 }
-.link-text {
-  color: rgb(90, 90, 220);
-  font-family: 'Inter', 'Roboto', sans-serif;
-  font-size: 13px;
+.transition-all {
+  transition:
+    margin-right 0.3s ease,
+    transform 0.3s ease;
 }
-.link-text:hover,
-.link-text:active {
-  color: rgb(12, 11, 11);
+.shift-app-bar {
+  margin-right: 72px;
 }
-.user-name {
-  font-family: 'Roboto';
-  letter-spacing: 1px;
-  font-size: 20px;
+.shift-mini {
+  margin-right: 240px;
 }
-.icon-mdi {
-  font-family: 'Roboto';
-  font-size: 14px;
+
+/* Animations */
+.fade-slide-up-enter-active {
+  animation: fadeSlideUp 0.6s ease;
 }
-.head {
-  font-family: 'Ubuntu';
+/*for the search bar*/
+@keyframes fadeSlideUp {
+  0% {
+    opacity: 0;
+    transform: translateY(24px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.fade-in {
+  animation: fadeIn 0.5s ease-in-out;
+}
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* Responsive Styles */
+@media (max-width: 600px) {
+  .v-dialog__content {
+    padding: 8px !important;
+  }
+  .v-card-text,
+  .v-card-actions {
+    padding: 12px !important;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .v-navigation-drawer {
+    width: 100% !important;
+  }
+  .v-main {
+    padding-top: 64px;
+  }
 }
 </style>
