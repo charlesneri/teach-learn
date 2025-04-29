@@ -180,8 +180,6 @@ onMounted(async () => {
                       <v-list-item-subtitle>{{ notification.time }}</v-list-item-subtitle>
                     </v-list-item-content>
                   </v-list-item>
-<<<<<<< HEAD
-=======
 
                   <v-list-item link>
                     <RouterLink
@@ -232,7 +230,6 @@ onMounted(async () => {
                     </RouterLink>
                   </v-list-item>
 
->>>>>>> feat/supabase
                   <v-divider></v-divider>
                   <v-list-item>
                     <v-list-item-title class="text-center">
@@ -314,14 +311,11 @@ onMounted(async () => {
                   <v-list-item link :to="'/appointments'" tag="RouterLink" :class="currentThemeClass">
                     <v-list-item-title>My Appointments</v-list-item-title>
                   </v-list-item>
-<<<<<<< HEAD
                   <v-list-item link :to="'/DeletedAppointments'" tag="RouterLink" :class="currentThemeClass">
                     <v-list-item-title>Deleted Appointments</v-list-item-title>
                   </v-list-item>
-=======
                
 
->>>>>>> feat/supabase
                   <v-divider class="my-2" />
                   <v-list-item link :to="'/'" tag="RouterLink" :class="currentThemeClass">
                     <v-list-item-title>Logout</v-list-item-title>
