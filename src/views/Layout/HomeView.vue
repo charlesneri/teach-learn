@@ -208,6 +208,17 @@ onMounted(async () => {
                       My Appointment
                     </RouterLink>
                   </v-list-item>
+                  <v-list-item link>
+                    <RouterLink
+                      to="/appointments"
+                      :class="[
+                        'active-click text-decoration-none',
+                        currentTheme === 'dark' ? 'text-white' : 'text-black',
+                      ]"
+                    >
+                     Deleted Appointments
+                    </RouterLink>
+                  </v-list-item>
 
                   <v-list-item link>
                     <RouterLink
@@ -324,6 +335,17 @@ onMounted(async () => {
                     ]"
                   >
                     <v-list-item-title>My Appointments</v-list-item-title>
+                  </v-list-item>
+                  <v-list-item
+                    link
+                    :to="'/DeletedAppointments'"
+                    tag="RouterLink"
+                    :class="[
+                      'active-click text-decoration-none',
+                      currentTheme === 'dark' ? 'text-white' : 'text-black',
+                    ]"
+                  >
+                    <v-list-item-title>Deleted Apointments</v-list-item-title>
                   </v-list-item>
 
                   <v-divider class="my-2" />
