@@ -119,7 +119,7 @@ onMounted(async () => {
   await fetchTutors()
 })
 //for collapsable drawer
-const drawer = ref(true)
+const drawer = ref(false)
 const mini = ref(false)
 const isMobile = ref(false)
 
@@ -142,7 +142,6 @@ onBeforeUnmount(() => {
 //searhc
 import { useDisplay } from 'vuetify'
 const { mobile } = useDisplay()
-
 const showSearchBar = ref(false)
 const searchQuery = ref('')
 
