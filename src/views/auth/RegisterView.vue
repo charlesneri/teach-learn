@@ -1,17 +1,23 @@
 <script setup>
 import { ref, onMounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
+import { supabase, formActionDefault } from '@/utils/supabase' // Make sure this is correctly exported
+import {
+  requiredValidator,
+  emailValidator,
+  passwordValidator,
+  confirmedValidator,
+} from '@/utils/validators'
 
 const router = useRouter()
 
-// Theme setup
+// Theme
 const theme = ref(localStorage.getItem('theme') || 'light')
 const toggleTheme = () => {
   theme.value = theme.value === 'light' ? 'dark' : 'light'
   localStorage.setItem('theme', theme.value)
 }
 watch(theme, (val) => localStorage.setItem('theme', val))
-
 onMounted(() => {
   const media = window.matchMedia('(prefers-color-scheme: dark)')
   media.addEventListener('change', (e) => {
@@ -20,13 +26,16 @@ onMounted(() => {
     }
   })
 })
-watch(theme, (val) => localStorage.setItem('theme', val))
 
-// Registration form data
-const userProfile = ref({
-  firstName: '',
-  lastName: '',
-  middleInitial: '',
+// Form references
+const visible = ref(false)
+const refVForm = ref()
+
+// Main form data (Composition API compliant)
+const formData = ref({
+  firstname: '',
+  lastname: '',
+  middleinitial: '',
   age: '',
   phone: '',
   expertise: '',
@@ -39,21 +48,28 @@ const userProfile = ref({
   confirm_password: '',
 })
 
+// Form state
 const formAction = ref({ ...formActionDefault })
 
-// Submit Handler
+// Dialog popup after registration
+const showDialog = ref(false)
+const handleDialogConfirm = () => {
+  showDialog.value = false
+  router.push('/home') // redirect
+}
+const handleDialogCancel = () => {
+  showDialog.value = false
+}
+
+// Submission
 const onFormSubmit = () => {
   refVForm.value?.validate().then(({ valid }) => {
-    if (valid) {
-      onSubmit()
-    }
+    if (valid) onSubmit()
   })
 }
 
-// Main Submit Function
 const onSubmit = async () => {
-  formAction.value = { ...formActionDefault }
-  formAction.value.formProcess = true
+  formAction.value = { ...formActionDefault, formProcess: true }
 
   const { data, error } = await supabase.auth.signUp({
     email: formData.value.email,
@@ -75,13 +91,9 @@ const onSubmit = async () => {
   })
 
   if (error) {
-    console.error(error)
     formAction.value.formErrorMessage = error.message
     formAction.value.formStatus = error.status
-  } else if (data && data.user) {
-    console.log('Auth signup success:', data.user)
-
-    // Insert into profiles table
+  } else if (data?.user) {
     const { error: profileError } = await supabase.from('profiles').insert({
       id: data.user.id,
       first_name: formData.value.firstname,
@@ -95,55 +107,38 @@ const onSubmit = async () => {
       school: formData.value.school,
       degree: formData.value.course,
       year: Number(formData.value.yearLevel),
-      avatar_url: '', // No image uploaded yet
+      avatar_url: '',
     })
 
     if (profileError) {
-      console.error('Error inserting into profiles table:', profileError)
       formAction.value.formErrorMessage = 'Profile creation failed!'
       formAction.value.formStatus = 500
     } else {
-      console.log('Profile inserted successfully')
       formAction.value.formSuccessMessage = 'Successfully Registered!'
       refVForm.value?.reset()
-      showDialog.value = true // show confirmation popup
+      showDialog.value = true
+
+      // Save profile to localStorage
+      const localProfile = {
+        firstName: formData.value.firstname,
+        lastName: formData.value.lastname,
+        middleInitial: formData.value.middleinitial,
+        age: formData.value.age,
+        phone: formData.value.phone,
+        expertise: formData.value.expertise,
+        about: formData.value.about,
+        email: formData.value.email,
+        education: [
+          formData.value.school,
+          formData.value.course,
+          formData.value.yearLevel,
+        ],
+      }
+      localStorage.setItem('userProfile', JSON.stringify(localProfile))
     }
   }
 
-  // Save only the fields needed for profile
-  const formattedProfile = {
-    firstName: userProfile.value.firstName,
-    lastName: userProfile.value.lastName,
-    middleInitial: userProfile.value.middleInitial,
-    age: userProfile.value.age,
-    phone: userProfile.value.phone,
-    expertise: userProfile.value.expertise,
-    about: userProfile.value.about,
-    email: userProfile.value.email,
-    education: [
-      userProfile.value.school,
-      userProfile.value.course,
-      userProfile.value.yearLevel,
-    ],
-  }
-
-  localStorage.setItem('userProfile', JSON.stringify(formattedProfile))
-  alert('Registration successful!')
-
-  // Optional redirect to profile
-  // router.push('/profile')
-}
-
-//direct login yes or no after register
-const showDialog = ref(false)
-
-const handleDialogConfirm = () => {
-  showDialog.value = false
-  router.push('/home') // or '/login'
-}
-
-const handleDialogCancel = () => {
-  showDialog.value = false
+  formAction.value.formProcess = false
 }
 </script>
 
