@@ -139,23 +139,30 @@ onBeforeUnmount(() => {
   window.removeEventListener('resize', checkMobile)
 })
 
-//searhc
-import { useDisplay } from 'vuetify'
-const { mobile } = useDisplay()
+//search
 
-const showSearchBar = ref(false)
+
+const showSearch = ref(false)
 const searchQuery = ref('')
 
-const toggleSearchBar = () => {
-  showSearchBar.value = true
+const toggleSearch = () => {
+  showSearch.value = !showSearch.value
 }
 
-const closeSearchBar = () => {
-  showSearchBar.value = false
+const closeSearch = () => {
+  // Optional: auto-close when blurred
+  // showSearch.value = false
 }
+const filteredTutors = computed(() => {
+  if (!searchQuery.value.trim()) return tutors.value
 
-const computedSearchWidth = computed(() => {
-  return mobile.value ? 160 : 240
+  const keyword = searchQuery.value.trim().toLowerCase()
+
+  return tutors.value.filter((tutor) => {
+    const fullName = `${tutor.first_name || ''} ${tutor.middle_initial || ''} ${tutor.last_name || ''}`.toLowerCase()
+    const expertise = (tutor.expertise || '').toLowerCase()
+    return fullName.includes(keyword) || expertise.includes(keyword)
+  })
 })
 </script>
 
@@ -275,36 +282,32 @@ const computedSearchWidth = computed(() => {
           'no-transition': isMobile,
         }"
       >
-        <v-spacer />
-        <div
-          class="position-absolute d-flex align-center"
-          style="right: 16px; top: 50%; transform: translateY(-50%); gap: 8px; z-index: 10"
-        >
-          <v-btn v-if="!showSearchBar" icon @click="toggleSearchBar">
-            <v-icon>mdi-magnify</v-icon>
-          </v-btn>
-
-          <v-text-field
-            v-else
+        <div class="search-wrapper">
+           <!-- Search Input -->
+           <v-text-field
+            v-if="showSearch"
             v-model="searchQuery"
             placeholder="Search..."
             density="compact"
             hide-details
-            single-line
             flat
-            prepend-inner-icon="mdi-magnify"
             clearable
-            class="search-expand"
-            :style="`max-width: ${computedSearchWidth}px; transition: max-width 0.3s ease;`"
-            @blur="closeSearchBar"
+            class="search-input large-icon"
+          append-inner-icon="mdi-magnify"
+            @blur="closeSearch"
             autofocus
           />
-
+          <!-- Toggle Button -->
+          <v-btn icon @click="toggleSearch">
+            <v-icon>{{ showSearch ? 'mdi-close' : 'mdi-magnify' }}</v-icon>
+          </v-btn>
           <v-avatar color="#fff" size="50" class="logo me-6">
-            <v-img src="image/Teach&Learn.png" alt="Logo" />
-          </v-avatar>
+        <v-img src="image/Teach&Learn.png" alt="Logo" />
+      </v-avatar>
+         
         </div>
       </v-container>
+  
     </v-app-bar>
 
     <!--pop up alert-->
@@ -357,7 +360,7 @@ const computedSearchWidth = computed(() => {
                           sm="6"
                           md="4"
                           lg="3"
-                          v-for="tutor in tutors"
+                          v-for="tutor in filteredTutors"
                           :key="tutor.id"
                           class="d-flex justify-center"
                         >
@@ -713,52 +716,49 @@ h1.head {
   margin-right: 240px;
 }
 /*search */
-/* Default for desktop */
-.right-align-wrapper {
+.search-wrapper {
+  position: absolute;
+  top: 50%;
+  right: 16px;
+  transform: translateY(-50%);
   display: flex;
-  justify-content: flex-end;
   align-items: center;
-  gap: 16px;
-  width: 100%;
-  padding: 8px;
-  min-width: 0; /* Prevents overflow in flex container */
-  flex-wrap: wrap; /* Allows wrapping on small screens */
+  justify-content: flex-end;
+  gap: 12px;
+  z-index: 10;
+  max-width: 100%;
+  flex-wrap: nowrap;
 }
 
 .search-input {
-  width: 100%;
-  max-width: 300px;
-  min-width: 0;
-  box-sizing: border-box;
+  width: 240px;
+  max-width: 100%;
+  transition: width 0.3s ease;
 }
 
 .logo {
   width: 50px;
   height: 50px;
 }
+.large-icon ::v-deep(.v-field__append-inner .v-icon) {
+  font-size: 28px !important;
+}
 
 @media (max-width: 600px) {
-  .right-align-wrapper {
-    flex-direction: column;
-    align-items: flex-end;
-    justify-content: flex-start;
-    gap: 8px;
-    padding: 10px;
-    overflow-y: auto;
-    max-height: 100vh;
-  }
-
   .search-input {
-    max-width: 90%;
-    margin: 0;
+    width: 70vw;
   }
 
   .logo {
     width: 40px;
     height: 40px;
   }
-}
 
+  .search-wrapper {
+    right: 12px;
+    gap: 8px;
+  }
+}
 /* Mobile responsiveness */
 @media (max-width: 600px) {
   .right-align-wrapper {
@@ -779,10 +779,7 @@ h1.head {
     display: block;
   }
 
-  .logo {
-    width: 40px;
-    height: 40px;
-  }
+  
 }
 
 /* Animations */
