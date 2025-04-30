@@ -1,9 +1,8 @@
 <script setup>
-import { ref, onMounted, onBeforeUnmount, watch } from 'vue'
+import { ref, computed, onMounted, onBeforeUnmount, watch } from 'vue' // ✅ now includes computed
 import { useTheme } from 'vuetify'
 import { useRouter, RouterLink } from 'vue-router'
 import { supabase } from '@/utils/supabase'
-
 const datePickerOpen = ref(false)
 const timePickerOpen = ref(false)
 
@@ -141,6 +140,9 @@ onBeforeUnmount(() => {
 })
 
 //searhc
+import { useDisplay } from 'vuetify' 
+const { mobile } = useDisplay()
+
 
 const showSearchBar = ref(false)
 const searchQuery = ref('')
@@ -152,76 +154,18 @@ const toggleSearchBar = () => {
 const closeSearchBar = () => {
   showSearchBar.value = false
 }
-</script>
 
-<!-- Your existing template and styles remain unchanged -->
+
+const computedSearchWidth = computed(() => {
+  return mobile.value ? 160 : 240
+})
+
+</script>
 
 <template>
   <v-app id="inspire">
-    <!-- App Bar -->
-    <v-app-bar flat :color="currentTheme === 'light' ? '#1565c0' : 'grey-darken-4'">
-      <!-- Menu Icon that toggles drawer size -->
-      <v-btn icon class="ms-5" @click="toggleDrawer">
-        <v-icon>mdi-menu</v-icon>
-      </v-btn>
-      <v-container
-        class="d-flex align-center pa-0"
-        :class="{
-          'transition-all': !isMobile,
-          'no-transition': isMobile,
-        }"
-      >
-        <!--     <div class="right-align-wrapper">
-  <v-responsive max-width="800" class="search-wrapper">
-    <v-text-field
-    v-model="searchQuery"
-      placeholder="Search..."
-      variant="solo-filled"
-      density="compact"
-      rounded="lg"
-      flat
-      hide-details
-      single-line
-      append-inner-icon="mdi-magnify"
-      class="search-input"
-    />
-  </v-responsive>
-
-  <v-avatar color="#fff" size="50" class="logo">
-    <v-img src="image/Teach&Learn.png" alt="Logo" />
-  </v-avatar>
-</div>
--->
-
-        <div class="d-flex align-center">
-          <template v-if="!showSearchBar">
-            <v-btn icon @click="toggleSearchBar">
-              <v-icon>mdi-magnify</v-icon>
-            </v-btn>
-          </template>
-
-          <template v-else>
-            <v-text-field
-              v-model="searchQuery"
-              placeholder="Search..."
-              density="compact"
-              hide-details
-              single-line
-              flat
-              prepend-inner-icon="mdi-magnify"
-              clearable
-              class="search-expand"
-              style="max-width: 200px"
-              @blur="closeSearchBar"
-              autofocus
-            />
-          </template>
-        </div>
-      </v-container>
-    </v-app-bar>
-
-    <!-- Drawer Sidebar (right, collapsible) -->
-    <transition name="fade-slide-up">
+      <!-- Drawer Sidebar (right, collapsible) -->
+      <transition name="fade-slide-up">
       <v-navigation-drawer
         v-if="drawer"
         :temporary="isMobile"
@@ -235,6 +179,10 @@ const closeSearchBar = () => {
           color: currentTheme === 'dark' ? '#ffffff' : '#000000',
         }"
       >
+         <!-- Menu Icon that toggles drawer size -->
+         <v-btn icon class="ms-5" @click="toggleDrawer">
+        <v-icon>mdi-menu</v-icon>
+      </v-btn>
         <!-- Profile -->
         <v-sheet
           class="pa-4 text-center"
@@ -317,6 +265,55 @@ const closeSearchBar = () => {
         </v-list>
       </v-navigation-drawer>
     </transition>
+    <!-- App Bar -->
+    <v-app-bar flat :color="currentTheme === 'light' ? '#1565c0' : 'grey-darken-4'">
+      <!-- Menu Icon that toggles drawer size -->
+      <v-btn icon class="ms-5" @click="toggleDrawer">
+        <v-icon>mdi-menu</v-icon>
+      </v-btn>
+      <v-container
+        class="d-flex align-center pa-0"
+        :class="{
+          'transition-all': !isMobile,
+          'no-transition': isMobile,
+        }"
+      >
+ 
+<v-spacer /> 
+
+<div class="d-flex align-center justify-end ml-auto flex-wrap" style="gap: 8px;">
+  <v-btn
+    v-if="!showSearchBar"
+    icon
+    @click="toggleSearchBar"
+  >
+    <v-icon>mdi-magnify</v-icon>
+  </v-btn>
+
+  <v-text-field
+    v-else
+    v-model="searchQuery"
+    placeholder="Search..."
+    density="compact"
+    hide-details
+    single-line
+    flat
+    prepend-inner-icon="mdi-magnify"
+    clearable
+    class="search-expand"
+    :style="`max-width: ${computedSearchWidth}px; transition: max-width 0.3s ease;`"
+    @blur="closeSearchBar"
+    autofocus
+  />
+</div>
+
+        <v-avatar color="#fff" size="50" class="logo">
+    <v-img src="image/Teach&Learn.png" alt="Logo" />
+  </v-avatar>
+      </v-container>
+    </v-app-bar>
+
+  
     <!--pop up alert-->
     <v-snackbar
       v-model="snackbar"
