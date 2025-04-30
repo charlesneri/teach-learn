@@ -119,7 +119,7 @@ onMounted(async () => {
   await fetchTutors()
 })
 //for collapsable drawer
-const drawer = ref(true)
+const drawer = ref(false)
 const mini = ref(false)
 const isMobile = ref(false)
 
