@@ -143,19 +143,30 @@ onMounted(() => {
 onBeforeUnmount(() => {
   window.removeEventListener('resize', checkMobile)
 })
-// for searching functionality
+
+//search
+
+
+const showSearch = ref(false)
 const searchQuery = ref('')
 
+const toggleSearch = () => {
+  showSearch.value = !showSearch.value
+}
+
+const closeSearch = () => {
+  // Optional: auto-close when blurred
+  // showSearch.value = false
+}
 const filteredTutors = computed(() => {
   if (!searchQuery.value.trim()) return tutors.value
 
-  const query = searchQuery.value.toLowerCase()
+  const keyword = searchQuery.value.trim().toLowerCase()
 
   return tutors.value.filter((tutor) => {
-    const fullName =
-      `${tutor.first_name} ${tutor.middle_initial || ''} ${tutor.last_name}`.toLowerCase()
-    const expertise = tutor.expertise?.toLowerCase() || ''
-    return fullName.includes(query) || expertise.includes(query)
+    const fullName = `${tutor.first_name || ''} ${tutor.middle_initial || ''} ${tutor.last_name || ''}`.toLowerCase()
+    const expertise = (tutor.expertise || '').toLowerCase()
+    return fullName.includes(keyword) || expertise.includes(keyword)
   })
 })
 </script>
@@ -277,23 +288,31 @@ const filteredTutors = computed(() => {
         }"
       >
         <div class="search-wrapper">
-          <v-text-field
+           <!-- Search Input -->
+           <v-text-field
+            v-if="showSearch"
             v-model="searchQuery"
             placeholder="Search..."
             density="compact"
             hide-details
-            single-line
             flat
-            prepend-inner-icon="mdi-magnify"
             clearable
-            class="responsive-search"
+            class="search-input large-icon"
+          append-inner-icon="mdi-magnify"
+            @blur="closeSearch"
+            autofocus
           />
-
-          <v-avatar color="#fff" size="50" class="logo">
-            <v-img src="image/Teach&Learn.png" alt="Logo" />
-          </v-avatar>
+          <!-- Toggle Button -->
+          <v-btn icon @click="toggleSearch">
+            <v-icon>{{ showSearch ? 'mdi-close' : 'mdi-magnify' }}</v-icon>
+          </v-btn>
+          <v-avatar color="#fff" size="50" class="logo me-6">
+        <v-img src="image/Teach&Learn.png" alt="Logo" />
+      </v-avatar>
+         
         </div>
       </v-container>
+  
     </v-app-bar>
 
     <!--pop up alert-->
@@ -700,43 +719,72 @@ h1.head {
   margin-right: 240px;
 }
 /*search */
-/* Default for desktop */
 .search-wrapper {
-  position: fixed; /* ✅ sticks to top-right */
-  top: 0;
-  right: 0;
+  position: absolute;
+  top: 50%;
+  right: 16px;
+  transform: translateY(-50%);
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  padding: 10px 16px;
-  width: auto; /* don't limit width here */
-  z-index: 1000;
+  justify-content: flex-end;
   gap: 12px;
-  border-bottom-left-radius: 12px; /* optional: rounded corner */
+  z-index: 10;
+  max-width: 100%;
+  flex-wrap: nowrap;
 }
 
-.responsive-search {
-  width: 250px;
-  max-width: 90vw;
+.search-input {
+  width: 240px;
+  max-width: 100%;
+  transition: width 0.3s ease;
+}
+
+.logo {
+  width: 50px;
+  height: 50px;
+}
+.large-icon ::v-deep(.v-field__append-inner .v-icon) {
+  font-size: 28px !important;
 }
 
 /* Mobile tweaks */
 @media (max-width: 600px) {
-  .search-wrapper {
-    flex-direction: column;
-    align-items: flex-end;
-    padding: 10px;
-  }
-
-  .responsive-search {
-    width: 150px;
-    max-width: 90vw;
+  .search-input {
+    width: 70vw;
   }
 
   .logo {
     margin-top: 6px;
   }
+
+  .search-wrapper {
+    right: 12px;
+    gap: 8px;
+  }
 }
+/* Mobile responsiveness */
+@media (max-width: 600px) {
+  .right-align-wrapper {
+    flex-direction: column;
+    align-items: flex-end;
+    justify-content: flex-start;
+    gap: 12px;
+    padding: 12px 8px;
+    overflow-y: auto; /* Enable scroll if vertical space is too tight */
+    max-height: 100vh;
+    box-sizing: border-box;
+  }
+
+  .search-input {
+    width: 100%;
+    max-width: 90%;
+    margin: 0;
+    display: block;
+  }
+
+  
+}
+
 /* Animations */
 .fade-slide-up-enter-active {
   animation: fadeSlideUp 0.6s ease;
