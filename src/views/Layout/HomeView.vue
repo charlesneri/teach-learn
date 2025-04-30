@@ -41,10 +41,16 @@ const notifications = ref([{ id: 1, title: 'No new notifications', time: '' }])
 
 // FETCH USER
 const fetchCurrentUser = async () => {
-  const { data: { user } } = await supabase.auth.getUser()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
   if (user) {
     currentUserId.value = user.id
-    const { data } = await supabase.from('profiles').select('first_name, last_name, avatar_url, is_public_tutor').eq('id', user.id).single()
+    const { data } = await supabase
+      .from('profiles')
+      .select('first_name, last_name, avatar_url, is_public_tutor')
+      .eq('id', user.id)
+      .single()
     if (data) {
       currentUserProfile.value = {
         firstName: data.first_name || '',
@@ -90,7 +96,7 @@ const saveAppointment = async () => {
       appointment_date: selectedDate.value,
       appointment_time: selectedTime.value,
       status: 'pending',
-      created_at: new Date()
+      created_at: new Date(),
     })
 
     if (error) throw error
@@ -103,7 +109,6 @@ const saveAppointment = async () => {
     snackbarMsg.value = 'Appointment request sent successfully!'
     snackbarColor.value = 'success'
     snackbar.value = true
-
   } catch (err) {
     console.error('Error saving appointment:', err)
     snackbarMsg.value = 'Failed to send appointment. Try again.'
@@ -138,23 +143,20 @@ onMounted(() => {
 onBeforeUnmount(() => {
   window.removeEventListener('resize', checkMobile)
 })
-
-//searhc
-import { useDisplay } from 'vuetify'
-const { mobile } = useDisplay()
-const showSearchBar = ref(false)
+// for searching functionality
 const searchQuery = ref('')
 
-const toggleSearchBar = () => {
-  showSearchBar.value = true
-}
+const filteredTutors = computed(() => {
+  if (!searchQuery.value.trim()) return tutors.value
 
-const closeSearchBar = () => {
-  showSearchBar.value = false
-}
+  const query = searchQuery.value.toLowerCase()
 
-const computedSearchWidth = computed(() => {
-  return mobile.value ? 160 : 240
+  return tutors.value.filter((tutor) => {
+    const fullName =
+      `${tutor.first_name} ${tutor.middle_initial || ''} ${tutor.last_name}`.toLowerCase()
+    const expertise = tutor.expertise?.toLowerCase() || ''
+    return fullName.includes(query) || expertise.includes(query)
+  })
 })
 </script>
 
@@ -274,17 +276,8 @@ const computedSearchWidth = computed(() => {
           'no-transition': isMobile,
         }"
       >
-        <v-spacer />
-        <div
-          class="position-absolute d-flex align-center"
-          style="right: 16px; top: 50%; transform: translateY(-50%); gap: 8px; z-index: 10"
-        >
-          <v-btn v-if="!showSearchBar" icon @click="toggleSearchBar">
-            <v-icon>mdi-magnify</v-icon>
-          </v-btn>
-
+        <div class="search-wrapper">
           <v-text-field
-            v-else
             v-model="searchQuery"
             placeholder="Search..."
             density="compact"
@@ -293,13 +286,10 @@ const computedSearchWidth = computed(() => {
             flat
             prepend-inner-icon="mdi-magnify"
             clearable
-            class="search-expand"
-            :style="`max-width: ${computedSearchWidth}px; transition: max-width 0.3s ease;`"
-            @blur="closeSearchBar"
-            autofocus
+            class="responsive-search"
           />
 
-          <v-avatar color="#fff" size="50" class="logo me-6">
+          <v-avatar color="#fff" size="50" class="logo">
             <v-img src="image/Teach&Learn.png" alt="Logo" />
           </v-avatar>
         </div>
@@ -356,7 +346,7 @@ const computedSearchWidth = computed(() => {
                           sm="6"
                           md="4"
                           lg="3"
-                          v-for="tutor in tutors"
+                          v-for="tutor in filteredTutors"
                           :key="tutor.id"
                           class="d-flex justify-center"
                         >
@@ -674,10 +664,7 @@ h1.head {
   transition: none !important;
 }
 /* Components Enhancements */
-.v-text-field {
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  border-radius: 10px;
-}
+
 .v-btn {
   transition: transform 0.3s ease;
 }
@@ -714,77 +701,42 @@ h1.head {
 }
 /*search */
 /* Default for desktop */
-.right-align-wrapper {
+.search-wrapper {
+  position: fixed; /* ✅ sticks to top-right */
+  top: 0;
+  right: 0;
   display: flex;
-  justify-content: flex-end;
   align-items: center;
-  gap: 16px;
-  width: 100%;
-  padding: 8px;
-  min-width: 0; /* Prevents overflow in flex container */
-  flex-wrap: wrap; /* Allows wrapping on small screens */
+  justify-content: space-between;
+  padding: 10px 16px;
+  width: auto; /* don't limit width here */
+  z-index: 1000;
+  gap: 12px;
+  border-bottom-left-radius: 12px; /* optional: rounded corner */
 }
 
-.search-input {
-  width: 100%;
-  max-width: 300px;
-  min-width: 0;
-  box-sizing: border-box;
+.responsive-search {
+  width: 250px;
+  max-width: 90vw;
 }
 
-.logo {
-  width: 50px;
-  height: 50px;
-}
-
+/* Mobile tweaks */
 @media (max-width: 600px) {
-  .right-align-wrapper {
+  .search-wrapper {
     flex-direction: column;
     align-items: flex-end;
-    justify-content: flex-start;
-    gap: 8px;
     padding: 10px;
-    overflow-y: auto;
-    max-height: 100vh;
   }
 
-  .search-input {
-    max-width: 90%;
-    margin: 0;
-  }
-
-  .logo {
-    width: 40px;
-    height: 40px;
-  }
-}
-
-/* Mobile responsiveness */
-@media (max-width: 600px) {
-  .right-align-wrapper {
-    flex-direction: column;
-    align-items: flex-end;
-    justify-content: flex-start;
-    gap: 12px;
-    padding: 12px 8px;
-    overflow-y: auto; /* Enable scroll if vertical space is too tight */
-    max-height: 100vh;
-    box-sizing: border-box;
-  }
-
-  .search-input {
-    width: 100%;
-    max-width: 90%;
-    margin: 0;
-    display: block;
+  .responsive-search {
+    width: 150px;
+    max-width: 90vw;
   }
 
   .logo {
-    width: 40px;
-    height: 40px;
+    margin-top: 6px;
   }
 }
-
 /* Animations */
 .fade-slide-up-enter-active {
   animation: fadeSlideUp 0.6s ease;
