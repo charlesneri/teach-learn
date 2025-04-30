@@ -5,7 +5,6 @@ import { supabase } from '@/utils/supabase.js'
 import { useRouter } from 'vue-router'
 import AlertNotification from '@/components/common/AlertNotification.vue'
 
-
 const visible = ref(false)
 
 // Get theme preference from localStorage or system
@@ -56,6 +55,8 @@ const formAction = ref({
 // Login function
 const onLogin = async () => {
   formAction.value.formProcess = true
+  formAction.value.formErrorMessage = ''
+  formAction.value.formSuccessMessage = ''
   const { data, error } = await supabase.auth.signInWithPassword({
     email: formData.value.email,
     password: formData.value.password,
@@ -69,13 +70,13 @@ const onLogin = async () => {
   }
 
   if (data) {
-  formAction.value.formSuccessMessage = 'Successfully Logged In!';
-  
-  // Wait for a bit so the user can see the alert
-  setTimeout(() => {
-    router.replace('/home')
-  }, 1500); // 1.5 seconds
-}
+    formAction.value.formSuccessMessage = 'Successfully Logged In!'
+
+    // Wait for a bit so the user can see the alert
+    setTimeout(() => {
+      router.replace('/home')
+    }, 1500) // 1.5 seconds
+  }
 }
 
 // Form submission handler
@@ -87,14 +88,18 @@ const onFormSubmit = () => {
   })
 }
 const showSuccess = ref(true)
-
 </script>
 
 <template>
   <v-responsive class="login-wrapper">
     <v-app :theme="theme">
       <v-main class="no-scroll">
-        <v-container fluid class="wrapper" :style="{ background: theme === 'light' ? '#1565c0' : '#121212' }">
+        <v-container
+          fluid
+          class="wrapper"
+          style="min-height: 100vh; padding: 32px"
+          :style="{ backgroundColor: theme === 'light' ? '#1565c0' : '#121212' }"
+        >
           <!-- Theme Toggle Button -->
           <v-btn
             :icon="true"
@@ -117,7 +122,7 @@ const showSuccess = ref(true)
             <v-col cols="12" sm="10" md="6" lg="4" class="mx-auto">
               <transition name="slide-fade">
                 <v-card
-                  :class="theme === 'dark' ? 'bg-grey-darken-4 text-white' : ''"
+                  :style="{ backgroundColor: theme === 'light' ? '#fefcf9' : '#222222' }"
                   class="mx-auto rounded-xl pb-5 hover-card"
                   width="500"
                   style="font-size: 85%; font-weight: 200"
@@ -141,7 +146,7 @@ const showSuccess = ref(true)
                     <v-form ref="refVForm" @submit.prevent="onFormSubmit">
                       <v-text-field
                         label="Email"
-                        variant="outlined"
+                        variant="filled"
                         :color="theme === 'dark' ? 'white' : 'primary'"
                         :rules="[requiredValidator, emailValidator]"
                         v-model="formData.email"
@@ -151,20 +156,22 @@ const showSuccess = ref(true)
                         :type="visible ? 'text' : 'password'"
                         label="Password"
                         @click:append-inner="visible = !visible"
-                        variant="outlined"
+                        variant="filled"
                         :color="theme === 'dark' ? 'white' : 'primary'"
                         :rules="[requiredValidator]"
                         v-model="formData.password"
                       />
-                      <v-btn
-                        color="light-blue-darken-2"
-                        class="mt-2 signup-btn"
-                        type="submit"
-                        prepend-icon="mdi-login"
-                        block
-                      >
-                        Login
-                      </v-btn>
+                      <v-col cols="12" class="d-flex justify-center">
+                        <v-btn
+                          color="light-blue-darken-2"
+                          class="mt-2 signup-btn"
+                          type="submit"
+                          prepend-icon="mdi-login"
+                          
+                        >
+                          Login
+                        </v-btn>
+                      </v-col>
 
                       <v-divider class="my-5" />
                       <p class="text-center text-primary">
@@ -209,10 +216,8 @@ const showSuccess = ref(true)
     box-shadow 0.3s ease;
 }
 .hover-card:hover {
- 
   transform: scale(1.05);
   box-shadow: 0 6px 18px rgba(33, 150, 243, 0.6);
-
 }
 
 /* Theme toggle button */
@@ -234,6 +239,7 @@ const showSuccess = ref(true)
   color: white;
   font-weight: bold;
   letter-spacing: 1px;
+  max-width: 160px;
   font-size: 16px;
   padding: 12px 24px;
   border-radius: 50px;
@@ -269,16 +275,28 @@ const showSuccess = ref(true)
 
 /* Remove underline on link */
 
+/* Base link style */
 .active-click {
-  color: #0d47a1;
   text-decoration: none;
+  transition: color 0.3s ease;
 }
-.active-click:active {
-  color: #ffffff19;
+
+/* Light mode: default + hover */
+body:not(.dark) .active-click {
+  color: #0d47a1;
 }
-.active-click:hover {
-  color: #1c1717d1;
+body:not(.dark) .active-click:hover {
+  color: #002171;
 }
+
+/* Dark mode: default + hover */
+body.dark .active-click {
+  color: #90caf9;
+}
+body.dark .active-click:hover {
+  color: #ffffff;
+}
+
 @media (max-width: 600px) {
   .wrapper {
     padding: 0 1rem;
@@ -310,6 +328,11 @@ const showSuccess = ref(true)
 
   .v-img {
     max-width: 120px;
+  }
+  .signup-btn {
+    font-size: 14px;
+    padding: 10px 20px;
+    max-width: 100%;        /* fill available width */
   }
 }
 </style>
