@@ -39,16 +39,75 @@ const userProfile = ref({
   confirm_password: '',
 })
 
-// Form submit logic
-const handleSubmit = () => {
-  if (
-    userProfile.value.password !== userProfile.value.confirmPassword ||
-    !userProfile.value.firstName ||
-    !userProfile.value.lastName ||
-    !userProfile.value.email
-  ) {
-    alert('Please complete all required fields and ensure passwords match.')
-    return
+const formAction = ref({ ...formActionDefault })
+
+// Submit Handler
+const onFormSubmit = () => {
+  refVForm.value?.validate().then(({ valid }) => {
+    if (valid) {
+      onSubmit()
+    }
+  })
+}
+
+// Main Submit Function
+const onSubmit = async () => {
+  formAction.value = { ...formActionDefault }
+  formAction.value.formProcess = true
+
+  const { data, error } = await supabase.auth.signUp({
+    email: formData.value.email,
+    password: formData.value.password,
+    options: {
+      data: {
+        firstName: formData.value.firstname,
+        lastName: formData.value.lastname,
+        middleInitial: formData.value.middleinitial,
+        age: Number(formData.value.age),
+        phone: formData.value.phone,
+        expertise: formData.value.expertise,
+        about: formData.value.about,
+        school: formData.value.school,
+        course: formData.value.course,
+        yearLevel: Number(formData.value.yearLevel),
+      },
+    },
+  })
+
+  if (error) {
+    console.error(error)
+    formAction.value.formErrorMessage = error.message
+    formAction.value.formStatus = error.status
+  } else if (data && data.user) {
+    console.log('Auth signup success:', data.user)
+
+    // Insert into profiles table
+    const { error: profileError } = await supabase.from('profiles').insert({
+      id: data.user.id,
+      first_name: formData.value.firstname,
+      last_name: formData.value.lastname,
+      middle_initial: formData.value.middleinitial,
+      age: Number(formData.value.age),
+      email: formData.value.email,
+      phone: formData.value.phone,
+      expertise: formData.value.expertise,
+      about: formData.value.about,
+      school: formData.value.school,
+      degree: formData.value.course,
+      year: Number(formData.value.yearLevel),
+      avatar_url: '', // No image uploaded yet
+    })
+
+    if (profileError) {
+      console.error('Error inserting into profiles table:', profileError)
+      formAction.value.formErrorMessage = 'Profile creation failed!'
+      formAction.value.formStatus = 500
+    } else {
+      console.log('Profile inserted successfully')
+      formAction.value.formSuccessMessage = 'Successfully Registered!'
+      refVForm.value?.reset()
+      showDialog.value = true // show confirmation popup
+    }
   }
 
   // Save only the fields needed for profile
@@ -74,6 +133,18 @@ const handleSubmit = () => {
   // Optional redirect to profile
   // router.push('/profile')
 }
+
+//direct login yes or no after register
+const showDialog = ref(false)
+
+const handleDialogConfirm = () => {
+  showDialog.value = false
+  router.push('/home') // or '/login'
+}
+
+const handleDialogCancel = () => {
+  showDialog.value = false
+}
 </script>
 
 <template>
@@ -82,7 +153,8 @@ const handleSubmit = () => {
       <v-main>
         <v-container
           fluid
-          class="d-flex align-center justify-center"
+          class="d-flex justify-center align-center container-bg"
+          style="min-height: 100vh; padding: 32px"
           :style="{ backgroundColor: theme === 'light' ? '#1565c0' : '#121212' }"
         >
           <!-- Theme Toggle -->
@@ -99,161 +171,215 @@ const handleSubmit = () => {
 
           <!-- Registration Card -->
           <v-row>
-            <v-col cols="12" md="6" class="mx-auto">
-              <transition name="slide-fade">
-                <v-card
-                  :class="theme === 'dark' ? 'bg-grey-darken-4 text-white' : ''"
-                  class="mx-auto rounded-xl pb-5 hover-card"
-                  width="500"
-                >
-                  <template v-slot:title>
-                    <v-img
-                      src="/image/Teach&Learn.png"
-                      width="150"
-                      class="mx-auto"
-                      aspect-ratio="16/9"
-                      cover
+            <v-col cols="12" md="10" lg="10" xl="9" class="mx-auto">
+              <div class="d-flex flex-column justify-center" style="height: 100%">
+                <transition name="slide-fade">
+                  <v-card
+                    class="mx-auto rounded-xl pb-5 hover-card"
+                    max-width="1500"
+                    width="100%"
+                    :style="{ backgroundColor: theme === 'light' ? '#fefcf9' : '#222222' }"
+                  >
+                    <template v-slot:title>
+                      <v-img
+                        src="/image/Teach&Learn.png"
+                        width="150"
+                        class="mx-auto"
+                        aspect-ratio="16/9"
+                        cover
+                      />
+                      <v-divider class="mb-5 mt-4" thickness="3" color="black" />
+                      <span class="text-font font-weight-black d-flex justify-center"
+                        >Register Now!</span
+                      >
+                    </template>
+
+                    <AlertNotification
+                      :form-success-message="formAction.formSuccessMessage"
+                      :form-error-message="formAction.formErrorMessage"
                     />
-                    <v-divider class="mb-5 mt-4" thickness="3" color="black" />
-                    <span class="font-weight-black d-flex justify-center">Register Now!</span>
-                  </template>
 
-                  <AlertNotification
-                    :form-success-message="formAction.formSuccessMessage"
-                    :form-error-message="formAction.formErrorMessage"
-                  />
+                    <v-card-text class="pt-4">
+                      <v-sheet
+                        class="mx-auto"
+                        :style="{ backgroundColor: theme === 'light' ? '#fefcf9' : '#222222' }"
+                      >
+                        <v-form ref="refVForm" fast-fail @submit.prevent="onFormSubmit">
+                          <v-row dense>
+                            <v-col cols="12" md="6" lg="4">
+                              <v-text-field
+                                v-model="formData.firstname"
+                                label="First Name"
+                                variant="filled"
+                                :hide-details="true"
+                                :rules="[requiredValidator]"
+                              />
+                            </v-col>
+                            <v-col cols="12" md="6" lg="4">
+                              <v-text-field
+                                v-model="formData.lastname"
+                                label="Last Name"
+                                variant="filled"
+                                color="white"
+                                :rules="[requiredValidator]"
+                              />
+                            </v-col>
+                            <v-col cols="12" md="6" lg="4">
+                              <v-text-field
+                                v-model="formData.middleinitial"
+                                label="Middle Initial (optional)"
+                                variant="filled"
+                                color="white"
+                              />
+                            </v-col>
+                            <v-col cols="12" md="6" lg="4">
+                              <v-text-field
+                                v-model="formData.age"
+                                label="Age"
+                                type="number"
+                                variant="filled"
+                                color="white"
+                                :rules="[requiredValidator]"
+                              />
+                            </v-col>
+                            <v-col cols="12" md="6" lg="4">
+                              <v-text-field
+                                v-model="formData.phone"
+                                label="Phone"
+                                variant="filled"
+                                color="white"
+                                :rules="[requiredValidator]"
+                              />
+                            </v-col>
+                            <v-col cols="12" md="6" lg="4">
+                              <v-text-field
+                                v-model="formData.expertise"
+                                label="Expertise"
+                                variant="filled"
+                                color="white"
+                              />
+                            </v-col>
+                            <v-col cols="12 pa-4">
+                              <v-textarea
+                                v-model="formData.about"
+                                label="About Me"
+                                variant="filled"
+                                color="white"
+                                :rules="[requiredValidator]"
+                                auto-grow
+                                rows="3"
+                              ></v-textarea>
+                            </v-col>
+                            <v-col cols="12" md="6" lg="4">
+                              <v-text-field
+                                v-model="formData.school"
+                                label="School"
+                                variant="filled"
+                                color="white"
+                                :rules="[requiredValidator]"
+                              />
+                            </v-col>
+                            <v-col cols="12" md="6" lg="4">
+                              <v-text-field
+                                v-model="formData.course"
+                                label="Course"
+                                variant="filled"
+                                color="white"
+                                :rules="[requiredValidator]"
+                              />
+                            </v-col>
+                            <v-col cols="12" md="6" lg="4">
+                              <v-text-field
+                                v-model="formData.yearLevel"
+                                label="Year Level"
+                                type="number"
+                                variant="filled"
+                                color="white"
+                                :rules="[requiredValidator]"
+                              />
+                            </v-col>
+                            <v-col cols="12" md="6" lg="4">
+                              <v-text-field
+                                v-model="formData.email"
+                                label="Email"
+                                variant="filled"
+                                color="white"
+                                :rules="[requiredValidator, emailValidator]"
+                              />
+                            </v-col>
+                            <v-col cols="12" md="6" lg="4">
+                              <v-text-field
+                                v-model="formData.password"
+                                label="Password"
+                                variant="filled"
+                                color="white"
+                                :append-inner-icon="visible ? 'mdi-eye-off' : 'mdi-eye'"
+                                :type="visible ? 'text' : 'password'"
+                                @click:append-inner="visible = !visible"
+                                :rules="[requiredValidator, passwordValidator]"
+                              />
+                            </v-col>
+                            <v-col cols="12" md="6" lg="4">
+                              <v-text-field
+                                v-model="formData.confirm_password"
+                                label="Confirm Password"
+                                variant="filled"
+                                color="white"
+                                :append-inner-icon="visible ? 'mdi-eye-off' : 'mdi-eye'"
+                                :type="visible ? 'text' : 'password'"
+                                @click:append-inner="visible = !visible"
+                                :rules="[
+                                  requiredValidator,
+                                  confirmedValidator(formData.confirm_password, formData.password),
+                                ]"
+                              />
+                            </v-col>
 
-                  <v-card-text class="pt-4">
-                    <v-sheet class="mx-auto" width="300">
-                      <v-form ref="refVForm" @submit.prevent="onFormSubmit">
-                        <v-text-field
-                          v-model="formData.firstname"
-                          label="First Name"
-                          variant="outlined"
-                          :rules="[requiredValidator]"
-                        />
-                        <v-text-field
-                          v-model="formData.lastname"
-                          label="Last Name"
-                          variant="outlined"
-                          :rules="[requiredValidator]"
-                        />
-                        <v-text-field
-                          v-model="formData.middleinitial"
-                          label="Middle Initial (optional)"
-                          variant="outlined"
-                        />
-                        <v-text-field
-                          v-model="formData.age"
-                          label="Age"
-                          type="number"
-                          variant="outlined"
-                          :rules="[requiredValidator]"
-                        />
+                            <!-- Sign Up Button & Login Text at the Bottom Center -->
+                            <v-col cols="12" class="d-flex justify-center">
+                              <v-btn
+                                class="signup-btn"
+                                type="submit"
+                                prepend-icon="mdi-account-plus"
+                                :disabled="formAction.formProcess"
+                                :loading="formAction.formProcess"
+                              >
+                                Signup
+                              </v-btn>
+                            </v-col>
 
-                        <!-- ✅ New Field: Phone Number -->
-                        <v-text-field
-                          v-model="userProfile.phone"
-                          label="Phone Number"
-                          type="tel"
-                          variant="outlined"
-                          :color="theme === 'dark' ? 'white' : 'primary'"
-                        />
-
-                        <!-- ✅ New Field: Expertise -->
-                        <v-text-field
-                          v-model="userProfile.expertise"
-                          label="Expertise / Field"
-                          variant="outlined"
-                          :color="theme === 'dark' ? 'white' : 'primary'"
-                        />
-
-                        <v-text-field
-                          v-model="formData.phone"
-                          label="Phone"
-                          variant="outlined"
-                          :rules="[requiredValidator]"
-                        />
-                        <v-text-field
-                          v-model="formData.expertise"
-                          label="Expertise"
-                          variant="outlined"
-                        />
-
-                        <v-text-field
-                          v-model="formData.about"
-                          label="About Me"
-                          variant="outlined"
-                          :rules="[requiredValidator]"
-                        />
-                        <v-text-field
-                          v-model="formData.school"
-                          label="School"
-                          variant="outlined"
-                          :rules="[requiredValidator]"
-                        />
-                        <v-text-field
-                          v-model="formData.course"
-                          label="Course"
-                          variant="outlined"
-                          :rules="[requiredValidator]"
-                        />
-                        <v-text-field
-                          v-model="formData.yearLevel"
-                          label="Year Level"
-                          type="number"
-                          variant="outlined"
-                          :rules="[requiredValidator]"
-                        />
-                        <v-text-field
-                          v-model="formData.email"
-                          label="Email"
-                          variant="outlined"
-                          :rules="[requiredValidator, emailValidator]"
-                        />
-                        <v-text-field
-                          v-model="formData.password"
-                          label="Password"
-                          variant="outlined"
-                          :append-inner-icon="visible ? 'mdi-eye-off' : 'mdi-eye'"
-                          :type="visible ? 'text' : 'password'"
-                          @click:append-inner="visible = !visible"
-                          :rules="[requiredValidator, passwordValidator]"
-                        />
-                        <v-text-field
-                          v-model="formData.confirm_password"
-                          label="Confirm Password"
-                          variant="outlined"
-                          :append-inner-icon="visible ? 'mdi-eye-off' : 'mdi-eye'"
-                          :type="visible ? 'text' : 'password'"
-                          @click:append-inner="visible = !visible"
-                          :rules="[
-                            requiredValidator,
-                            confirmedValidator(formData.confirm_password, formData.password),
-                          ]"
-                        />
-
-                        <v-btn
-                          class="mt-2 signup-btn"
-                          type="submit"
-                          prepend-icon="mdi-account-plus"
-                          block
-                          :disabled="formAction.formProcess"
-                          :loading="formAction.formProcess"
+                            <v-col cols="12">
+                              <v-divider class="my-5" />
+                              <p class="text-center text-primary">
+                                Already have an account?
+                                <RouterLink class="active-click" to="/"
+                                  ><b>Login now!</b></RouterLink
+                                >
+                              </p>
+                            </v-col>
+                          </v-row>
+                        </v-form>
+                        <v-dialog
+                          v-model="showDialog"
+                          max-width="400"
+                          location="top"
+                          scrim="false"
+                          persistent
                         >
-                          Signup
-                        </v-btn>
-
-                        <v-divider class="my-5" />
-                        <p class="text-center text-primary">
-                          Already have an account?
-                          <RouterLink class="active-click" to="/">Login now!</RouterLink>
-                        </p>
-                      </v-form>
-                    </v-sheet>
-                  </v-card-text>
-                </v-card>
-              </transition>
+                          <v-card class="mt-6">
+                            <v-card-title class="text-h6">Registration Successful!</v-card-title>
+                            <v-card-text>Do you want to proceed to login?</v-card-text>
+                            <v-card-actions class="justify-end">
+                              <v-btn text color="primary" @click="handleDialogCancel">No</v-btn>
+                              <v-btn color="primary" @click="handleDialogConfirm">Yes</v-btn>
+                            </v-card-actions>
+                          </v-card>
+                        </v-dialog>
+                      </v-sheet>
+                    </v-card-text>
+                  </v-card>
+                </transition>
+              </div>
             </v-col>
           </v-row>
         </v-container>
@@ -262,7 +388,7 @@ const handleSubmit = () => {
   </v-responsive>
 </template>
 
-
+-
 <style scoped>
 /* Entrance animation */
 .slide-fade-enter-active {
@@ -281,7 +407,6 @@ const handleSubmit = () => {
     box-shadow 0.3s ease;
 }
 .hover-card:hover {
- 
   transform: scale(1.05);
   box-shadow: 0 6px 18px rgba(33, 150, 243, 0.6);
 }
@@ -317,6 +442,8 @@ body {
 .signup-btn {
   background-color: #1565c0;
   color: white;
+  max-width: 200px;
+  width: 100%;
   font-weight: bold;
   letter-spacing: 1px;
   font-size: 16px;
@@ -328,6 +455,13 @@ body {
   justify-content: center;
   align-items: center;
   transition: all 0.3s ease;
+}
+body.dark .signup-btn {
+  background-color: #2196f3;
+}
+
+body.dark .signup-btn:hover {
+  background-color: #1565c0;
 }
 
 /* Hover effect: slightly scale up and change background */
@@ -350,17 +484,34 @@ body {
 }
 
 /* Remove underline on link */
-
 .active-click {
-  color: #0d47a1;
   text-decoration: none;
+  transition: color 0.3s ease;
 }
-.active-click:active {
-  color: #ffffff19;
+
+body.dark .active-click {
+  color: #90caf9; /* default text in dark */
 }
-.active-click:hover {
-  color: #1c1717d1;
+
+body.dark .active-click:hover {
+  color: #ffffff; /* hover in dark mode */
 }
+
+body:not(.dark) .active-click {
+  color: #1565c0; /* default text in light */
+}
+
+body:not(.dark) .active-click:hover {
+  color: #0d47a1; /* hover in light mode */
+}
+
+/*/register now */
+.text-font {
+  font-size: 20px;
+  font-family: 'Ubuntu', sans-serif;
+  letter-spacing: 2px;
+}
+
 @media (max-width: 600px) {
   /* Reduce padding around card */
   .container-bg {
