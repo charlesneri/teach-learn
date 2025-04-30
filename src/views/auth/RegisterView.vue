@@ -60,8 +60,9 @@ const onFormSubmit = () => {
 
 // Main Submit Function
 const onSubmit = async () => {
-  formAction.value = { ...formActionDefault }
   formAction.value.formProcess = true
+  formAction.value.formErrorMessage = ''
+  formAction.value.formSuccessMessage = ''
 
   const { data, error } = await supabase.auth.signUp({
     email: formData.value.email,
@@ -89,7 +90,6 @@ const onSubmit = async () => {
   } else if (data && data.user) {
     console.log('Auth signup success:', data.user)
 
-    // Insert into profiles table
     const { error: profileError } = await supabase.from('profiles').insert({
       id: data.user.id,
       first_name: formData.value.firstname,
@@ -103,7 +103,7 @@ const onSubmit = async () => {
       school: formData.value.school,
       degree: formData.value.course,
       year: Number(formData.value.yearLevel),
-      avatar_url: '', // No image uploaded yet
+      avatar_url: '',
     })
 
     if (profileError) {
@@ -111,15 +111,15 @@ const onSubmit = async () => {
       formAction.value.formErrorMessage = 'Profile creation failed!'
       formAction.value.formStatus = 500
     } else {
-      console.log('Profile inserted successfully')
       formAction.value.formSuccessMessage = 'Successfully Registered!'
       refVForm.value?.reset()
-      showDialog.value = true // show confirmation popup
+      showDialog.value = true
     }
   }
 
   formAction.value.formProcess = false
 }
+
 
 //direct login yes or no after register
 const showDialog = ref(false)
@@ -200,6 +200,7 @@ const handleDialogCancel = () => {
                                 variant="filled"
                                 :hide-details="true"
                                 :rules="[requiredValidator]"
+                                 :color="theme === 'dark' ? 'white' : 'primary'"
                               />
                             </v-col>
                             <v-col cols="12" md="6" lg="4">
@@ -207,7 +208,7 @@ const handleDialogCancel = () => {
                                 v-model="formData.lastname"
                                 label="Last Name"
                                 variant="filled"
-                                color="white"
+                               :color="theme === 'dark' ? 'white' : 'primary'"
                                 :rules="[requiredValidator]"
                               />
                             </v-col>
@@ -216,7 +217,7 @@ const handleDialogCancel = () => {
                                 v-model="formData.middleinitial"
                                 label="Middle Initial (optional)"
                                 variant="filled"
-                                color="white"
+                               :color="theme === 'dark' ? 'white' : 'primary'"
                               />
                             </v-col>
                             <v-col cols="12" md="6" lg="4">
@@ -225,7 +226,7 @@ const handleDialogCancel = () => {
                                 label="Age"
                                 type="number"
                                 variant="filled"
-                                color="white"
+                               :color="theme === 'dark' ? 'white' : 'primary'"
                                 :rules="[requiredValidator]"
                               />
                             </v-col>
@@ -234,7 +235,7 @@ const handleDialogCancel = () => {
                                 v-model="formData.phone"
                                 label="Phone"
                                 variant="filled"
-                                color="white"
+                               :color="theme === 'dark' ? 'white' : 'primary'"
                                 :rules="[requiredValidator]"
                               />
                             </v-col>
@@ -243,7 +244,7 @@ const handleDialogCancel = () => {
                                 v-model="formData.expertise"
                                 label="Expertise"
                                 variant="filled"
-                                color="white"
+                               :color="theme === 'dark' ? 'white' : 'primary'"
                               />
                             </v-col>
                             <v-col cols="12 pa-4">
@@ -251,7 +252,7 @@ const handleDialogCancel = () => {
                                 v-model="formData.about"
                                 label="About Me"
                                 variant="filled"
-                                color="white"
+                               :color="theme === 'dark' ? 'white' : 'primary'"
                                 :rules="[requiredValidator]"
                                 auto-grow
                                 rows="3"
@@ -262,7 +263,7 @@ const handleDialogCancel = () => {
                                 v-model="formData.school"
                                 label="School"
                                 variant="filled"
-                                color="white"
+                               :color="theme === 'dark' ? 'white' : 'primary'"
                                 :rules="[requiredValidator]"
                               />
                             </v-col>
@@ -271,7 +272,7 @@ const handleDialogCancel = () => {
                                 v-model="formData.course"
                                 label="Course"
                                 variant="filled"
-                                color="white"
+                               :color="theme === 'dark' ? 'white' : 'primary'"
                                 :rules="[requiredValidator]"
                               />
                             </v-col>
@@ -281,7 +282,7 @@ const handleDialogCancel = () => {
                                 label="Year Level"
                                 type="number"
                                 variant="filled"
-                                color="white"
+                               :color="theme === 'dark' ? 'white' : 'primary'"
                                 :rules="[requiredValidator]"
                               />
                             </v-col>
@@ -290,7 +291,7 @@ const handleDialogCancel = () => {
                                 v-model="formData.email"
                                 label="Email"
                                 variant="filled"
-                                color="white"
+                               :color="theme === 'dark' ? 'white' : 'primary'"
                                 :rules="[requiredValidator, emailValidator]"
                               />
                             </v-col>
@@ -299,7 +300,7 @@ const handleDialogCancel = () => {
                                 v-model="formData.password"
                                 label="Password"
                                 variant="filled"
-                                color="white"
+                               :color="theme === 'dark' ? 'white' : 'primary'"
                                 :append-inner-icon="visible ? 'mdi-eye-off' : 'mdi-eye'"
                                 :type="visible ? 'text' : 'password'"
                                 @click:append-inner="visible = !visible"
@@ -311,7 +312,7 @@ const handleDialogCancel = () => {
                                 v-model="formData.confirm_password"
                                 label="Confirm Password"
                                 variant="filled"
-                                color="white"
+                               :color="theme === 'dark' ? 'white' : 'primary'"
                                 :append-inner-icon="visible ? 'mdi-eye-off' : 'mdi-eye'"
                                 :type="visible ? 'text' : 'password'"
                                 @click:append-inner="visible = !visible"
