@@ -18,7 +18,7 @@ import router from './router'
 import DayJsAdapter from '@date-io/dayjs'
 //import { VTimePicker } from 'vuetify/labs/VTimePicker'
 import { VTimePicker } from 'vuetify/labs/VTimePicker'
-
+import colors from 'vuetify/util/colors'
 //til herre
 
 const app = createApp(App)
@@ -37,6 +37,7 @@ const vuetify = createVuetify({
     VTimePicker,   // Register VTimePicker from Vuetify Labs
   },
   directives, // Register Vuetify directives
+  
 })
 
 app.use(createPinia())
