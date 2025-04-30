@@ -114,11 +114,23 @@ const onSubmit = async () => {
       console.log('Profile inserted successfully')
       formAction.value.formSuccessMessage = 'Successfully Registered!'
       refVForm.value?.reset()
-      // Optionally: router.push('/login')
+      showDialog.value = true // show confirmation popup
     }
   }
 
   formAction.value.formProcess = false
+}
+
+//direct login yes or no after register
+const showDialog = ref(false)
+
+const handleDialogConfirm = () => {
+  showDialog.value = false
+  router.push('/home') // or '/login'
+}
+
+const handleDialogCancel = () => {
+  showDialog.value = false
 }
 </script>
 
@@ -164,7 +176,9 @@ const onSubmit = async () => {
                         cover
                       />
                       <v-divider class="mb-5 mt-4" thickness="3" color="black" />
-                      <span class="text-font font-weight-black d-flex justify-center">Register Now!</span>
+                      <span class="text-font font-weight-black d-flex justify-center"
+                        >Register Now!</span
+                      >
                     </template>
 
                     <AlertNotification
@@ -325,11 +339,29 @@ const onSubmit = async () => {
                               <v-divider class="my-5" />
                               <p class="text-center text-primary">
                                 Already have an account?
-                                <RouterLink class="active-click" to="/"><b>Login now!</b></RouterLink>
+                                <RouterLink class="active-click" to="/"
+                                  ><b>Login now!</b></RouterLink
+                                >
                               </p>
                             </v-col>
                           </v-row>
                         </v-form>
+                        <v-dialog
+                          v-model="showDialog"
+                          max-width="400"
+                          location="top"
+                          scrim="false"
+                          persistent
+                        >
+                          <v-card class="mt-6">
+                            <v-card-title class="text-h6">Registration Successful!</v-card-title>
+                            <v-card-text>Do you want to proceed to login?</v-card-text>
+                            <v-card-actions class="justify-end">
+                              <v-btn text color="primary" @click="handleDialogCancel">No</v-btn>
+                              <v-btn color="primary" @click="handleDialogConfirm">Yes</v-btn>
+                            </v-card-actions>
+                          </v-card>
+                        </v-dialog>
                       </v-sheet>
                     </v-card-text>
                   </v-card>
@@ -461,7 +493,7 @@ body:not(.dark) .active-click:hover {
 }
 
 /*/register now */
-.text-font{
+.text-font {
   font-size: 20px;
   font-family: 'Ubuntu', sans-serif;
   letter-spacing: 2px;
