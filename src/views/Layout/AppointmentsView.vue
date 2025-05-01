@@ -40,8 +40,6 @@ const checkMobile = () => {
 const snackbar = ref(false)
 const snackbarMsg = ref('')
 const snackbarColor = ref('')
-const notificationMenu = ref(false)
-const notifications = ref([{ id: 1, title: 'No new notifications', time: '' }])
 const toggleMenu = () => (notificationMenu.value = !notificationMenu.value)
 
 // USER
@@ -289,27 +287,52 @@ const confirmDeleteAppointment = (appointment) => {
 }
 
 const deleteAppointment = async () => {
-  if (!appointmentToDelete.value?.id) return
+  if (!appointmentToDelete.value?.id) return;
 
-  const { error } = await supabase
-    .from('appointments')
-    .delete()
-    .eq('id', appointmentToDelete.value.id)
+  // INSERT INTO deleted_appointments
+  const deletedPayload = {
+    original_appointment_id: appointmentToDelete.value.id,
+    deleted_by: currentUserId.value,
+    appointment_date: appointmentToDelete.value.appointment_date,
+    appointment_time: appointmentToDelete.value.appointment_time,
+    mentor_id: appointmentToDelete.value.mentor?.id,
+    student_id: appointmentToDelete.value.student?.id,
+    message: appointmentToDelete.value.message,
+    deleted_at: new Date().toISOString(),
+  };
 
-  if (error) {
-    console.error('Error deleting appointment:', error)
-    snackbarMsg.value = 'Failed to delete appointment.'
-    snackbarColor.value = 'red'
-  } else {
-    snackbarMsg.value = 'Appointment deleted.'
-    snackbarColor.value = 'green'
-    // refresh list
-    await fetchAppointments()
+  const { error: insertError } = await supabase
+    .from('deleted_appointments')
+    .insert(deletedPayload);
+
+  if (insertError) {
+    console.error('Failed to insert deleted appointment:', insertError);
+    snackbarMsg.value = 'Failed to log deletion.';
+    snackbarColor.value = 'red';
+    snackbar.value = true;
+    return;
   }
 
-  deleteDialog.value = false
-  snackbar.value = true
-}
+  // DELETE from appointments
+  const { error: deleteError } = await supabase
+    .from('appointments')
+    .delete()
+    .eq('id', appointmentToDelete.value.id);
+
+  if (deleteError) {
+    console.error('Error deleting appointment:', deleteError);
+    snackbarMsg.value = 'Failed to delete appointment.';
+    snackbarColor.value = 'red';
+  } else {
+    snackbarMsg.value = 'Appointment deleted and logged.';
+    snackbarColor.value = 'green';
+    await fetchAppointments(); // refresh list
+  }
+
+  deleteDialog.value = false;
+  snackbar.value = true;
+};
+
 //fetch appointments
 const userRatings = ref([])
 
@@ -462,7 +485,7 @@ const updateAppointment = async () => {
             </div>
           </v-list-item>
 
-          <v-list-item  tag="RouterLink" @click="isMobile && (drawer = false)">
+          <v-list-item :to="'/DeleteHistory'"  tag="RouterLink" @click="isMobile && (drawer = false)">
             <div class="d-flex align-center" style="gap: 8px; width: 100%">
               <v-icon size="30" style="margin-left: 15px"> mdi-delete-outline</v-icon>
               <span v-if="!mini" class="icon-mdi">Delete History</span>
