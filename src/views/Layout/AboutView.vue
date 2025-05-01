@@ -1,13 +1,13 @@
 <script setup>
-import { ref, onMounted, onBeforeUnmount, watch } from 'vue'
+import { ref, computed, onMounted, onBeforeUnmount, watch } from 'vue'
 import { useTheme } from 'vuetify'
-import { useRouter } from 'vue-router'
+import { useRouter, RouterLink } from 'vue-router'
 import { supabase } from '@/utils/supabase'
 
 const router = useRouter()
 const theme = useTheme()
 
-// Theme
+// THEME
 const currentTheme = ref(localStorage.getItem('theme') || 'light')
 watch(currentTheme, (val) => {
   theme.global.name.value = val
@@ -15,34 +15,87 @@ watch(currentTheme, (val) => {
 })
 const toggleTheme = () => {
   currentTheme.value = currentTheme.value === 'light' ? 'dark' : 'light'
+  theme.global.name.value = currentTheme.value
+  localStorage.setItem('theme', currentTheme.value)
 }
 
-// Profile image from localStorage
+// PROFILE IMAGE
 const profileImage = ref('')
 watch(profileImage, (newVal) => {
   if (newVal) localStorage.setItem('profileImage', newVal)
 })
 
-// User info
+// CURRENT USER
 const currentUserProfile = ref({
   firstName: '',
   lastName: '',
   avatarUrl: '',
   isPublicTutor: false,
 })
+const currentUserId = ref(null)
 
-// Drawer and responsive
+const fetchCurrentUser = async () => {
+  const {
+    data: { user },
+    error,
+  } = await supabase.auth.getUser()
+
+  if (error) {
+    console.error('Error fetching user:', error)
+    return
+  }
+
+  if (user) {
+    currentUserId.value = user.id
+    const { data, error: profileError } = await supabase
+      .from('profiles')
+      .select('first_name, last_name, avatar_url, is_public_tutor')
+      .eq('id', user.id)
+      .single()
+
+    if (profileError) {
+      console.error('Error fetching profile:', profileError)
+    } else if (data) {
+      currentUserProfile.value = {
+        firstName: data.first_name || '',
+        lastName: data.last_name || '',
+        avatarUrl: data.avatar_url || '',
+        isPublicTutor: data.is_public_tutor || false,
+      }
+    }
+  }
+}
+
+// SNACKBAR
+const snackbar = ref(false)
+const snackbarMsg = ref('')
+const snackbarColor = ref('')
+
+// DRAWER AND SEARCH
 const drawer = ref(false)
 const mini = ref(false)
 const isMobile = ref(false)
-const checkMobile = () => {
-  isMobile.value = window.innerWidth <= 768
-}
+//const showSearch = ref(false)
+//const searchQuery = ref('')
+
 const toggleDrawer = () => {
   drawer.value = !drawer.value
 }
 
-// Logout
+/*
+const toggleSearch = () => {
+  if (showSearch.value) searchQuery.value = ''
+  showSearch.value = !showSearch.value
+}
+const closeSearch = () => {
+  showSearch.value = false
+  searchQuery.value = ''
+}*/
+const checkMobile = () => {
+  isMobile.value = window.innerWidth <= 768
+}
+
+// LOGOUT
 const handleLogoutClick = async () => {
   const { error } = await supabase.auth.signOut()
 
@@ -54,6 +107,7 @@ const handleLogoutClick = async () => {
     return
   }
 
+  currentUserId.value = null
   currentUserProfile.value = {
     firstName: '',
     lastName: '',
@@ -71,15 +125,31 @@ const handleLogoutClick = async () => {
   }, 1000)
 }
 
-// Lifecycle
-onMounted(() => {
+// PROFILE FORM
+const profile = ref({
+  firstName: '',
+  lastName: '',
+  middleInitial: '',
+  age: '',
+  expertise: '',
+  email: '',
+  phone: '',
+  about: '',
+  education: ['', '', ''],
+})
+
+// INIT
+onMounted(async () => {
   theme.global.name.value = currentTheme.value
   checkMobile()
   window.addEventListener('resize', checkMobile)
 
   const storedImage = localStorage.getItem('profileImage')
   if (storedImage) profileImage.value = storedImage
+
+  await fetchCurrentUser()
 })
+
 onBeforeUnmount(() => {
   window.removeEventListener('resize', checkMobile)
 })
@@ -88,7 +158,7 @@ onBeforeUnmount(() => {
 <template>
   <v-app id="inspire">
     <!-- Drawer Sidebar (right, collapsible) -->
-    <transition name="fade-slide-up">
+    <transi name="fade-slide-up">
       <v-navigation-drawer
         v-if="drawer"
         :temporary="isMobile"
@@ -186,7 +256,7 @@ onBeforeUnmount(() => {
           </div>
         </v-list>
       </v-navigation-drawer>
-    </transition>
+    </transi  tion>
     <!-- App Bar -->
     <v-app-bar flat :color="currentTheme === 'light' ? '#1565c0' : 'grey-darken-4'">
       <!-- Menu Icon that toggles drawer size -->
@@ -201,14 +271,24 @@ onBeforeUnmount(() => {
         }"
       >
         <div class="search-wrapper">
-          <!--logo-->
-
+       
           <v-avatar color="#fff" size="50" class="logo me-6">
             <v-img src="image/Teach&Learn.png" alt="Logo" />
           </v-avatar>
         </div>
       </v-container>
+
     </v-app-bar>
+    <!--pop up alert-->
+    <v-snackbar
+      v-model="snackbar"
+      timeout="3000"
+      :color="snackbarColor"
+      location="top center"
+      style="top: 80px"
+    >
+      {{ snackbarMsg }}
+    </v-snackbar>
 
     <!-- Main Content -->
     <v-main
@@ -252,13 +332,16 @@ onBeforeUnmount(() => {
               <!-- Steps -->
               <v-row dense>
                 <!-- Step 1 -->
-                <v-col cols="12" sm="6" md="4" class="mb-4 d-flex">
-                  <v-card class="pa-4 flex-grow-1 fade-in" variant="outlined" rounded="lg">
-                    <v-icon size="32" class="mb-2" color="primary">mdi-account-plus</v-icon>
-                    <v-card-title class="text-subtitle-1 font-weight-bold"
-                      >Step 1: Create Your Profile</v-card-title
+                <v-col cols="12" sm="6" md="4" class="mb-4 d-flex" >
+                  <v-card class="pa-4 flex-grow-1 fade-in" variant="outlined" rounded="lg"  :style="{
+                    backgroundColor: currentTheme === 'dark' ? '#424242' : '#1565c0',
+                    color: currentTheme === 'dark' ? '#ffffff' : '#000000',
+                  }">
+                    <v-icon size="32" class="mb-2" color="white">mdi-account-plus</v-icon>
+                    <v-card-title class="text-subtitle-1 font-weight-bold white-font"
+                   >Step 1: Create Your Profile</v-card-title
                     >
-                    <v-card-text class="text-body-2">
+                    <v-card-text class="text-body-2 white-font" >
                       Add your details and a profile photo to connect with tutors or learners.
                     </v-card-text>
                   </v-card>
@@ -266,12 +349,15 @@ onBeforeUnmount(() => {
 
                 <!-- Step 2 -->
                 <v-col cols="12" sm="6" md="4" class="mb-4 d-flex">
-                  <v-card class="pa-4 flex-grow-1 fade-in" variant="outlined" rounded="lg">
-                    <v-icon size="32" class="mb-2" color="primary">mdi-magnify</v-icon>
-                    <v-card-title class="text-subtitle-1 font-weight-bold"
+                  <v-card class="pa-4 flex-grow-1 fade-in" variant="outlined" rounded="lg" :style="{
+                    backgroundColor: currentTheme === 'dark' ? '#424242' : '#1565c0',
+                    color: currentTheme === 'dark' ? '#ffffff' : '#000000',
+                  }">
+                    <v-icon size="32" class="mb-2 white-font" color="primary">mdi-magnify</v-icon>
+                    <v-card-title class="text-subtitle-1 font-weight-bold white-font "
                       >Step 2: Search and Connect</v-card-title
                     >
-                    <v-card-text class="text-body-2">
+                    <v-card-text class="text-body-2 white-font">
                       Find others by subject or expertise and start chatting.
                     </v-card-text>
                   </v-card>
@@ -279,12 +365,15 @@ onBeforeUnmount(() => {
 
                 <!-- Step 3 -->
                 <v-col cols="12" sm="6" md="4" class="mb-4 d-flex">
-                  <v-card class="pa-4 flex-grow-1 fade-in" variant="outlined" rounded="lg">
-                    <v-icon size="32" class="mb-2" color="primary">mdi-calendar-clock</v-icon>
-                    <v-card-title class="text-subtitle-1 font-weight-bold"
+                  <v-card class="pa-4 flex-grow-1 fade-in" variant="outlined" rounded="lg" :style="{
+                    backgroundColor: currentTheme === 'dark' ? '#424242' : '#1565c0',
+                    color: currentTheme === 'dark' ? '#ffffff' : '#000000',
+                  }">
+                    <v-icon size="32" class="mb-2" color="primary white-font" >mdi-calendar-clock</v-icon>
+                    <v-card-title class="text-subtitle-1 font-weight-bold white-font"
                       >Step 3: Book an Appointment</v-card-title
                     >
-                    <v-card-text class="text-body-2">
+                    <v-card-text class="text-body-2 white-font">
                       Pick a time and confirm your session. Get reminders automatically.
                     </v-card-text>
                   </v-card>
@@ -292,12 +381,15 @@ onBeforeUnmount(() => {
 
                 <!-- Step 4 -->
                 <v-col cols="12" sm="6" md="4" class="mb-4 d-flex">
-                  <v-card class="pa-4 flex-grow-1 fade-in" variant="outlined" rounded="lg">
+                  <v-card class="pa-4 flex-grow-1 fade-in" variant="outlined" rounded="lg" :style="{
+                    backgroundColor: currentTheme === 'dark' ? '#424242' : '#1565c0',
+                    color: currentTheme === 'dark' ? '#ffffff' : '#000000',
+                  }">
                     <v-icon size="32" class="mb-2" color="primary">mdi-school</v-icon>
-                    <v-card-title class="text-subtitle-1 font-weight-bold"
+                    <v-card-title class="text-subtitle-1 font-weight-bold white-font"
                       >Step 4: Attend & Learn</v-card-title
                     >
-                    <v-card-text class="text-body-2">
+                    <v-card-text class="text-body-2 white-font">
                       Join the session, engage actively, and take notes.
                     </v-card-text>
                   </v-card>
@@ -305,12 +397,15 @@ onBeforeUnmount(() => {
 
                 <!-- Step 5 -->
                 <v-col cols="12" sm="6" md="4" class="mb-4 d-flex">
-                  <v-card class="pa-4 flex-grow-1 fade-in" variant="outlined" rounded="lg">
+                  <v-card class="pa-4 flex-grow-1 fade-in" variant="outlined" rounded="lg" :style="{
+                    backgroundColor: currentTheme === 'dark' ? '#424242' : '#1565c0',
+                    color: currentTheme === 'dark' ? '#ffffff' : '#000000',
+                  }">
                     <v-icon size="32" class="mb-2" color="primary">mdi-star-check</v-icon>
-                    <v-card-title class="text-subtitle-1 font-weight-bold"
+                    <v-card-title class="text-subtitle-1 font-weight-bold white-font"
                       >Step 5: Review and Continue</v-card-title
                     >
-                    <v-card-text class="text-body-2">
+                    <v-card-text class="text-body-2 white-font">
                       Reflect on what you learned, give feedback, and book your next session.
                     </v-card-text>
                   </v-card>
@@ -455,5 +550,8 @@ onBeforeUnmount(() => {
     opacity: 1;
     transform: translateY(0);
   }
+}
+.white-font{
+  color:white
 }
 </style>

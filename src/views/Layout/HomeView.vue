@@ -122,11 +122,12 @@ const viewTutor = (tutor) => {
   selectedTutor.value = tutor
   profileDialog.value = true
 }
-
+//appointment 
 const openAppointment = (tutor) => {
   selectedTutor.value = tutor
   appointmentDialog.value = true
 }
+
 
 const saveAppointment = async () => {
   try {
@@ -148,14 +149,30 @@ const saveAppointment = async () => {
     })
 
     snackbar.value = true
-    if (error) {
-      console.error('Error saving appointment:', error)
-      snackbarMsg.value = 'Failed to book appointment. Try again.'
-      snackbarColor.value = 'red'
-    } else {
-      snackbarMsg.value = 'Appointment request sent successfully!'
-      snackbarColor.value = 'success'
-      appointmentDialog.value = false
+    return
+  }
+
+  const { error } = await supabase.from('appointments').insert({
+    student_id: currentUserId.value,
+    mentor_id: selectedTutor.value.id,
+    student_name: `${currentUserProfile.value.firstName} ${currentUserProfile.value.lastName}`,
+    appointment_date: selectedDate.value,
+    appointment_time: selectedTime.value,
+    message: messageInput.value,
+   
+  })
+
+  snackbar.value = true
+  if (error) {
+    console.error('Error saving appointment:', error)
+    snackbarMsg.value = 'Failed to book appointment. Try again.'
+    snackbarColor.value = 'red'
+  } else {
+    snackbarMsg.value = 'Appointment booked successfully!'
+    snackbarColor.value = 'green'
+    appointmentDialog.value = false
+
+    setTimeout(() => {
       selectedDate.value = ''
       selectedTime.value = ''
       messageInput.value = ''
@@ -195,11 +212,39 @@ onMounted(async () => {
   window.addEventListener('resize', checkMobile)
   await fetchCurrentUser()
   await fetchTutors()
+  await fetchRatings()
 })
 
 onBeforeUnmount(() => {
   window.removeEventListener('resize', checkMobile)
 })
+
+// for rating code
+const ratingsMap = ref({})
+
+const fetchRatings = async () => {
+  const { data, error } = await supabase.from('ratings').select('mentor_id, rating')
+
+  if (error) {
+    console.error('Error fetching ratings:', error)
+    return
+  }
+
+  const totals = {}
+  const counts = {}
+
+  data.forEach(({ mentor_id, rating }) => {
+    totals[mentor_id] = (totals[mentor_id] || 0) + rating
+    counts[mentor_id] = (counts[mentor_id] || 0) + 1
+  })
+
+  const result = {}
+  Object.keys(totals).forEach((id) => {
+    result[id] = (totals[id] / counts[id]).toFixed(1)
+  })
+
+  ratingsMap.value = result
+}
 </script>
 <template>
   <v-app id="inspire">
@@ -448,6 +493,14 @@ onBeforeUnmount(() => {
                                 Set an Appointment
                               </span>
                               <span v-else class="text-grey text-caption"> (My profile) </span>
+                              <!--display the number of star added to the user as rating-->
+                              <div class="text-center mt-2">
+                                <v-icon color="amber" size="20">mdi-star</v-icon>
+                                <span v-if="ratingsMap[tutor.id]">
+                                  <strong>{{ ratingsMap[tutor.id] }}</strong>
+                                </span>
+                                <span v-else class="text-caption text-grey"> Not rated yet </span>
+                              </div>
                             </div>
                           </v-fade-transition>
                         </v-col>
@@ -535,8 +588,8 @@ onBeforeUnmount(() => {
                         </v-card>
                       </v-dialog>
 
-                      <!-- Appointment Dialog -->
-                      <v-dialog
+                        <!-- Appointment Dialog -->
+                        <v-dialog
                         v-model="appointmentDialog"
                         max-width="500px"
                         transition="scale-transition"

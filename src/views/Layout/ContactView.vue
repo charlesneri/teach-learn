@@ -1,49 +1,47 @@
 <script setup>
-/* Imports */
-import { ref, onMounted, onBeforeUnmount, watch, computed } from 'vue'
+/* === Imports === */
+import { ref, onMounted, onBeforeUnmount, watch } from 'vue'
 import { useTheme } from 'vuetify'
 import { useRouter } from 'vue-router'
 import { supabase } from '@/utils/supabase'
 
-/*  Theme Management  */
+/* === Router === */
+const router = useRouter()
+
+/* === Theme === */
 const theme = useTheme()
 const currentTheme = ref(localStorage.getItem('theme') || 'light')
-watch(currentTheme, (val) => {
-  theme.global.name.value = val
-  localStorage.setItem('theme', val)
-})
-onMounted(() => {
-  theme.global.name.value = currentTheme.value
-})
 
-function toggleTheme() {
+const toggleTheme = () => {
   currentTheme.value = currentTheme.value === 'light' ? 'dark' : 'light'
   theme.global.name.value = currentTheme.value
   localStorage.setItem('theme', currentTheme.value)
 }
 
-/*  Drawer & Mobile  */
+watch(currentTheme, (val) => {
+  theme.global.name.value = val
+  localStorage.setItem('theme', val)
+})
+
+/* === Responsive Drawer & Mobile === */
 const drawer = ref(false)
 const mini = ref(false)
 const isMobile = ref(false)
 
-function toggleDrawer() {
+const toggleDrawer = () => {
   drawer.value = !drawer.value
 }
 
-function checkMobile() {
+const checkMobile = () => {
   isMobile.value = window.innerWidth <= 768
 }
-onMounted(() => {
-  checkMobile()
-  window.addEventListener('resize', checkMobile)
-})
-onBeforeUnmount(() => {
-  window.removeEventListener('resize', checkMobile)
-})
 
-/*  Supabase Auth  */
-const router = useRouter()
+/* === Snackbar === */
+const snackbar = ref(false)
+const snackbarMsg = ref('')
+const snackbarColor = ref('')
+
+/* === User Profile === */
 const currentUserId = ref(null)
 const currentUserProfile = ref({
   firstName: '',
@@ -52,8 +50,30 @@ const currentUserProfile = ref({
   isPublicTutor: false,
 })
 
-async function handleLogoutClick() {
+const fetchCurrentUser = async () => {
+  const { data: { user } } = await supabase.auth.getUser()
+  if (user) {
+    currentUserId.value = user.id
+    const { data } = await supabase
+      .from('profiles')
+      .select('first_name, last_name, avatar_url, is_public_tutor')
+      .eq('id', user.id)
+      .single()
+    if (data) {
+      currentUserProfile.value = {
+        firstName: data.first_name || '',
+        lastName: data.last_name || '',
+        avatarUrl: data.avatar_url || '',
+        isPublicTutor: data.is_public_tutor || false,
+      }
+    }
+  }
+}
+
+/* === Logout === */
+const handleLogoutClick = async () => {
   const { error } = await supabase.auth.signOut()
+
   if (error) {
     console.error('Logout failed:', error.message)
     snackbarMsg.value = 'Logout failed. Try again.'
@@ -69,7 +89,9 @@ async function handleLogoutClick() {
     avatarUrl: '',
     isPublicTutor: false,
   }
+
   localStorage.removeItem('theme')
+
   snackbarMsg.value = 'Logged out successfully!'
   snackbarColor.value = 'green'
   snackbar.value = true
@@ -79,7 +101,15 @@ async function handleLogoutClick() {
   }, 1000)
 }
 
-/*  Contacts & Messaging  */
+/* === Tutors === */
+const tutors = ref([])
+
+const fetchTutors = async () => {
+  const { data } = await supabase.from('profiles').select('*').eq('is_public_tutor', true)
+  tutors.value = data || []
+}
+
+/* === Messaging === */
 const messageInput = ref('')
 const contacts = ref([
   {
@@ -114,10 +144,24 @@ const contacts = ref([
   },
 ])
 
-function sendMessage() {
+const sendMessage = () => {
   console.log('Message sent:', messageInput.value)
   messageInput.value = ''
 }
+
+/* === Lifecycle Hooks === */
+onMounted(async () => {
+  theme.global.name.value = currentTheme.value
+  checkMobile()
+  window.addEventListener('resize', checkMobile)
+
+  await fetchCurrentUser()
+  await fetchTutors()
+})
+
+onBeforeUnmount(() => {
+  window.removeEventListener('resize', checkMobile)
+})
 </script>
 
 <template>
@@ -242,7 +286,16 @@ function sendMessage() {
         </div>
       </v-container>
     </v-app-bar>
-
+  <!--pop up alert-->
+  <v-snackbar
+      v-model="snackbar"
+      timeout="3000"
+      :color="snackbarColor"
+      location="top center"
+      style="top: 80px"
+    >
+      {{ snackbarMsg }}
+    </v-snackbar>
     <!-- Main Content -->
     <v-main  :style="{
                 backgroundColor: currentTheme === 'dark' ? '#424242' : '#fefcf9',
