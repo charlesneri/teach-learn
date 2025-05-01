@@ -1,5 +1,3 @@
-// FULLY CLEANED + FIXED HomeView.vue
-
 <script setup>
 import { ref, computed, onMounted, onBeforeUnmount, watch } from 'vue'
 import { useTheme } from 'vuetify'
@@ -83,6 +81,7 @@ const fetchCurrentUser = async () => {
   const {
     data: { user },
   } = await supabase.auth.getUser()
+
   if (user) {
     currentUserId.value = user.id
     const { data } = await supabase
@@ -90,6 +89,7 @@ const fetchCurrentUser = async () => {
       .select('first_name, last_name, avatar_url, is_public_tutor')
       .eq('id', user.id)
       .single()
+
     if (data) {
       currentUserProfile.value = {
         firstName: data.first_name || '',
@@ -109,6 +109,8 @@ const appointmentDialog = ref(false)
 const selectedDate = ref('')
 const selectedTime = ref('')
 const messageInput = ref('')
+const datePickerOpen = ref(false)
+const timePickerOpen = ref(false)
 
 // === Tutor Actions ===
 const fetchTutors = async () => {
@@ -135,32 +137,29 @@ const saveAppointment = async () => {
       return
     }
 
-  const { error } = await supabase.from('appointments').insert({
-    student_id: currentUserId.value,
-    mentor_id: selectedTutor.value.id,
-    student_name: `${currentUserProfile.value.firstName} ${currentUserProfile.value.lastName}`,
-    appointment_date: selectedDate.value,
-    appointment_time: selectedTime.value,
-    message: messageInput.value,
-    status: 'Pending',
-  })
+    const { error } = await supabase.from('appointments').insert({
+      student_id: currentUserId.value,
+      mentor_id: selectedTutor.value.id,
+      student_name: `${currentUserProfile.value.firstName} ${currentUserProfile.value.lastName}`,
+      appointment_date: selectedDate.value,
+      appointment_time: selectedTime.value,
+      message: messageInput.value,
+      status: 'Pending',
+    })
 
-  snackbar.value = true
-  if (error) {
-    console.error('Error saving appointment:', error)
-    snackbarMsg.value = 'Failed to book appointment. Try again.'
-    snackbarColor.value = 'red'
-  } else {
-    snackbarMsg.value = 'Appointment booked successfully!'
-    snackbarColor.value = 'green'
-    appointmentDialog.value = false
-    selectedDate.value = ''
-    selectedTime.value = ''
-    messageInput.value = ''
-
-    snackbarMsg.value = 'Appointment request sent successfully!'
-    snackbarColor.value = 'success'
     snackbar.value = true
+    if (error) {
+      console.error('Error saving appointment:', error)
+      snackbarMsg.value = 'Failed to book appointment. Try again.'
+      snackbarColor.value = 'red'
+    } else {
+      snackbarMsg.value = 'Appointment request sent successfully!'
+      snackbarColor.value = 'success'
+      appointmentDialog.value = false
+      selectedDate.value = ''
+      selectedTime.value = ''
+      messageInput.value = ''
+    }
   } catch (err) {
     console.error('Error saving appointment:', err)
     snackbarMsg.value = 'Failed to send appointment. Try again.'
@@ -183,8 +182,7 @@ const filteredTutors = computed(() => {
 
   const keyword = searchQuery.value.trim().toLowerCase()
   return tutors.value.filter((tutor) => {
-    const fullName =
-      `${tutor.first_name || ''} ${tutor.middle_initial || ''} ${tutor.last_name || ''}`.toLowerCase()
+    const fullName = `${tutor.first_name || ''} ${tutor.middle_initial || ''} ${tutor.last_name || ''}`.toLowerCase()
     const expertise = (tutor.expertise || '').toLowerCase()
     return fullName.includes(keyword) || expertise.includes(keyword)
   })
@@ -203,7 +201,6 @@ onBeforeUnmount(() => {
   window.removeEventListener('resize', checkMobile)
 })
 </script>
-
 <template>
   <v-app id="inspire">
     <!-- Drawer Sidebar (right, collapsible) -->
@@ -222,8 +219,8 @@ onBeforeUnmount(() => {
         }"
       >
         <!-- Menu Icon that toggles drawer size -->
-        <v-btn icon class="ms-5 d-lg-none" @click="toggleDrawer">
-          <v-icon>mdi-menu</v-icon>
+        <v-btn icon class="ms-10 mt-10 d-lg-none" @click="toggleDrawer">
+          <v-icon size="50">mdi-menu</v-icon>
         </v-btn>
         <!-- Profile -->
         <v-sheet
