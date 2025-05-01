@@ -20,6 +20,39 @@ watch(currentTheme, (val) => {
   localStorage.setItem('theme', val)
 })
 
+const router = useRouter()
+
+const handleLogoutClick = async () => {
+  const { error } = await supabase.auth.signOut()
+
+  if (error) {
+    console.error('Logout failed:', error.message)
+    snackbarMsg.value = 'Logout failed. Try again.'
+    snackbarColor.value = 'red'
+    snackbar.value = true
+    return
+  }
+
+  // Clear local state
+  currentUserId.value = null
+  currentUserProfile.value = {
+    firstName: '',
+    lastName: '',
+    avatarUrl: '',
+    isPublicTutor: false,
+  }
+  localStorage.removeItem('theme') // or any session-related key
+
+  snackbarMsg.value = 'Logged out successfully!'
+  snackbarColor.value = 'green'
+  snackbar.value = true
+
+  // Redirect after short delay
+  setTimeout(() => {
+    router.push('/')
+  }, 1000)
+}
+
 // STATES
 const tutors = ref([])
 const selectedTutor = ref(null)
@@ -115,9 +148,19 @@ const saveAppointment = async () => {
 // MOUNT
 onMounted(async () => {
   theme.global.name.value = currentTheme.value
-  await fetchCurrentUser()
-  await fetchTutors()
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+
+  if (user) {
+    await fetchCurrentUser()
+    await fetchTutors()
+  } else {
+    console.log('No user session. Skipping data fetch.')
+  }
 })
+
 //for collapsable drawer
 const drawer = ref(false)
 const mini = ref(false)
@@ -250,10 +293,9 @@ const filteredTutors = computed(() => {
           </v-list-item>
 
           <v-divider class="my-2" />
-
-          <v-list-item :to="'/'" tag="RouterLink" @click="isMobile && (drawer = false)">
+          <v-list-item @click="handleLogoutClick">
             <div class="d-flex align-center" style="gap: 8px; width: 100%">
-              <v-icon size="30" style="margin-left: 15px" class="icon-mdi">mdi-logout</v-icon>
+              <v-icon size="30" style="margin-left: 15px">mdi-logout</v-icon>
               <span v-if="!mini" class="icon-mdi">Logout</span>
             </div>
           </v-list-item>
@@ -352,9 +394,9 @@ const filteredTutors = computed(() => {
                       style="flex-wrap: wrap; gap: 24px"
                     >
                       <v-row
-                      :justify="filteredTutors.length < 3 ? 'center' : 'start'"
-  align="stretch"
-  class="gx-4 gy-4" 
+                        :justify="filteredTutors.length < 3 ? 'center' : 'start'"
+                        align="stretch"
+                        class="gx-4 gy-4"
                       >
                         <v-col
                           v-for="tutor in filteredTutors"
@@ -368,7 +410,6 @@ const filteredTutors = computed(() => {
                             <div
                               class="mentor-card fade-in pa-4 d-flex flex-column align-center"
                               :style="{
-                             
                                 minWidth: '260px',
                                 maxWidth: '100%',
                                 width: '100%',
