@@ -1,15 +1,15 @@
 // FULLY CLEANED + FIXED HomeView.vue
 
 <script setup>
-import { ref, computed, onMounted, onBeforeUnmount, watch } from 'vue' // ✅ now includes computed
+import { ref, computed, onMounted, onBeforeUnmount, watch } from 'vue'
 import { useTheme } from 'vuetify'
 import { useRouter, RouterLink } from 'vue-router'
 import { supabase } from '@/utils/supabase'
-const datePickerOpen = ref(false)
-const timePickerOpen = ref(false)
 
-// THEME SETUP
+const router = useRouter()
 const theme = useTheme()
+
+// === Theme Setup ===
 const currentTheme = ref(localStorage.getItem('theme') || 'light')
 
 const toggleTheme = () => {
@@ -23,23 +23,62 @@ watch(currentTheme, (val) => {
   localStorage.setItem('theme', val)
 })
 
-// STATES
-const tutors = ref([])
-const selectedTutor = ref(null)
-const profileDialog = ref(false)
-const appointmentDialog = ref(false)
-const selectedDate = ref('')
-const selectedTime = ref('')
-const messageInput = ref('')
+// === Drawer & Layout ===
+const drawer = ref(false)
+const mini = ref(false)
+const isMobile = ref(false)
+
+const toggleDrawer = () => {
+  drawer.value = !drawer.value
+}
+
+const checkMobile = () => {
+  isMobile.value = window.innerWidth <= 768
+}
+
+// === Snackbar ===
 const snackbar = ref(false)
 const snackbarMsg = ref('')
-const snackbarColor = ref('success')
-const currentUserId = ref(null)
-const currentUserProfile = ref({ firstName: '', lastName: '', avatarUrl: '', isPublicTutor: false })
-const notificationMenu = ref(false)
-const notifications = ref([{ id: 1, title: 'No new notifications', time: '' }])
+const snackbarColor = ref('')
 
-// FETCH USER
+// === Auth & User Profile ===
+const currentUserId = ref(null)
+const currentUserProfile = ref({
+  firstName: '',
+  lastName: '',
+  avatarUrl: '',
+  isPublicTutor: false,
+})
+
+const handleLogoutClick = async () => {
+  const { error } = await supabase.auth.signOut()
+
+  if (error) {
+    console.error('Logout failed:', error.message)
+    snackbarMsg.value = 'Logout failed. Try again.'
+    snackbarColor.value = 'red'
+    snackbar.value = true
+    return
+  }
+
+  currentUserId.value = null
+  currentUserProfile.value = {
+    firstName: '',
+    lastName: '',
+    avatarUrl: '',
+    isPublicTutor: false,
+  }
+  localStorage.removeItem('theme')
+
+  snackbarMsg.value = 'Logged out successfully!'
+  snackbarColor.value = 'green'
+  snackbar.value = true
+
+  setTimeout(() => {
+    router.push('/')
+  }, 1000)
+}
+
 const fetchCurrentUser = async () => {
   const {
     data: { user },
@@ -62,13 +101,21 @@ const fetchCurrentUser = async () => {
   }
 }
 
-// FETCH TUTORS
+// === Tutors & Appointment State ===
+const tutors = ref([])
+const selectedTutor = ref(null)
+const profileDialog = ref(false)
+const appointmentDialog = ref(false)
+const selectedDate = ref('')
+const selectedTime = ref('')
+const messageInput = ref('')
+
+// === Tutor Actions ===
 const fetchTutors = async () => {
   const { data } = await supabase.from('profiles').select('*').eq('is_public_tutor', true)
   tutors.value = data || []
 }
 
-// ACTIONS
 const viewTutor = (tutor) => {
   selectedTutor.value = tutor
   profileDialog.value = true
@@ -88,19 +135,24 @@ const saveAppointment = async () => {
       return
     }
 
-    const { error } = await supabase.from('appointments').insert({
-      mentor_id: selectedTutor.value.id,
-      student_id: currentUserId.value,
-      student_name: `${currentUserProfile.firstName} ${currentUserProfile.lastName}`,
-      message: messageInput.value,
-      appointment_date: selectedDate.value,
-      appointment_time: selectedTime.value,
-      status: 'pending',
-      created_at: new Date(),
-    })
+  const { error } = await supabase.from('appointments').insert({
+    student_id: currentUserId.value,
+    mentor_id: selectedTutor.value.id,
+    student_name: `${currentUserProfile.value.firstName} ${currentUserProfile.value.lastName}`,
+    appointment_date: selectedDate.value,
+    appointment_time: selectedTime.value,
+    message: messageInput.value,
+    status: 'Pending',
+  })
 
-    if (error) throw error
-
+  snackbar.value = true
+  if (error) {
+    console.error('Error saving appointment:', error)
+    snackbarMsg.value = 'Failed to book appointment. Try again.'
+    snackbarColor.value = 'red'
+  } else {
+    snackbarMsg.value = 'Appointment booked successfully!'
+    snackbarColor.value = 'green'
     appointmentDialog.value = false
     selectedDate.value = ''
     selectedTime.value = ''
@@ -117,42 +169,12 @@ const saveAppointment = async () => {
   }
 }
 
-// MOUNT
-onMounted(async () => {
-  theme.global.name.value = currentTheme.value
-  await fetchCurrentUser()
-  await fetchTutors()
-})
-//for collapsable drawer
-const drawer = ref(false)
-const mini = ref(false)
-const isMobile = ref(false)
-
-const toggleDrawer = () => {
-  drawer.value = !drawer.value
-}
-const checkMobile = () => {
-  isMobile.value = window.innerWidth <= 768
-}
-
-onMounted(() => {
-  checkMobile()
-  window.addEventListener('resize', checkMobile)
-})
-
-onBeforeUnmount(() => {
-  window.removeEventListener('resize', checkMobile)
-})
-
-//search
-
+// === Search ===
 const showSearch = ref(false)
 const searchQuery = ref('')
 
 const toggleSearch = () => {
-  if (showSearch.value) {
-    searchQuery.value = ''
-  }
+  if (showSearch.value) searchQuery.value = ''
   showSearch.value = !showSearch.value
 }
 
@@ -160,13 +182,25 @@ const filteredTutors = computed(() => {
   if (!searchQuery.value.trim()) return tutors.value
 
   const keyword = searchQuery.value.trim().toLowerCase()
-
   return tutors.value.filter((tutor) => {
     const fullName =
       `${tutor.first_name || ''} ${tutor.middle_initial || ''} ${tutor.last_name || ''}`.toLowerCase()
     const expertise = (tutor.expertise || '').toLowerCase()
     return fullName.includes(keyword) || expertise.includes(keyword)
   })
+})
+
+// === Mount Lifecycle ===
+onMounted(async () => {
+  theme.global.name.value = currentTheme.value
+  checkMobile()
+  window.addEventListener('resize', checkMobile)
+  await fetchCurrentUser()
+  await fetchTutors()
+})
+
+onBeforeUnmount(() => {
+  window.removeEventListener('resize', checkMobile)
 })
 </script>
 
@@ -255,10 +289,9 @@ const filteredTutors = computed(() => {
           </v-list-item>
 
           <v-divider class="my-2" />
-
-          <v-list-item :to="'/'" tag="RouterLink" @click="isMobile && (drawer = false)">
+          <v-list-item @click="handleLogoutClick">
             <div class="d-flex align-center" style="gap: 8px; width: 100%">
-              <v-icon size="30" style="margin-left: 15px" class="icon-mdi">mdi-logout</v-icon>
+              <v-icon size="30" style="margin-left: 15px">mdi-logout</v-icon>
               <span v-if="!mini" class="icon-mdi">Logout</span>
             </div>
           </v-list-item>
@@ -357,9 +390,9 @@ const filteredTutors = computed(() => {
                       style="flex-wrap: wrap; gap: 24px"
                     >
                       <v-row
-                      :justify="filteredTutors.length < 3 ? 'center' : 'start'"
-  align="stretch"
-  class="gx-4 gy-4" 
+                        :justify="filteredTutors.length < 3 ? 'center' : 'start'"
+                        align="stretch"
+                        class="gx-4 gy-4"
                       >
                         <v-col
                           v-for="tutor in filteredTutors"
@@ -373,7 +406,6 @@ const filteredTutors = computed(() => {
                             <div
                               class="mentor-card fade-in pa-4 d-flex flex-column align-center"
                               :style="{
-                             
                                 minWidth: '260px',
                                 maxWidth: '100%',
                                 width: '100%',
