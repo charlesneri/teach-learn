@@ -1,13 +1,13 @@
 <script setup>
-import { ref, onMounted, onBeforeUnmount, watch } from 'vue'
+import { ref, computed, onMounted, onBeforeUnmount, watch } from 'vue'
 import { useTheme } from 'vuetify'
-import { useRouter } from 'vue-router'
+import { useRouter, RouterLink } from 'vue-router'
 import { supabase } from '@/utils/supabase'
 
 const router = useRouter()
 const theme = useTheme()
 
-// Theme
+// THEME
 const currentTheme = ref(localStorage.getItem('theme') || 'light')
 watch(currentTheme, (val) => {
   theme.global.name.value = val
@@ -17,32 +17,76 @@ const toggleTheme = () => {
   currentTheme.value = currentTheme.value === 'light' ? 'dark' : 'light'
 }
 
-// Profile image from localStorage
+// INITIALIZE THEME ON LOAD
+onMounted(() => {
+  theme.global.name.value = currentTheme.value
+  checkMobile()
+  window.addEventListener('resize', checkMobile)
+
+  const storedImage = localStorage.getItem('profileImage')
+  if (storedImage) profileImage.value = storedImage
+})
+
+onBeforeUnmount(() => {
+  window.removeEventListener('resize', checkMobile)
+})
+
+// PROFILE IMAGE
 const profileImage = ref('')
 watch(profileImage, (newVal) => {
   if (newVal) localStorage.setItem('profileImage', newVal)
 })
 
-// User info
+// PROFILE FORM
+const profile = ref({
+  firstName: '',
+  lastName: '',
+  middleInitial: '',
+  age: '',
+  expertise: '',
+  email: '',
+  phone: '',
+  about: '',
+  education: ['', '', ''],
+})
+
+// CURRENT USER
 const currentUserProfile = ref({
   firstName: '',
   lastName: '',
   avatarUrl: '',
   isPublicTutor: false,
 })
+const currentUserId = ref(null)
 
-// Drawer and responsive
+// SNACKBAR
+const snackbar = ref(false)
+const snackbarMsg = ref('')
+const snackbarColor = ref('')
+
+// DRAWER AND SEARCH
 const drawer = ref(false)
 const mini = ref(false)
 const isMobile = ref(false)
-const checkMobile = () => {
-  isMobile.value = window.innerWidth <= 768
-}
+const showSearch = ref(false)
+const searchQuery = ref('')
+
 const toggleDrawer = () => {
   drawer.value = !drawer.value
 }
+const toggleSearch = () => {
+  if (showSearch.value) searchQuery.value = ''
+  showSearch.value = !showSearch.value
+}
+const closeSearch = () => {
+  showSearch.value = false
+  searchQuery.value = ''
+}
+const checkMobile = () => {
+  isMobile.value = window.innerWidth <= 768
+}
 
-// Logout
+// LOGOUT
 const handleLogoutClick = async () => {
   const { error } = await supabase.auth.signOut()
 
@@ -54,6 +98,7 @@ const handleLogoutClick = async () => {
     return
   }
 
+  currentUserId.value = null
   currentUserProfile.value = {
     firstName: '',
     lastName: '',
@@ -70,19 +115,6 @@ const handleLogoutClick = async () => {
     router.push('/')
   }, 1000)
 }
-
-// Lifecycle
-onMounted(() => {
-  theme.global.name.value = currentTheme.value
-  checkMobile()
-  window.addEventListener('resize', checkMobile)
-
-  const storedImage = localStorage.getItem('profileImage')
-  if (storedImage) profileImage.value = storedImage
-})
-onBeforeUnmount(() => {
-  window.removeEventListener('resize', checkMobile)
-})
 </script>
 
 <template>
@@ -186,7 +218,7 @@ onBeforeUnmount(() => {
           </div>
         </v-list>
       </v-navigation-drawer>
-    </transition>
+    </transition  tion>
     <!-- App Bar -->
     <v-app-bar flat :color="currentTheme === 'light' ? '#1565c0' : 'grey-darken-4'">
       <!-- Menu Icon that toggles drawer size -->
@@ -201,14 +233,41 @@ onBeforeUnmount(() => {
         }"
       >
         <div class="search-wrapper">
-          <!--logo-->
-
+          <!-- Search Input -->
+          <v-text-field
+            v-if="showSearch"
+            v-model="searchQuery"
+            placeholder="Search..."
+            density="compact"
+            hide-details
+            flat
+            clearable
+            class="search-input large-icon"
+            append-inner-icon="mdi-magnify"
+            @blur="closeSearch"
+            autofocus
+          />
+          <!-- Toggle Button -->
+          <v-btn icon @click="toggleSearch">
+            <v-icon>{{ showSearch ? 'mdi-close' : 'mdi-magnify' }}</v-icon>
+          </v-btn>
           <v-avatar color="#fff" size="50" class="logo me-6">
             <v-img src="image/Teach&Learn.png" alt="Logo" />
           </v-avatar>
         </div>
       </v-container>
+
     </v-app-bar>
+    <!--pop up alert-->
+    <v-snackbar
+      v-model="snackbar"
+      timeout="3000"
+      :color="snackbarColor"
+      location="top center"
+      style="top: 80px"
+    >
+      {{ snackbarMsg }}
+    </v-snackbar>
 
     <!-- Main Content -->
     <v-main

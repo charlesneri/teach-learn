@@ -1,9 +1,10 @@
 <script setup>
-import { ref, onMounted, watch, computed } from 'vue'
+import { ref, onMounted, onBeforeUnmount, watch, computed } from 'vue'
 import { useTheme } from 'vuetify'
+import { useRouter } from 'vue-router'
 import { supabase } from '@/utils/supabase'
 
-// THEME SETUP
+/*  THEME  */
 const theme = useTheme()
 const currentTheme = ref(localStorage.getItem('theme') || 'light')
 
@@ -18,41 +19,89 @@ watch(currentTheme, (val) => {
   localStorage.setItem('theme', val)
 })
 
-// SEARCH + SORT
-const searchQuery = ref('')
-const selectedSort = ref('')
+/*  ROUTER & UI  */
+const router = useRouter()
+const drawer = ref(false)
+const mini = ref(false)
+const isMobile = ref(false)
+const showSearch = ref(false)
 
-// SNACKBAR
-const snackbar = ref(false)
-const snackbarMsg = ref('')
-
-// NOTIFICATIONS
-const notificationMenu = ref(false)
-const notifications = ref([{ id: 1, title: 'No new notifications', time: '' }])
-
-const toggleMenu = () => {
-  notificationMenu.value = !notificationMenu.value
+const toggleDrawer = () => (drawer.value = !drawer.value)
+const toggleSearch = () => {
+  if (showSearch.value) searchQuery.value = ''
+  showSearch.value = !showSearch.value
+}
+const closeSearch = () => {
+  showSearch.value = false
+  searchQuery.value = ''
+}
+const checkMobile = () => {
+  isMobile.value = window.innerWidth <= 768
 }
 
-// USER + APPOINTMENTS
+/*  SNACKBAR & NOTIFICATIONS  */
+const snackbar = ref(false)
+const snackbarMsg = ref('')
+const snackbarColor = ref('')
+const notificationMenu = ref(false)
+const notifications = ref([{ id: 1, title: 'No new notifications', time: '' }])
+const toggleMenu = () => (notificationMenu.value = !notificationMenu.value)
+
+/*  USER  */
+const profileImage = ref('')
 const currentUserId = ref(null)
+const currentUserProfile = ref({
+  firstName: '',
+  lastName: '',
+  avatarUrl: '',
+  isPublicTutor: false,
+})
+
+watch(profileImage, (newVal) => {
+  if (newVal) localStorage.setItem('profileImage', newVal)
+})
+
+/*  LOGOUT  */
+const handleLogoutClick = async () => {
+  const { error } = await supabase.auth.signOut()
+
+  if (error) {
+    console.error('Logout failed:', error.message)
+    snackbarMsg.value = 'Logout failed. Try again.'
+    snackbarColor.value = 'red'
+    snackbar.value = true
+    return
+  }
+
+  currentUserId.value = null
+  currentUserProfile.value = {
+    firstName: '',
+    lastName: '',
+    avatarUrl: '',
+    isPublicTutor: false,
+  }
+  localStorage.removeItem('theme')
+
+  snackbarMsg.value = 'Logged out successfully!'
+  snackbarColor.value = 'green'
+  snackbar.value = true
+
+  setTimeout(() => {
+    router.push('/')
+  }, 1000)
+}
+
+/*  APPOINTMENTS  */
+const searchQuery = ref('')
+const selectedSort = ref('')
 const appointments = ref([])
 
-// Fetch Student Appointments
 const fetchStudentAppointments = async () => {
   const { data, error } = await supabase
     .from('appointments')
-    .select(
-      `
-      id,
-      appointment_date,
-      appointment_time,
-      message,
-      status,
-      mentor:mentor_id(id, first_name, last_name),
-      student:student_id(id, first_name, last_name)
-    `,
-    )
+    .select(`id, appointment_date, appointment_time, message, status,
+             mentor:mentor_id(id, first_name, last_name),
+             student:student_id(id, first_name, last_name)`)
     .eq('student_id', currentUserId.value)
     .order('appointment_date', { ascending: true })
 
@@ -60,24 +109,16 @@ const fetchStudentAppointments = async () => {
     console.error('Error fetching student appointments:', error)
     return []
   }
+
   return data || []
 }
 
-// Fetch Mentor Appointments
 const fetchMentorAppointments = async () => {
   const { data, error } = await supabase
     .from('appointments')
-    .select(
-      `
-      id,
-      appointment_date,
-      appointment_time,
-      message,
-      status,
-      mentor:mentor_id(id, first_name, last_name),
-      student:student_id(id, first_name, last_name)
-    `,
-    )
+    .select(`id, appointment_date, appointment_time, message, status,
+             mentor:mentor_id(id, first_name, last_name),
+             student:student_id(id, first_name, last_name)`)
     .eq('mentor_id', currentUserId.value)
     .order('appointment_date', { ascending: true })
 
@@ -85,10 +126,10 @@ const fetchMentorAppointments = async () => {
     console.error('Error fetching mentor appointments:', error)
     return []
   }
+
   return data || []
 }
 
-// Fetch Both (Student and Mentor) Appointments
 const fetchAppointments = async () => {
   const { data: userData, error: userError } = await supabase.auth.getUser()
   if (userError || !userData?.user) {
@@ -106,17 +147,14 @@ const fetchAppointments = async () => {
   appointments.value = [...studentAppointments, ...mentorAppointments]
 }
 
-// Computed: Sorted and Filtered Appointments
 const filteredAppointments = computed(() => {
   let temp = [...appointments.value]
 
   if (searchQuery.value.trim()) {
     const query = searchQuery.value.toLowerCase()
     temp = temp.filter((appointment) => {
-      const studentName =
-        `${appointment.student?.first_name || ''} ${appointment.student?.last_name || ''}`.toLowerCase()
-      const mentorName =
-        `${appointment.mentor?.first_name || ''} ${appointment.mentor?.last_name || ''}`.toLowerCase()
+      const studentName = `${appointment.student?.first_name || ''} ${appointment.student?.last_name || ''}`.toLowerCase()
+      const mentorName = `${appointment.mentor?.first_name || ''} ${appointment.mentor?.last_name || ''}`.toLowerCase()
       return studentName.includes(query) || mentorName.includes(query)
     })
   }
@@ -134,36 +172,26 @@ const filteredAppointments = computed(() => {
   return temp
 })
 
-// Perform Search
 const performSearch = () => {
   if (searchQuery.value.trim()) {
     snackbarMsg.value = `You searched for: "${searchQuery.value}"`
+    snackbarColor.value = 'info'
     snackbar.value = true
   }
 }
 
-// LIFECYCLE: Mounted
-onMounted(() => {
-  fetchAppointments()
-})
-
-//clickable view more button
-// Add these states
+/*  APPOINTMENT DETAILS  */
 const selectedAppointment = ref(null)
 const selectedStudentProfile = ref(null)
 const detailsDialog = ref(false)
 
-// When you click "View Details"
 const openAppointmentDetails = async (appointment) => {
   selectedAppointment.value = appointment
-  selectedStudentProfile.value = null // reset first
+  selectedStudentProfile.value = null
 
-  // Fetch student profile from Supabase
   const { data, error } = await supabase
     .from('profiles')
-    .select(
-      'first_name, last_name, email, phone, about, school, degree, year, expertise, avatar_url',
-    )
+    .select('first_name, last_name, email, phone, about, school, degree, year, expertise, avatar_url')
     .eq('id', appointment.student?.id)
     .single()
 
@@ -175,129 +203,174 @@ const openAppointmentDetails = async (appointment) => {
 
   detailsDialog.value = true
 }
-</script>
 
+/*  LIFECYCLE  */
+onMounted(() => {
+  fetchAppointments()
+  theme.global.name.value = currentTheme.value
+  checkMobile()
+  window.addEventListener('resize', checkMobile)
+
+  const storedImage = localStorage.getItem('profileImage')
+  if (storedImage) profileImage.value = storedImage
+})
+
+onBeforeUnmount(() => {
+  window.removeEventListener('resize', checkMobile)
+})
+</script>
 <template>
   <v-app id="inspire">
-    <!-- APP BAR -->
-    <v-app-bar
-      flat
-      :color="currentTheme === 'light' ? '#1565c0' : 'grey-darken-4'"
-      class="px-2 px-md-4"
-    >
-      <v-container fluid class="d-flex align-center justify-space-between pa-0">
-        <!-- Logo -->
-        <v-avatar color="#fff" size="44" class="mr-2">
-          <v-img src="image/Teach&Learn.png" alt="Logo" />
-        </v-avatar>
+  
+<!-- Drawer Sidebar (right, collapsible) -->
+    <transition name="fade-slide-up">
+      <v-navigation-drawer
+        v-if="drawer"
+        :temporary="isMobile"
+        :permanent="!isMobile"
+        :width="isMobile ? '100%' : 280"
+        right
+        app
+        :scrim="isMobile"
+        :style="{
+          backgroundColor: currentTheme === 'dark' ? '#424242' : '',
+          color: currentTheme === 'dark' ? '#ffffff' : '#000000',
+        }"
+      >
+        <!-- Menu Icon that toggles drawer size -->
+        <v-btn icon class="ms-5 d-lg-none" @click="toggleDrawer">
+          <v-icon>mdi-menu</v-icon>
+        </v-btn>
+        <!-- Profile -->
+        <v-sheet
+          class="pa-4 text-center"
+          rounded="lg"
+          :style="{
+            backgroundColor: currentTheme === 'dark' ? '#424242' : '',
+            color: currentTheme === 'dark' ? '#ffffff' : '#000000',
+          }"
+        >
+          <v-avatar size="100" class="mb-3">
+            <v-img v-if="currentUserProfile.avatarUrl" :src="currentUserProfile.avatarUrl" cover />
+            <v-icon v-else size="80">mdi-account</v-icon>
+          </v-avatar>
+          <h3 v-if="!mini">{{ currentUserProfile.firstName }} {{ currentUserProfile.lastName }}</h3>
+        </v-sheet>
 
-        <v-spacer />
+        <v-divider class="my-2" />
 
-        <!-- Desktop Links -->
-        <div class="d-none d-md-flex align-center me-5" style="gap: 24px">
-          <RouterLink
-            to="/home"
-            class="active-click text-white text-decoration-none font-weight-medium"
-            >Home</RouterLink
-          >
-          <RouterLink
-            to="/about"
-            class="active-click text-white text-decoration-none font-weight-medium"
-            >About Us</RouterLink
-          >
-          <RouterLink
-            to="/contact"
-            class="active-click text-white text-decoration-none font-weight-medium"
-            >Contact Us</RouterLink
-          >
-        </div>
+        <v-list nav dense>
+          <v-list-item :to="'/home'" tag="RouterLink" @click="isMobile && (drawer = false)">
+            <div class="d-flex align-center" style="gap: 8px; width: 100%">
+              <v-icon size="30" style="margin-left: 15px">mdi-home-outline</v-icon>
+              <span v-if="!mini" class="icon-mdi">Home</span>
+            </div>
+          </v-list-item>
 
-        <v-spacer />
+          <v-list-item :to="'/about'" tag="RouterLink" @click="isMobile && (drawer = false)">
+            <div class="d-flex align-center" style="gap: 8px; width: 100%">
+              <v-icon size="30" style="margin-left: 15px">mdi-information-outline</v-icon>
+              <span v-if="!mini" class="icon-mdi">About Us</span>
+            </div>
+          </v-list-item>
 
-        <!-- Bell + Mobile Menu -->
-        <div class="d-flex align-center gap-2">
-          <!-- Notification Bell -->
-          <v-menu
-            v-model="notificationMenu"
-            offset-y
-            close-on-content-click
-            transition="scale-transition"
-          >
-            <template #activator="{ props }">
-              <v-btn icon v-bind="props" @click="toggleMenu">
-                <v-icon>mdi-bell</v-icon>
-              </v-btn>
-            </template>
-            <v-card min-width="300">
-              <v-list density="compact">
-                <v-list-item v-for="notification in notifications" :key="notification.id">
-                  <v-list-item-content>
-                    <v-list-item-title>{{ notification.title }}</v-list-item-title>
-                    <v-list-item-subtitle>{{ notification.time }}</v-list-item-subtitle>
-                  </v-list-item-content>
-                </v-list-item>
-                <v-divider></v-divider>
-                <v-list-item>
-                  <v-list-item-title class="text-center">
-                    <v-btn text small @click="notifications = []">Clear All</v-btn>
-                  </v-list-item-title>
-                </v-list-item>
-              </v-list>
-            </v-card>
-          </v-menu>
+          <v-list-item :to="'/contact'" tag="RouterLink" @click="isMobile && (drawer = false)">
+            <div class="d-flex align-center" style="gap: 8px; width: 100%">
+              <v-icon size="30" style="margin-left: 15px">mdi-phone-outline</v-icon>
+              <span v-if="!mini" class="icon-mdi">Contact Us</span>
+            </div>
+          </v-list-item>
 
-          <!-- Mobile Hamburger Menu -->
-          <v-menu transition="scale-transition" offset-y>
-            <template #activator="{ props }">
-              <v-app-bar-nav-icon v-bind="props" class="d-md-none" />
-            </template>
-            <v-list>
-              <v-list-item link
-                ><RouterLink
-                  to="/home"
-                  :class="[currentTheme === 'dark' ? 'text-white' : 'text-black']"
-                  >Home</RouterLink
-                ></v-list-item
-              >
-              <v-list-item link
-                ><RouterLink
-                  to="/profile"
-                  :class="[currentTheme === 'dark' ? 'text-white' : 'text-black']"
-                  >My Profile</RouterLink
-                ></v-list-item
-              >
-              <v-list-item link
-                ><RouterLink
-                  to="/appointments"
-                  :class="[currentTheme === 'dark' ? 'text-white' : 'text-black']"
-                  >My Appointment</RouterLink
-                ></v-list-item
-              >
-              <v-list-item link
-                ><RouterLink
-                  to="/about"
-                  :class="[currentTheme === 'dark' ? 'text-white' : 'text-black']"
-                  >About Us</RouterLink
-                ></v-list-item
-              >
-              <v-list-item link
-                ><RouterLink
-                  to="/contact"
-                  :class="[currentTheme === 'dark' ? 'text-white' : 'text-black']"
-                  >Contact Us</RouterLink
-                ></v-list-item
-              >
-              <v-divider></v-divider>
-              <v-list-item link
-                ><RouterLink to="/" :class="[currentTheme === 'dark' ? 'text-white' : 'text-black']"
-                  >Logout</RouterLink
-                ></v-list-item
-              >
-            </v-list>
-          </v-menu>
+          <v-divider class="my-2" />
+
+          <v-list-item :to="'/profile'" tag="RouterLink" @click="isMobile && (drawer = false)">
+            <div class="d-flex align-center" style="gap: 8px; width: 100%">
+              <v-icon size="30" style="margin-left: 15px">mdi-account-outline</v-icon>
+              <span v-if="!mini" class="icon-mdi">My Profile</span>
+            </div>
+          </v-list-item>
+
+          <v-list-item :to="'/appointments'" tag="RouterLink" @click="isMobile && (drawer = false)">
+            <div class="d-flex align-center" style="gap: 8px; width: 100%">
+              <v-icon size="30" style="margin-left: 15px">mdi-calendar</v-icon>
+              <span v-if="!mini" class="icon-mdi">My Appointments</span>
+            </div>
+          </v-list-item>
+
+          <v-list-item :to="'/appointments'" tag="RouterLink" @click="isMobile && (drawer = false)">
+            <div class="d-flex align-center" style="gap: 8px; width: 100%">
+              <v-icon size="30" style="margin-left: 15px"> mdi-delete-outline</v-icon>
+              <span v-if="!mini" class="icon-mdi">Delete History</span>
+            </div>
+          </v-list-item>
+
+          <v-divider class="my-2" />
+          <v-list-item @click="handleLogoutClick">
+            <div class="d-flex align-center" style="gap: 8px; width: 100%">
+              <v-icon size="30" style="margin-left: 15px">mdi-logout</v-icon>
+              <span v-if="!mini" class="icon-mdi">Logout</span>
+            </div>
+          </v-list-item>
+          <!-- Theme toggle -->
+          <div class="text-center mt-4">
+            <v-btn icon @click="toggleTheme">
+              <v-icon>{{
+                currentTheme === 'light' ? 'mdi-weather-night' : 'mdi-white-balance-sunny'
+              }}</v-icon>
+            </v-btn>
+          </div>
+        </v-list>
+      </v-navigation-drawer>
+    </transition>
+    <!-- App Bar -->
+    <v-app-bar flat :color="currentTheme === 'light' ? '#1565c0' : 'grey-darken-4'">
+      <!-- Menu Icon that toggles drawer size -->
+      <v-btn icon class="ms-5" @click="toggleDrawer">
+        <v-icon>mdi-menu</v-icon>
+      </v-btn>
+      <v-container
+        class="d-flex align-center pa-0"
+        :class="{
+          'transition-all': !isMobile,
+          'no-transition': isMobile,
+        }"
+      >
+        <div class="search-wrapper">
+          <!-- Search Input -->
+          <v-text-field
+            v-if="showSearch"
+            v-model="searchQuery"
+            placeholder="Search..."
+            density="compact"
+            hide-details
+            flat
+            clearable
+            class="search-input large-icon"
+            append-inner-icon="mdi-magnify"
+            @blur="closeSearch"
+            autofocus
+          />
+          <!-- Toggle Button -->
+          <v-btn icon @click="toggleSearch">
+            <v-icon>{{ showSearch ? 'mdi-close' : 'mdi-magnify' }}</v-icon>
+          </v-btn>
+          <v-avatar color="#fff" size="50" class="logo me-6">
+            <v-img src="image/Teach&Learn.png" alt="Logo" />
+          </v-avatar>
         </div>
       </v-container>
+
     </v-app-bar>
+    <!--pop up alert-->
+    <v-snackbar
+      v-model="snackbar"
+      timeout="3000"
+      :color="snackbarColor"
+      location="top center"
+      style="top: 80px"
+    >
+      {{ snackbarMsg }}
+    </v-snackbar>
 
     <!-- MAIN CONTENT -->
     <v-main :class="currentTheme === 'dark' ? 'bg-grey-darken-4 text-white' : 'bg-grey-lighten-3'">

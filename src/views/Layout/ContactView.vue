@@ -1,49 +1,52 @@
 <script setup>
 /* Imports */
-import { ref, onMounted, onBeforeUnmount, watch, computed } from 'vue'
+import { ref, onMounted, onBeforeUnmount, watch } from 'vue'
 import { useTheme } from 'vuetify'
 import { useRouter } from 'vue-router'
 import { supabase } from '@/utils/supabase'
 
-/*  Theme Management  */
+/* Router */
+const router = useRouter()
+
+/* Theme Management */
 const theme = useTheme()
 const currentTheme = ref(localStorage.getItem('theme') || 'light')
-watch(currentTheme, (val) => {
-  theme.global.name.value = val
-  localStorage.setItem('theme', val)
-})
-onMounted(() => {
-  theme.global.name.value = currentTheme.value
-})
 
-function toggleTheme() {
+const toggleTheme = () => {
   currentTheme.value = currentTheme.value === 'light' ? 'dark' : 'light'
   theme.global.name.value = currentTheme.value
   localStorage.setItem('theme', currentTheme.value)
 }
 
-/*  Drawer & Mobile  */
+watch(currentTheme, (val) => {
+  theme.global.name.value = val
+  localStorage.setItem('theme', val)
+})
+
+/* Responsive Drawer & Mobile Detection */
 const drawer = ref(false)
 const mini = ref(false)
 const isMobile = ref(false)
 
-function toggleDrawer() {
+const toggleDrawer = () => {
   drawer.value = !drawer.value
 }
 
-function checkMobile() {
+const checkMobile = () => {
   isMobile.value = window.innerWidth <= 768
 }
+
 onMounted(() => {
+  theme.global.name.value = currentTheme.value
   checkMobile()
   window.addEventListener('resize', checkMobile)
 })
+
 onBeforeUnmount(() => {
   window.removeEventListener('resize', checkMobile)
 })
 
-/*  Supabase Auth  */
-const router = useRouter()
+/* Supabase Auth & Logout */
 const currentUserId = ref(null)
 const currentUserProfile = ref({
   firstName: '',
@@ -52,8 +55,13 @@ const currentUserProfile = ref({
   isPublicTutor: false,
 })
 
-async function handleLogoutClick() {
+const snackbar = ref(false)
+const snackbarMsg = ref('')
+const snackbarColor = ref('')
+
+const handleLogoutClick = async () => {
   const { error } = await supabase.auth.signOut()
+
   if (error) {
     console.error('Logout failed:', error.message)
     snackbarMsg.value = 'Logout failed. Try again.'
@@ -62,6 +70,7 @@ async function handleLogoutClick() {
     return
   }
 
+  // Reset session data
   currentUserId.value = null
   currentUserProfile.value = {
     firstName: '',
@@ -69,7 +78,9 @@ async function handleLogoutClick() {
     avatarUrl: '',
     isPublicTutor: false,
   }
+
   localStorage.removeItem('theme')
+
   snackbarMsg.value = 'Logged out successfully!'
   snackbarColor.value = 'green'
   snackbar.value = true
@@ -79,7 +90,7 @@ async function handleLogoutClick() {
   }, 1000)
 }
 
-/*  Contacts & Messaging  */
+/* Contact & Messaging Section */
 const messageInput = ref('')
 const contacts = ref([
   {
@@ -114,7 +125,7 @@ const contacts = ref([
   },
 ])
 
-function sendMessage() {
+const sendMessage = () => {
   console.log('Message sent:', messageInput.value)
   messageInput.value = ''
 }
@@ -242,7 +253,16 @@ function sendMessage() {
         </div>
       </v-container>
     </v-app-bar>
-
+  <!--pop up alert-->
+  <v-snackbar
+      v-model="snackbar"
+      timeout="3000"
+      :color="snackbarColor"
+      location="top center"
+      style="top: 80px"
+    >
+      {{ snackbarMsg }}
+    </v-snackbar>
     <!-- Main Content -->
     <v-main  :style="{
                 backgroundColor: currentTheme === 'dark' ? '#424242' : '#fefcf9',
