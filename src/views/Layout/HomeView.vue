@@ -146,25 +146,24 @@ onBeforeUnmount(() => {
 
 //search
 
-
 const showSearch = ref(false)
 const searchQuery = ref('')
 
 const toggleSearch = () => {
+  if (showSearch.value) {
+    searchQuery.value = ''
+  }
   showSearch.value = !showSearch.value
 }
 
-const closeSearch = () => {
-  // Optional: auto-close when blurred
-  // showSearch.value = false
-}
 const filteredTutors = computed(() => {
   if (!searchQuery.value.trim()) return tutors.value
 
   const keyword = searchQuery.value.trim().toLowerCase()
 
   return tutors.value.filter((tutor) => {
-    const fullName = `${tutor.first_name || ''} ${tutor.middle_initial || ''} ${tutor.last_name || ''}`.toLowerCase()
+    const fullName =
+      `${tutor.first_name || ''} ${tutor.middle_initial || ''} ${tutor.last_name || ''}`.toLowerCase()
     const expertise = (tutor.expertise || '').toLowerCase()
     return fullName.includes(keyword) || expertise.includes(keyword)
   })
@@ -288,8 +287,8 @@ const filteredTutors = computed(() => {
         }"
       >
         <div class="search-wrapper">
-           <!-- Search Input -->
-           <v-text-field
+          <!-- Search Input -->
+          <v-text-field
             v-if="showSearch"
             v-model="searchQuery"
             placeholder="Search..."
@@ -298,7 +297,7 @@ const filteredTutors = computed(() => {
             flat
             clearable
             class="search-input large-icon"
-          append-inner-icon="mdi-magnify"
+            append-inner-icon="mdi-magnify"
             @blur="closeSearch"
             autofocus
           />
@@ -307,12 +306,10 @@ const filteredTutors = computed(() => {
             <v-icon>{{ showSearch ? 'mdi-close' : 'mdi-magnify' }}</v-icon>
           </v-btn>
           <v-avatar color="#fff" size="50" class="logo me-6">
-        <v-img src="image/Teach&Learn.png" alt="Logo" />
-      </v-avatar>
-         
+            <v-img src="image/Teach&Learn.png" alt="Logo" />
+          </v-avatar>
         </div>
       </v-container>
-  
     </v-app-bar>
 
     <!--pop up alert-->
@@ -340,7 +337,7 @@ const filteredTutors = computed(() => {
             <v-col cols="12" md="10">
               <div class="floating-wrapper">
                 <v-sheet
-                  max-width="1000"
+                  max-width="1500"
                   width="100%"
                   rounded="lg"
                   class="pa-6"
@@ -359,30 +356,30 @@ const filteredTutors = computed(() => {
                       class="profile-container"
                       style="flex-wrap: wrap; gap: 24px"
                     >
-                      <v-row>
+                      <v-row
+                      :justify="filteredTutors.length < 3 ? 'center' : 'start'"
+  align="stretch"
+  class="gx-4 gy-4" 
+                      >
                         <v-col
-                          cols="12"
-                          sm="6"
-                          md="4"
-                          lg="3"
                           v-for="tutor in filteredTutors"
                           :key="tutor.id"
-                          class="d-flex justify-center"
+                          cols="12"
+                          sm="6"
+                          md="3"
+                          lg="3"
                         >
                           <v-fade-transition>
                             <div
                               class="mentor-card fade-in pa-4 d-flex flex-column align-center"
-                              style="
-                                border: 1px solid #ccc;
-                                border-radius: 12px;
-                                width: 100%;
-                                max-width: 250px;
-                              "
-                              :class="
-                                currentTheme === 'dark'
-                                  ? 'bg-grey-darken-3 text-white'
-                                  : 'bg-white text-black'
-                              "
+                              :style="{
+                             
+                                minWidth: '260px',
+                                maxWidth: '100%',
+                                width: '100%',
+                                backgroundColor: currentTheme === 'dark' ? '#424242' : '#fff',
+                                color: currentTheme === 'dark' ? '#fff' : '#000',
+                              }"
                             >
                               <!-- Avatar -->
                               <v-avatar size="100" class="mb-3">
@@ -616,14 +613,18 @@ const filteredTutors = computed(() => {
 
 /* Mentor Card */
 .mentor-card {
-  background-color: white;
-  border: 1px solid #ddd;
-  border-radius: 8px;
-  width: 260px;
-  transition:
-    transform 0.3s ease,
-    box-shadow 0.3s ease;
+  border: 1px solid #ccc;
+  border-radius: 12px;
+  width: 100%;
+  height: 100%;
+  transition: all 0.3s ease;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+  max-width: 1500px;
 }
+
 .mentor-card:hover {
   transform: translateY(-8px);
   box-shadow: 0 10px 20px rgba(0, 0, 0, 0.15);
@@ -729,13 +730,13 @@ h1.head {
   justify-content: flex-end;
   gap: 12px;
   z-index: 10;
-  max-width: 100%;
+  max-width: none;
   flex-wrap: nowrap;
 }
 
 .search-input {
   width: 240px;
-  max-width: 100%;
+  max-width: none;
   transition: width 0.3s ease;
 }
 
@@ -747,48 +748,37 @@ h1.head {
   font-size: 28px !important;
 }
 
-/* Mobile tweaks */
-@media (max-width: 600px) {
-  .search-input {
-    width: 70vw;
-  }
-
-  .logo {
-    margin-top: 6px;
-  }
-
-  .search-wrapper {
-    right: 12px;
-    gap: 8px;
-  }
-}
-/* Mobile responsiveness */
-@media (max-width: 600px) {
-  .right-align-wrapper {
-    flex-direction: column;
-    align-items: flex-end;
-    justify-content: flex-start;
-    gap: 12px;
-    padding: 12px 8px;
-    overflow-y: auto; /* Enable scroll if vertical space is too tight */
-    max-height: 100vh;
-    box-sizing: border-box;
-  }
-
-  .search-input {
-    width: 100%;
-    max-width: 90%;
-    margin: 0;
-    display: block;
-  }
-
-  
-}
-
 /* Animations */
 .fade-slide-up-enter-active {
   animation: fadeSlideUp 0.6s ease;
 }
+/*animation or transition of search*/
+.fade-slide-enter-active,
+.fade-slide-leave-active {
+  transition: all 0.4s ease;
+}
+
+.fade-slide-enter-from {
+  opacity: 0;
+  transform: translateY(12px);
+}
+
+.fade-slide-leave-to {
+  opacity: 0;
+  transform: scale(0.95);
+}
+.fade-slide-enter-active {
+  transition: all 0.4s ease;
+}
+.fade-slide-enter-from {
+  opacity: 0;
+  transform: translateY(16px);
+}
+
+.fade-slide-move {
+  transition: transform 0.3s ease;
+}
+
 /*for the search bar*/
 @keyframes fadeSlideUp {
   0% {
@@ -813,8 +803,19 @@ h1.head {
     transform: scale(1);
   }
 }
+/*for large screen */
+@media (min-width: 768px) {
+  .mentor-card.single-card {
+    width: 250px !important;
+    min-height: 340px;
+  }
 
-/* Responsive Styles */
+  .d-flex.flex-wrap.justify-center {
+    justify-content: start; /* optional, to align left like default Vuetify v-row behavior */
+  }
+}
+
+/* Responsive Styles for mobile */
 @media (max-width: 600px) {
   .v-dialog__content {
     padding: 8px !important;
@@ -830,6 +831,42 @@ h1.head {
   }
   .v-main {
     padding-top: 64px;
+  }
+
+  .search-input {
+    width: 150px;
+    max-width: 100%;
+  }
+
+  .search-wrapper {
+    right: 12px;
+    gap: 8px;
+  }
+
+  .logo {
+    width: 40px;
+    height: 40px;
+  }
+
+  h1.head {
+    font-size: 1.8rem;
+    letter-spacing: 0.2rem;
+  }
+
+  /*mobile responsive search matching apppear*/
+  .mentor-card {
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+
+  .profile-container {
+    justify-content: center;
+    padding: 0 16px;
+    width: 100%;
+  }
+
+  .d-flex.flex-wrap.justify-center {
+    width: 100%;
   }
 }
 </style>
