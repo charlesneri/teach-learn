@@ -332,13 +332,16 @@ onBeforeUnmount(() => {
               <!-- Steps -->
               <v-row dense>
                 <!-- Step 1 -->
-                <v-col cols="12" sm="6" md="4" class="mb-4 d-flex">
-                  <v-card class="pa-4 flex-grow-1 fade-in" variant="outlined" rounded="lg">
-                    <v-icon size="32" class="mb-2" color="primary">mdi-account-plus</v-icon>
-                    <v-card-title class="text-subtitle-1 font-weight-bold"
-                      >Step 1: Create Your Profile</v-card-title
+                <v-col cols="12" sm="6" md="4" class="mb-4 d-flex" >
+                  <v-card class="pa-4 flex-grow-1 fade-in" variant="outlined" rounded="lg"  :style="{
+                    backgroundColor: currentTheme === 'dark' ? '#424242' : '#1565c0',
+                    color: currentTheme === 'dark' ? '#ffffff' : '#000000',
+                  }">
+                    <v-icon size="32" class="mb-2" color="white">mdi-account-plus</v-icon>
+                    <v-card-title class="text-subtitle-1 font-weight-bold white-font"
+                   >Step 1: Create Your Profile</v-card-title
                     >
-                    <v-card-text class="text-body-2">
+                    <v-card-text class="text-body-2 white-font" >
                       Add your details and a profile photo to connect with tutors or learners.
                     </v-card-text>
                   </v-card>
@@ -346,12 +349,15 @@ onBeforeUnmount(() => {
 
                 <!-- Step 2 -->
                 <v-col cols="12" sm="6" md="4" class="mb-4 d-flex">
-                  <v-card class="pa-4 flex-grow-1 fade-in" variant="outlined" rounded="lg">
-                    <v-icon size="32" class="mb-2" color="primary">mdi-magnify</v-icon>
-                    <v-card-title class="text-subtitle-1 font-weight-bold"
+                  <v-card class="pa-4 flex-grow-1 fade-in" variant="outlined" rounded="lg" :style="{
+                    backgroundColor: currentTheme === 'dark' ? '#424242' : '#1565c0',
+                    color: currentTheme === 'dark' ? '#ffffff' : '#000000',
+                  }">
+                    <v-icon size="32" class="mb-2 white-font" color="primary">mdi-magnify</v-icon>
+                    <v-card-title class="text-subtitle-1 font-weight-bold white-font "
                       >Step 2: Search and Connect</v-card-title
                     >
-                    <v-card-text class="text-body-2">
+                    <v-card-text class="text-body-2 white-font">
                       Find others by subject or expertise and start chatting.
                     </v-card-text>
                   </v-card>
@@ -359,12 +365,15 @@ onBeforeUnmount(() => {
 
                 <!-- Step 3 -->
                 <v-col cols="12" sm="6" md="4" class="mb-4 d-flex">
-                  <v-card class="pa-4 flex-grow-1 fade-in" variant="outlined" rounded="lg">
-                    <v-icon size="32" class="mb-2" color="primary">mdi-calendar-clock</v-icon>
-                    <v-card-title class="text-subtitle-1 font-weight-bold"
+                  <v-card class="pa-4 flex-grow-1 fade-in" variant="outlined" rounded="lg" :style="{
+                    backgroundColor: currentTheme === 'dark' ? '#424242' : '#1565c0',
+                    color: currentTheme === 'dark' ? '#ffffff' : '#000000',
+                  }">
+                    <v-icon size="32" class="mb-2" color="primary white-font" >mdi-calendar-clock</v-icon>
+                    <v-card-title class="text-subtitle-1 font-weight-bold white-font"
                       >Step 3: Book an Appointment</v-card-title
                     >
-                    <v-card-text class="text-body-2">
+                    <v-card-text class="text-body-2 white-font">
                       Pick a time and confirm your session. Get reminders automatically.
                     </v-card-text>
                   </v-card>
@@ -372,12 +381,15 @@ onBeforeUnmount(() => {
 
                 <!-- Step 4 -->
                 <v-col cols="12" sm="6" md="4" class="mb-4 d-flex">
-                  <v-card class="pa-4 flex-grow-1 fade-in" variant="outlined" rounded="lg">
+                  <v-card class="pa-4 flex-grow-1 fade-in" variant="outlined" rounded="lg" :style="{
+                    backgroundColor: currentTheme === 'dark' ? '#424242' : '#1565c0',
+                    color: currentTheme === 'dark' ? '#ffffff' : '#000000',
+                  }">
                     <v-icon size="32" class="mb-2" color="primary">mdi-school</v-icon>
-                    <v-card-title class="text-subtitle-1 font-weight-bold"
+                    <v-card-title class="text-subtitle-1 font-weight-bold white-font"
                       >Step 4: Attend & Learn</v-card-title
                     >
-                    <v-card-text class="text-body-2">
+                    <v-card-text class="text-body-2 white-font">
                       Join the session, engage actively, and take notes.
                     </v-card-text>
                   </v-card>
@@ -385,12 +397,15 @@ onBeforeUnmount(() => {
 
                 <!-- Step 5 -->
                 <v-col cols="12" sm="6" md="4" class="mb-4 d-flex">
-                  <v-card class="pa-4 flex-grow-1 fade-in" variant="outlined" rounded="lg">
+                  <v-card class="pa-4 flex-grow-1 fade-in" variant="outlined" rounded="lg" :style="{
+                    backgroundColor: currentTheme === 'dark' ? '#424242' : '#1565c0',
+                    color: currentTheme === 'dark' ? '#ffffff' : '#000000',
+                  }">
                     <v-icon size="32" class="mb-2" color="primary">mdi-star-check</v-icon>
-                    <v-card-title class="text-subtitle-1 font-weight-bold"
+                    <v-card-title class="text-subtitle-1 font-weight-bold white-font"
                       >Step 5: Review and Continue</v-card-title
                     >
-                    <v-card-text class="text-body-2">
+                    <v-card-text class="text-body-2 white-font">
                       Reflect on what you learned, give feedback, and book your next session.
                     </v-card-text>
                   </v-card>
@@ -535,5 +550,8 @@ onBeforeUnmount(() => {
     opacity: 1;
     transform: translateY(0);
   }
+}
+.white-font{
+  color:white
 }
 </style>

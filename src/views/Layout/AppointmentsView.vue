@@ -117,7 +117,7 @@ const appointments = ref([])
 const fetchStudentAppointments = async () => {
   const { data, error } = await supabase
     .from('appointments')
-    .select(`id, appointment_date, appointment_time, message, status,
+    .select(`id, appointment_date, appointment_time, message,
              mentor:mentor_id(id, first_name, last_name),
              student:student_id(id, first_name, last_name)`)
     .eq('student_id', currentUserId.value)
@@ -132,7 +132,7 @@ const fetchStudentAppointments = async () => {
 const fetchMentorAppointments = async () => {
   const { data, error } = await supabase
     .from('appointments')
-    .select(`id, appointment_date, appointment_time, message, status,
+    .select(`id, appointment_date, appointment_time, message, 
              mentor:mentor_id(id, first_name, last_name),
              student:student_id(id, first_name, last_name)`)
     .eq('mentor_id', currentUserId.value)
@@ -191,25 +191,36 @@ const performSearch = () => {
 const selectedAppointment = ref(null)
 const selectedStudentProfile = ref(null)
 const detailsDialog = ref(false)
+const mentorAverageRating = ref(null)
+
+//appointment
 const openAppointmentDetails = async (appointment) => {
   selectedAppointment.value = appointment
   selectedStudentProfile.value = null
+
+  // Get mentor's average rating
+  const avg = await getAverageRatingForMentor(appointment.mentor?.id)
+  mentorAverageRating.value = avg
+
   const { data, error } = await supabase
     .from('profiles')
     .select('first_name, last_name, email, phone, about, school, degree, year, expertise, avatar_url')
     .eq('id', appointment.student?.id)
     .single()
+
   if (error) {
     console.error('Error fetching student profile:', error)
   } else {
     selectedStudentProfile.value = data
   }
+
   detailsDialog.value = true
 }
 
 onMounted(async () => {
   await fetchAppointments()
   await fetchCurrentUser()
+  await fetchUserRatings()
   theme.global.name.value = currentTheme.value
   checkMobile()
   window.addEventListener('resize', checkMobile)
@@ -220,6 +231,157 @@ onMounted(async () => {
 onBeforeUnmount(() => {
   window.removeEventListener('resize', checkMobile)
 })
+// tating dialog
+const ratingDialog = ref(false)
+const userRating = ref(0)
+const ratingMentorId = ref(null)
+
+const openRatingDialog = (appointment) => {
+  selectedAppointment.value = appointment
+  userRating.value = 0
+  ratingDialog.value = true
+}
+//submit ratings
+const submitRating = async () => {
+  if (
+    !selectedAppointment.value?.id ||
+    !selectedAppointment.value?.mentor?.id ||
+    !currentUserId.value ||
+    !userRating.value
+  ) {
+    snackbarMsg.value = 'Please complete the rating information.'
+    snackbarColor.value = 'red'
+    snackbar.value = true
+    return
+  }
+
+  const payload = {
+    appointment_id: selectedAppointment.value.id,
+    mentor_id: selectedAppointment.value.mentor.id,
+    student_id: currentUserId.value,
+    rating: userRating.value,
+  }
+
+  console.log('Submitting rating payload:', payload)
+
+  const { error } = await supabase.from('ratings').upsert(payload)
+
+  if (error) {
+    console.error('Rating error:', error)
+    snackbarMsg.value = 'Sorry, You can only rate once per session.'
+    snackbarColor.value = 'red'
+  } else {
+    snackbarMsg.value = 'Rating submitted successfully!'
+    snackbarColor.value = 'green'
+    ratingDialog.value = false
+  }
+
+  snackbar.value = true
+}
+
+//for delete function
+const deleteDialog = ref(false)
+const appointmentToDelete = ref(null)
+
+const confirmDeleteAppointment = (appointment) => {
+  appointmentToDelete.value = appointment
+  deleteDialog.value = true
+}
+
+const deleteAppointment = async () => {
+  if (!appointmentToDelete.value?.id) return
+
+  const { error } = await supabase
+    .from('appointments')
+    .delete()
+    .eq('id', appointmentToDelete.value.id)
+
+  if (error) {
+    console.error('Error deleting appointment:', error)
+    snackbarMsg.value = 'Failed to delete appointment.'
+    snackbarColor.value = 'red'
+  } else {
+    snackbarMsg.value = 'Appointment deleted.'
+    snackbarColor.value = 'green'
+    // refresh list
+    await fetchAppointments()
+  }
+
+  deleteDialog.value = false
+  snackbar.value = true
+}
+//fetch appointments
+const userRatings = ref([])
+
+const fetchUserRatings = async () => {
+  const { data, error } = await supabase
+    .from('ratings')
+    .select('appointment_id, rating')
+    .eq('student_id', currentUserId.value)
+
+  if (error) {
+    console.error('Error fetching ratings:', error)
+    return
+  }
+
+  userRatings.value = data || []
+}
+const getRatingForAppointment = (appointmentId) => {
+  const found = userRatings.value.find(r => r.appointment_id === appointmentId)
+  return found ? found.rating : null
+}
+// adding the ratings and get avg
+const getAverageRatingForMentor = async (mentorId) => {
+  const { data, error } = await supabase
+    .from('ratings')
+    .select('rating')
+    .eq('mentor_id', mentorId)
+
+  if (error || !data) {
+    console.error('Error fetching average rating:', error)
+    return null
+  }
+
+  if (data.length === 0) return null
+
+  const total = data.reduce((sum, entry) => sum + entry.rating, 0)
+  return (total / data.length).toFixed(1)
+}
+
+//for edit appointments
+const editDialog = ref(false)
+const editedAppointment = ref({
+  id: '',
+  appointment_date: '',
+  appointment_time: '',
+  message: '',
+})
+const openEditDialog = (appointment) => {
+  editedAppointment.value = { ...appointment }
+  editDialog.value = true
+}
+const updateAppointment = async () => {
+  const { error } = await supabase
+    .from('appointments')
+    .update({
+      appointment_date: editedAppointment.value.appointment_date,
+      appointment_time: editedAppointment.value.appointment_time,
+      message: editedAppointment.value.message,
+    })
+    .eq('id', editedAppointment.value.id)
+
+  if (error) {
+    snackbarMsg.value = 'Failed to update appointment.'
+    snackbarColor.value = 'red'
+  } else {
+    snackbarMsg.value = 'Appointment updated successfully!'
+    snackbarColor.value = 'green'
+    editDialog.value = false
+    await fetchAppointments()
+  }
+  snackbar.value = true
+}
+
 </script>
 
 <template>
@@ -440,31 +602,36 @@ onBeforeUnmount(() => {
                     </v-list-item-title>
 
                     <v-list-item-subtitle class="appointment-subtitle">
-                      Date: {{ appointment.appointment_date }} at {{ appointment.appointment_time }}
-                      <br />
-                      Status: {{ appointment.status }}
+                      <div v-if="getRatingForAppointment(appointment.id)" class="text-center mt-2">
+  <v-rating
+    v-model="userRatingsMap[appointment.id]"
+    readonly
+    color="amber"
+    background-color="grey lighten-1"
+    dense
+    half-increments
+    size="20"
+  />
+  <small class="text-grey">You rated this session</small>
+</div>
+
                     </v-list-item-subtitle>
 
                     <!-- View Details -->
-                    <div >
-                      <span
-  @click="openAppointmentDetails(appointment)"
-  class="text-center text-decoration-none text-primary cursor-pointer"
->
-  View Details
-</span>
-   <v-spacer></v-spacer>
-<!--this delete appointment for  both the user and mentors appointments to cancel appointment there is a pop up where user willl be ask if are you sure you want to delete this appointment  answerable by yes or no-->
-<span
-  @click=""
-  class="text-center text-decoration-none text-primary cursor-pointer"
->
-  Delete Appointment
-</span>
-<v-spacer></v-spacer>
-<!--by clicking this there is a pop up with 5 star that colorable, user can fill color of how many star the user give to the mentor as a rate and all total star givein to the user will appear in the home page-->
-<span @click="">Rate</span>
-                    </div>
+                    <div class="d-flex justify-center align-center" style="gap: 16px; flex-wrap: wrap;">
+  <v-btn size="small" color="primary" variant="text" @click="openAppointmentDetails(appointment)">
+    View Details
+  </v-btn>
+  <v-btn size="small" color="error" variant="text" @click="confirmDeleteAppointment(appointment)">
+    Delete
+  </v-btn>
+  <v-btn size="small" color="amber" variant="text" @click="openRatingDialog(appointment)">
+    Rate
+  </v-btn>
+  <v-btn size="small" color="success" variant="text" @click="openEditDialog(appointment)">
+  Edit Appointment
+</v-btn>
+</div>
                 
                  
                   </v-list-item>
@@ -546,7 +713,6 @@ onBeforeUnmount(() => {
                         <h3 class="font-weight-bold text-center mt-5 mb-10">Appointment Information</h3>
                         <p class="text-center"><strong>Date:</strong> <br>{{ selectedAppointment.appointment_date }}</p>
                         <p class="text-center"><strong>Time:</strong> <br>{{ selectedAppointment.appointment_time }}</p>
-                        <p class="text-center"><strong>Status:</strong><br> {{ selectedAppointment.status }}</p>
                         <p class="text-center">
                           <strong>Message:</strong><br>
                           {{ selectedAppointment.message || 'No message provided' }}
@@ -577,6 +743,69 @@ onBeforeUnmount(() => {
       </v-container>
     </v-main>
   </v-app>
+  <v-dialog v-model="ratingDialog" max-width="400px">
+  <v-card :class="currentTheme === 'dark' ? 'bg-grey-darken-3 text-white' : 'bg-white text-black'">
+    <v-card-title class="text-h6 font-weight-bold text-center">Rate this Mentor</v-card-title>
+    <v-card-text class="d-flex justify-center">
+      <v-rating
+        v-model="userRating"
+        length="5"
+        color="amber"
+        background-color="grey lighten-1"
+        size="36"
+        half-increments
+        hover
+      />
+    </v-card-text>
+    <v-card-actions class="justify-center">
+      <v-btn variant="text" @click="ratingDialog = false">Cancel</v-btn>
+      <v-btn color="primary" @click="submitRating">Submit</v-btn>
+    </v-card-actions>
+  </v-card>
+</v-dialog>
+<v-dialog v-model="deleteDialog" max-width="400px">
+  <v-card :class="currentTheme === 'dark' ? 'bg-grey-darken-3 text-white' : 'bg-white text-black'">
+    <v-card-title class="text-h6 font-weight-bold text-center">Confirm Deletion</v-card-title>
+    <v-card-text class="text-center">
+      Are you sure you want to delete this appointment?
+    </v-card-text>
+    <v-card-actions class="justify-center">
+      <v-btn text @click="deleteDialog = false">Cancel</v-btn>
+      <v-btn color="error" @click="deleteAppointment">Yes, Delete</v-btn>
+    </v-card-actions>
+  </v-card>
+</v-dialog>
+<!--for appointment edit-->
+<v-dialog v-model="editDialog" max-width="500px">
+  <v-card :class="currentTheme === 'dark' ? 'bg-grey-darken-3 text-white' : 'bg-white text-black'">
+    <v-card-title class="text-h6 font-weight-bold text-center">Edit Appointment</v-card-title>
+    <v-card-text>
+      <v-text-field
+        v-model="editedAppointment.appointment_date"
+        label="Date"
+        type="date"
+        dense
+      />
+      <v-text-field
+        v-model="editedAppointment.appointment_time"
+        label="Time"
+        type="time"
+        dense
+      />
+      <v-textarea
+        v-model="editedAppointment.message"
+        label="Message"
+        rows="3"
+        dense
+      />
+    </v-card-text>
+    <v-card-actions class="justify-center">
+      <v-btn text @click="editDialog = false">Cancel</v-btn>
+      <v-btn color="primary" @click="updateAppointment">Save Changes</v-btn>
+    </v-card-actions>
+  </v-card>
+</v-dialog>
+
 </template>
 
 <style scoped>
