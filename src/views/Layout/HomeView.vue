@@ -148,19 +148,9 @@ const saveAppointment = async () => {
 // MOUNT
 onMounted(async () => {
   theme.global.name.value = currentTheme.value
-
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
-
-  if (user) {
-    await fetchCurrentUser()
-    await fetchTutors()
-  } else {
-    console.log('No user session. Skipping data fetch.')
-  }
+  await fetchCurrentUser()
+  await fetchTutors()
 })
-
 //for collapsable drawer
 const drawer = ref(false)
 const mini = ref(false)
