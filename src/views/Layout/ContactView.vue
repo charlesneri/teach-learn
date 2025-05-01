@@ -1,39 +1,19 @@
 <script setup>
-import { ref, onMounted, watch, computed } from 'vue'
+/* Imports */
+import { ref, onMounted, onBeforeUnmount, watch, computed } from 'vue'
 import { useTheme } from 'vuetify'
+import { useRouter } from 'vue-router'
+import { supabase } from '@/utils/supabase'
 
+/*  Theme Management  */
 const theme = useTheme()
 const currentTheme = ref(localStorage.getItem('theme') || 'light')
-
-const dialog = ref(false)
-const loading = ref(false)
-const snackbar = ref(false)
-const snackbarMsg = ref('')
-const isEditing = ref(false)
-
-const profileImage = ref('')
-const selectedFile = ref(null)
-const maxSizeMB = 2
-
-const searchQuery = ref('')
-
-function performSearch() {
-  if (searchQuery.value.trim()) {
-    snackbarMsg.value = `You searched for: "${searchQuery.value}"`
-    snackbar.value = true
-  }
-}
-
-const profile = ref({
-  firstName: '',
-  lastName: '',
-  middleInitial: '',
-  age: '',
-  expertise: '',
-  email: '',
-  phone: '',
-  about: '',
-  education: ['', '', ''],
+watch(currentTheme, (val) => {
+  theme.global.name.value = val
+  localStorage.setItem('theme', val)
+})
+onMounted(() => {
+  theme.global.name.value = currentTheme.value
 })
 
 function toggleTheme() {
@@ -42,90 +22,65 @@ function toggleTheme() {
   localStorage.setItem('theme', currentTheme.value)
 }
 
-watch(currentTheme, (val) => {
-  theme.global.name.value = val
-  localStorage.setItem('theme', val)
-})
+/*  Drawer & Mobile  */
+const drawer = ref(false)
+const mini = ref(false)
+const isMobile = ref(false)
 
+function toggleDrawer() {
+  drawer.value = !drawer.value
+}
+
+function checkMobile() {
+  isMobile.value = window.innerWidth <= 768
+}
 onMounted(() => {
-  theme.global.name.value = currentTheme.value
-  const storedImage = localStorage.getItem('profileImage')
-  if (storedImage) profileImage.value = storedImage
+  checkMobile()
+  window.addEventListener('resize', checkMobile)
+})
+onBeforeUnmount(() => {
+  window.removeEventListener('resize', checkMobile)
 })
 
-watch(profileImage, (newVal) => {
-  if (newVal) localStorage.setItem('profileImage', newVal)
+/*  Supabase Auth  */
+const router = useRouter()
+const currentUserId = ref(null)
+const currentUserProfile = ref({
+  firstName: '',
+  lastName: '',
+  avatarUrl: '',
+  isPublicTutor: false,
 })
 
-function proceedWithApplication() {
-  loading.value = true
-  setTimeout(() => {
-    loading.value = false
-    dialog.value = false
-    snackbarMsg.value = 'Application submitted successfully!'
+async function handleLogoutClick() {
+  const { error } = await supabase.auth.signOut()
+  if (error) {
+    console.error('Logout failed:', error.message)
+    snackbarMsg.value = 'Logout failed. Try again.'
+    snackbarColor.value = 'red'
     snackbar.value = true
-  }, 2000)
-}
+    return
+  }
 
-function enableEdit() {
-  isEditing.value = true
-}
-function cancelEdit() {
-  isEditing.value = false
-}
-function saveProfile() {
-  isEditing.value = false
-  snackbarMsg.value = 'Profile saved!'
+  currentUserId.value = null
+  currentUserProfile.value = {
+    firstName: '',
+    lastName: '',
+    avatarUrl: '',
+    isPublicTutor: false,
+  }
+  localStorage.removeItem('theme')
+  snackbarMsg.value = 'Logged out successfully!'
+  snackbarColor.value = 'green'
   snackbar.value = true
+
+  setTimeout(() => {
+    router.push('/')
+  }, 1000)
 }
 
-function onImageSelected(event) {
-  const file = event.target.files[0]
-  if (!file) return
-
-  const allowedTypes = ['image/jpeg', 'image/png']
-  if (!allowedTypes.includes(file.type)) {
-    snackbarMsg.value = 'Only JPG and PNG files are allowed.'
-    snackbar.value = true
-    return
-  }
-
-  const sizeMB = file.size / 1024 / 1024
-  if (sizeMB > maxSizeMB) {
-    snackbarMsg.value = `File size exceeds ${maxSizeMB}MB limit.`
-    snackbar.value = true
-    return
-  }
-
-  selectedFile.value = file
-
-  const reader = new FileReader()
-  reader.onload = (e) => {
-    profileImage.value = e.target.result
-  }
-  reader.readAsDataURL(file)
-}
-
-function removeProfileImage() {
-  profileImage.value = ''
-  localStorage.removeItem('profileImage')
-}
-
-const fullName = computed(() => {
-  return `${profile.value.firstName} ${profile.value.middleInitial}. ${profile.value.lastName}`
-})
-
-function getEducationPlaceholder(index) {
-  if (index === 0) return 'Enter your school/university'
-  if (index === 1) return 'Enter your course or degree'
-  if (index === 2) return 'Enter your year level'
-  return 'Enter educational info'
-}
-
-// Set up  contacts
-
-// Reactive state variables
-const messageInput = ref('') // Single input field for messages
+/*  Contacts & Messaging  */
+const messageInput = ref('')
 const contacts = ref([
   {
     name: 'Erica Ellazo',
@@ -159,103 +114,140 @@ const contacts = ref([
   },
 ])
 
-// Methods
-const sendMessage = () => {
-  // Handle the logic to send a message
+function sendMessage() {
   console.log('Message sent:', messageInput.value)
-  messageInput.value = '' // Clear the input after sending the message
+  messageInput.value = ''
 }
 </script>
+
 <template>
   <v-app id="inspire">
-    <!-- App Bar -->
-    <v-app-bar
-      flat
-      :color="currentTheme === 'light' ? '#1565c0' : 'grey-darken-4'"
-      class="px-2 px-md-4"
-    >
-    <v-container fluid class="d-flex align-center justify-space-between pa-0">
-  <!-- Logo -->
-  <v-avatar color="#fff" size="44" class="mr-2">
-    <v-img src="image/Teach&Learn.png" alt="Logo" />
-  </v-avatar>
-
-  <!-- Spacer -->
-  <v-spacer />
-
-  <!-- Centered Desktop Links -->
-  <div class="d-none d-md-flex align-center me-5" style="gap: 24px">
-    <RouterLink to="/home" class="text-white text-decoration-none font-weight-medium">Home</RouterLink>
-    <RouterLink to="/about" class="text-white text-decoration-none font-weight-medium">About Us</RouterLink>
-    <RouterLink to="/contact" class="text-white text-decoration-none font-weight-medium">Contact Us</RouterLink>
-  </div>
-
-  <!-- Spacer -->
-  <v-spacer />
-
-  <!-- Notification Bell + Mobile Menu together -->
-  <div class="d-flex align-center gap-2">
-    
-    <!-- Notification Bell -->
-    <v-menu v-model="notificationMenu" offset-y close-on-content-click transition="scale-transition">
-      <template #activator="{ props }">
-        <v-btn icon v-bind="props" @click="toggleMenu">
-          <v-icon>mdi-bell</v-icon>
+    <!-- Drawer Sidebar (right, collapsible) -->
+    <transition name="fade-slide-up">
+      <v-navigation-drawer
+        v-if="drawer"
+        :temporary="isMobile"
+        :permanent="!isMobile"
+        :width="isMobile ? '100%' : 280"
+        right
+        app
+        :scrim="isMobile"
+        :style="{
+          backgroundColor: currentTheme === 'dark' ? '#424242' : '',
+          color: currentTheme === 'dark' ? '#ffffff' : '#000000',
+        }"
+      >
+        <!-- Menu Icon that toggles drawer size -->
+        <v-btn icon class="ms-5 d-lg-none" @click="toggleDrawer">
+          <v-icon>mdi-menu</v-icon>
         </v-btn>
-      </template>
-      <v-card min-width="300">
-        <v-list density="compact">
-          <v-list-item v-for="notification in notifications" :key="notification.id">
-            <v-list-item-content>
-              <v-list-item-title>{{ notification.title }}</v-list-item-title>
-              <v-list-item-subtitle>{{ notification.time }}</v-list-item-subtitle>
-            </v-list-item-content>
+        <!-- Profile -->
+        <v-sheet
+          class="pa-4 text-center"
+          rounded="lg"
+          :style="{
+            backgroundColor: currentTheme === 'dark' ? '#424242' : '',
+            color: currentTheme === 'dark' ? '#ffffff' : '#000000',
+          }"
+        >
+          <v-avatar size="100" class="mb-3">
+            <v-img v-if="currentUserProfile.avatarUrl" :src="currentUserProfile.avatarUrl" cover />
+            <v-icon v-else size="80">mdi-account</v-icon>
+          </v-avatar>
+          <h3 v-if="!mini">{{ currentUserProfile.firstName }} {{ currentUserProfile.lastName }}</h3>
+        </v-sheet>
+
+        <v-divider class="my-2" />
+
+        <v-list nav dense>
+          <v-list-item :to="'/home'" tag="RouterLink" @click="isMobile && (drawer = false)">
+            <div class="d-flex align-center" style="gap: 8px; width: 100%">
+              <v-icon size="30" style="margin-left: 15px">mdi-home-outline</v-icon>
+              <span v-if="!mini" class="icon-mdi">Home</span>
+            </div>
           </v-list-item>
-          <v-divider></v-divider>
-          <v-list-item>
-            <v-list-item-title class="text-center">
-              <v-btn text small @click="notifications = []">Clear All</v-btn>
-            </v-list-item-title>
+
+          <v-list-item :to="'/about'" tag="RouterLink" @click="isMobile && (drawer = false)">
+            <div class="d-flex align-center" style="gap: 8px; width: 100%">
+              <v-icon size="30" style="margin-left: 15px">mdi-information-outline</v-icon>
+              <span v-if="!mini" class="icon-mdi">About Us</span>
+            </div>
           </v-list-item>
+
+          <v-list-item :to="'/contact'" tag="RouterLink" @click="isMobile && (drawer = false)">
+            <div class="d-flex align-center" style="gap: 8px; width: 100%">
+              <v-icon size="30" style="margin-left: 15px">mdi-phone-outline</v-icon>
+              <span v-if="!mini" class="icon-mdi">Contact Us</span>
+            </div>
+          </v-list-item>
+
+          <v-divider class="my-2" />
+
+          <v-list-item :to="'/profile'" tag="RouterLink" @click="isMobile && (drawer = false)">
+            <div class="d-flex align-center" style="gap: 8px; width: 100%">
+              <v-icon size="30" style="margin-left: 15px">mdi-account-outline</v-icon>
+              <span v-if="!mini" class="icon-mdi">My Profile</span>
+            </div>
+          </v-list-item>
+
+          <v-list-item :to="'/appointments'" tag="RouterLink" @click="isMobile && (drawer = false)">
+            <div class="d-flex align-center" style="gap: 8px; width: 100%">
+              <v-icon size="30" style="margin-left: 15px">mdi-calendar</v-icon>
+              <span v-if="!mini" class="icon-mdi">My Appointments</span>
+            </div>
+          </v-list-item>
+
+          <v-list-item :to="'/appointments'" tag="RouterLink" @click="isMobile && (drawer = false)">
+            <div class="d-flex align-center" style="gap: 8px; width: 100%">
+              <v-icon size="30" style="margin-left: 15px"> mdi-delete-outline</v-icon>
+              <span v-if="!mini" class="icon-mdi">Delete History</span>
+            </div>
+          </v-list-item>
+
+          <v-divider class="my-2" />
+          <v-list-item @click="handleLogoutClick">
+            <div class="d-flex align-center" style="gap: 8px; width: 100%">
+              <v-icon size="30" style="margin-left: 15px">mdi-logout</v-icon>
+              <span v-if="!mini" class="icon-mdi">Logout</span>
+            </div>
+          </v-list-item>
+          <!-- Theme toggle -->
+          <div class="text-center mt-4">
+            <v-btn icon @click="toggleTheme">
+              <v-icon>{{
+                currentTheme === 'light' ? 'mdi-weather-night' : 'mdi-white-balance-sunny'
+              }}</v-icon>
+            </v-btn>
+          </div>
         </v-list>
-      </v-card>
-    </v-menu>
-
-    <!-- Mobile Menu (only shows in mobile) -->
-    <v-menu transition="scale-transition" offset-y>
-      <template #activator="{ props }">
-        <v-app-bar-nav-icon v-bind="props" class="d-md-none" />
-      </template>
-      <v-list>
-        <v-list-item link>
-          <RouterLink to="/" :class="[currentTheme === 'dark' ? 'text-white' : 'text-black']">Home</RouterLink>
-        </v-list-item>
-        <v-list-item link>
-          <RouterLink to="/profile" :class="[currentTheme === 'dark' ? 'text-white' : 'text-black']">My Profile</RouterLink>
-        </v-list-item>
-        <v-list-item link>
-          <RouterLink to="/appointments" :class="[currentTheme === 'dark' ? 'text-white' : 'text-black']">My Appointment</RouterLink>
-        </v-list-item>
-        <v-list-item link>
-          <RouterLink to="/about" :class="[currentTheme === 'dark' ? 'text-white' : 'text-black']">About Us</RouterLink>
-        </v-list-item>
-        <v-list-item link>
-          <RouterLink to="/contact" :class="[currentTheme === 'dark' ? 'text-white' : 'text-black']">Contact Us</RouterLink>
-        </v-list-item>
-        <v-divider></v-divider>
-        <v-list-item link>
-          <RouterLink to="/" :class="[currentTheme === 'dark' ? 'text-white' : 'text-black']">Logout</RouterLink>
-        </v-list-item>
-      </v-list>
-    </v-menu>
-
-  </div>
-</v-container>
-
+      </v-navigation-drawer>
+    </transition>
+    <!-- App Bar -->
+    <v-app-bar flat :color="currentTheme === 'light' ? '#1565c0' : 'grey-darken-4'">
+      <!-- Menu Icon that toggles drawer size -->
+      <v-btn icon class="ms-5" @click="toggleDrawer">
+        <v-icon>mdi-menu</v-icon>
+      </v-btn>
+      <v-container
+        class="d-flex align-center pa-0"
+        :class="{
+          'transition-all': !isMobile,
+          'no-transition': isMobile,
+        }"
+      >
+        <div class="search-wrapper">
+          <v-avatar color="#fff" size="50" class="logo me-6">
+            <v-img src="image/Teach&Learn.png" alt="Logo" />
+          </v-avatar>
+        </div>
+      </v-container>
     </v-app-bar>
 
     <!-- Main Content -->
-    <v-main :class="currentTheme === 'dark' ? 'bg-grey-darken-4 text-white' : 'bg-grey-lighten-3'">
+    <v-main  :style="{
+                backgroundColor: currentTheme === 'dark' ? '#424242' : '#fefcf9',
+                color: currentTheme === 'dark' ? '#ffffff' : '#000000',
+              }">
       <v-container fluid class="py-6 px-4 px-sm-6">
         <v-row justify="center">
           <!-- Adjusting the width of the column for responsiveness -->
@@ -263,7 +255,10 @@ const sendMessage = () => {
             <!-- Wider container, responsive on all screens -->
 
             <v-sheet
-              :class="currentTheme === 'dark' ? 'bg-grey-darken-3 text-white' : 'bg-white'"
+            :style="{
+                backgroundColor: currentTheme === 'dark' ? '#424242' : '#fefcf9',
+                color: currentTheme === 'dark' ? '#ffffff' : '#000000',
+              }"
               class="pa-6 pa-sm-8 text-center"
               elevation="2"
               rounded="lg"
@@ -273,7 +268,10 @@ const sendMessage = () => {
               <v-row dense class="mt-6" justify="center" align="stretch">
                 <v-col cols="12" sm="6" md="4" v-for="(contact, index) in contacts" :key="index">
                   <v-card
-                    :class="currentTheme === 'dark' ? 'bg-grey-darken-2 text-white' : 'bg-white'"
+                  :style="{
+                backgroundColor: currentTheme === 'dark' ? '#424242' : '#fefcf9',
+                color: currentTheme === 'dark' ? '#ffffff' : '#000000',
+              }"
                     elevation="5"
                     class="contact-card"
                   >
@@ -306,7 +304,10 @@ const sendMessage = () => {
               </v-row>
 
               <!-- Single Text Area for Message Input -->
-              <v-card class="mt-6">
+              <v-card class="mt-6"  :style="{
+                backgroundColor: currentTheme === 'dark' ? '#424242' : '#fefcf9',
+                color: currentTheme === 'dark' ? '#ffffff' : '#000000',
+              }">
                 <v-card-text>
                   <v-textarea
                     v-model="messageInput"
@@ -314,6 +315,7 @@ const sendMessage = () => {
                     placeholder="Type your message here..."
                     rows="4"
                     dense
+                    color="primary"
                   >
                     <template #append-inner>
                       <v-btn icon size="small" @click="sendMessage">
@@ -357,5 +359,105 @@ h1 {
 /* Adjust heading color for dark theme */
 body[data-theme='dark'] h1 {
   color: #e3f2fd; /* Lighter color for dark mode */
+}
+/* Drawer & App Bar */
+.v-navigation-drawer {
+  transition: all 0.3s ease;
+}
+.v-main {
+  transition: margin-right 0.3s ease;
+}
+
+/* Mini Drawer Logic */
+.drawer-hidden {
+  display: none !important;
+}
+
+/* Search Styles */
+.search-wrapper {
+  position: absolute;
+  top: 50%;
+  right: 16px;
+  transform: translateY(-50%);
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 12px;
+  z-index: 10;
+  max-width: none;
+  flex-wrap: nowrap;
+}
+.search-input {
+  width: 240px;
+  max-width: none;
+  transition: width 0.3s ease;
+}
+.logo {
+  width: 50px;
+  height: 50px;
+}
+.large-icon ::v-deep(.v-field__append-inner .v-icon) {
+  font-size: 28px !important;
+}
+
+/* Animations */
+.fade-slide-up-enter-active {
+  animation: fadeSlideUp 0.6s ease;
+}
+@keyframes fadeSlideUp {
+  0% {
+    opacity: 0;
+    transform: translateY(24px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.fade-slide-enter-active,
+.fade-slide-leave-active {
+  transition: all 0.4s ease;
+}
+.fade-slide-enter-from {
+  opacity: 0;
+  transform: translateY(16px);
+}
+.fade-slide-leave-to {
+  opacity: 0;
+  transform: scale(0.95);
+}
+.fade-slide-move {
+  transition: transform 0.3s ease;
+}
+
+/* Responsive */
+@media (max-width: 600px) {
+  .v-dialog__content {
+    padding: 8px !important;
+  }
+  .v-card-text,
+  .v-card-actions {
+    padding: 12px !important;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .v-navigation-drawer {
+    width: 100% !important;
+  }
+  .v-main {
+    padding-top: 64px;
+  }
+  .search-input {
+    width: 150px;
+    max-width: 100%;
+  }
+  .search-wrapper {
+    right: 12px;
+    gap: 8px;
+  }
+  .logo {
+    width: 40px;
+    height: 40px;
+  }
 }
 </style>
