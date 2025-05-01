@@ -128,59 +128,22 @@ const openAppointment = (tutor) => {
   appointmentDialog.value = true
 }
 
-
 const saveAppointment = async () => {
   try {
     if (!selectedTutor.value || !selectedDate.value || !selectedTime.value) {
       snackbarMsg.value = 'Please fill all fields!'
-      snackbarColor.value = 'error'
+      snackbarColor.value = 'red'
       snackbar.value = true
       return
     }
 
-    const { error } = await supabase.from('appointments').insert({
-      student_id: currentUserId.value,
-      mentor_id: selectedTutor.value.id,
-      student_name: `${currentUserProfile.value.firstName} ${currentUserProfile.value.lastName}`,
-      appointment_date: selectedDate.value,
-      appointment_time: selectedTime.value,
-      message: messageInput.value,
-      status: 'Pending',
-    })
+    // continue with logic...
+    // e.g., await supabase insert logic
 
-    snackbar.value = true
-    return
-  }
-
-  const { error } = await supabase.from('appointments').insert({
-    student_id: currentUserId.value,
-    mentor_id: selectedTutor.value.id,
-    student_name: `${currentUserProfile.value.firstName} ${currentUserProfile.value.lastName}`,
-    appointment_date: selectedDate.value,
-    appointment_time: selectedTime.value,
-    message: messageInput.value,
-   
-  })
-
-  snackbar.value = true
-  if (error) {
+  } catch (error) {
     console.error('Error saving appointment:', error)
-    snackbarMsg.value = 'Failed to book appointment. Try again.'
+    snackbarMsg.value = 'Failed to save appointment.'
     snackbarColor.value = 'red'
-  } else {
-    snackbarMsg.value = 'Appointment booked successfully!'
-    snackbarColor.value = 'green'
-    appointmentDialog.value = false
-
-    setTimeout(() => {
-      selectedDate.value = ''
-      selectedTime.value = ''
-      messageInput.value = ''
-    }
-  } catch (err) {
-    console.error('Error saving appointment:', err)
-    snackbarMsg.value = 'Failed to send appointment. Try again.'
-    snackbarColor.value = 'error'
     snackbar.value = true
   }
 }

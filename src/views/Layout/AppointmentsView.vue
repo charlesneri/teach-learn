@@ -213,6 +213,7 @@ const openAppointmentDetails = async (appointment) => {
   } else {
     selectedStudentProfile.value = data
   }
+
   detailsDialog.value = true
 }
 
@@ -519,10 +520,24 @@ const updateAppointment = async () => {
       {{ snackbarMsg }}
     </v-snackbar>
 
-    <!-- Main Content -->
+    <!-- MAIN CONTENT -->
     <v-main :class="currentTheme === 'dark' ? 'bg-grey-darken-4 text-white' : 'bg-grey-lighten-3'">
-      <v-container>
-        <h1 class="text-center my-6">My Appointments</h1>
+      <v-container fluid class="py-2 px-2">
+        <v-row justify="center">
+          <v-col cols="12" sm="11" md="8">
+            <v-sheet
+              :class="
+                currentTheme === 'dark'
+                  ? 'bg-grey-darken-4 text-white'
+                  : 'bg-white text-grey-darken-4'
+              "
+              class="pa-3 pa-sm-4 text-center"
+              elevation="1"
+              rounded="lg"
+              style="max-width: 1200px; min-height: 90vh"
+            >
+              <!-- Title -->
+              <h1 class="text-h6 text-sm-h5 font-weight-bold mb-3">Appointments</h1>
 
               <!-- Search & Sort -->
               <v-row class="mb-3" dense>
@@ -725,61 +740,6 @@ const updateAppointment = async () => {
             </v-sheet>
           </v-col>
         </v-row>
-
-        <!-- Appointment Cards -->
-        <v-row>
-          <v-col cols="12" md="4" v-for="appointment in filteredAppointments" :key="appointment.id">
-            <v-card>
-              <v-card-title>{{ appointment.student_name }}</v-card-title>
-              <v-card-subtitle>
-                {{ appointment.appointment_date }} @ {{ appointment.appointment_time }}
-              </v-card-subtitle>
-              <v-card-text>
-                {{ appointment.message || 'No message' }}
-              </v-card-text>
-              <v-card-actions>
-                <v-btn text color="primary" @click="openAppointmentDetails(appointment)">Details</v-btn>
-                <v-btn text color="error" @click="cancelAppointment(appointment.id)">Cancel</v-btn>
-              </v-card-actions>
-            </v-card>
-          </v-col>
-        </v-row>
-
-        <!-- No Appointments -->
-        <v-alert v-if="filteredAppointments.length === 0" type="info" class="mt-10">
-          No accepted appointments found.
-        </v-alert>
-
-        <!-- Details Dialog -->
-        <v-dialog v-model="detailsDialog" max-width="600">
-          <v-card>
-            <v-card-title>Appointment Details</v-card-title>
-            <v-card-text>
-              <div v-if="selectedStudentProfile">
-                <p><strong>Name:</strong> {{ selectedStudentProfile.first_name }} {{ selectedStudentProfile.last_name }}</p>
-                <p><strong>Email:</strong> {{ selectedStudentProfile.email }}</p>
-                <p><strong>Phone:</strong> {{ selectedStudentProfile.phone || 'N/A' }}</p>
-                <p><strong>School:</strong> {{ selectedStudentProfile.school || 'N/A' }}</p>
-                <p><strong>Degree:</strong> {{ selectedStudentProfile.degree || 'N/A' }}</p>
-                <p><strong>Year:</strong> {{ selectedStudentProfile.year || 'N/A' }}</p>
-                <p><strong>Expertise:</strong> {{ selectedStudentProfile.expertise || 'N/A' }}</p>
-              </div>
-              <div v-else>
-                <v-progress-circular indeterminate color="primary" />
-                Loading...
-              </div>
-            </v-card-text>
-            <v-card-actions>
-              <v-btn color="primary" @click="detailsDialog = false">Close</v-btn>
-            </v-card-actions>
-          </v-card>
-        </v-dialog>
-
-        <!-- Snackbar -->
-        <v-snackbar v-model="snackbar" :color="snackbarColor" timeout="3000">
-          {{ snackbarMsg }}
-        </v-snackbar>
-
       </v-container>
     </v-main>
   </v-app>
@@ -849,22 +809,47 @@ const updateAppointment = async () => {
 </template>
 
 <style scoped>
+/* Links */
 .active-click {
-  font-weight: bold;
+  font-weight: 700;
   text-decoration: none;
   transition: color 0.3s;
 }
+.active-click:active {
+  color: #d34b4b;
+}
 .active-click:hover {
-  color: #ff9800;
+  color: #2196f3;
 }
-.text-white {
-  color: white !important;
+
+/* Appointments Container */
+.appointments-container {
+  width: 100%;
+  max-width: 960px;
+  margin: auto;
+  padding: 24px;
 }
-.bg-grey-darken-4 {
-  background-color: #212121 !important;
+
+.appointments-list {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
 }
-.bg-grey-lighten-3 {
-  background-color: #f5f5f5 !important;
+
+/* Appointment Item */
+.appointment-item {
+  background-color: #ffffff;
+  border: 1px solid #ddd;
+  border-radius: 12px;
+  padding: 28px;
+  min-height: 200px;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.1);
+  transition:
+    transform 0.3s,
+    box-shadow 0.3s;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
 }
 
 .appointment-item:hover {
