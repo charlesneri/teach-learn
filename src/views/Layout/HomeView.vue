@@ -1,13 +1,13 @@
 <script setup>
-import { ref, computed, onMounted, onBeforeUnmount, watch } from 'vue' // ✅ now includes computed
+import { ref, computed, onMounted, onBeforeUnmount, watch } from 'vue'
 import { useTheme } from 'vuetify'
 import { useRouter, RouterLink } from 'vue-router'
 import { supabase } from '@/utils/supabase'
-const datePickerOpen = ref(false)
-const timePickerOpen = ref(false)
 
-// THEME SETUP
+const router = useRouter()
 const theme = useTheme()
+
+// === Theme Setup ===
 const currentTheme = ref(localStorage.getItem('theme') || 'light')
 
 const toggleTheme = () => {
@@ -15,12 +15,38 @@ const toggleTheme = () => {
   theme.global.name.value = currentTheme.value
   localStorage.setItem('theme', currentTheme.value)
 }
+
 watch(currentTheme, (val) => {
   theme.global.name.value = val
   localStorage.setItem('theme', val)
 })
 
-const router = useRouter()
+// === Drawer & Layout ===
+const drawer = ref(false)
+const mini = ref(false)
+const isMobile = ref(false)
+
+const toggleDrawer = () => {
+  drawer.value = !drawer.value
+}
+
+const checkMobile = () => {
+  isMobile.value = window.innerWidth <= 768
+}
+
+// === Snackbar ===
+const snackbar = ref(false)
+const snackbarMsg = ref('')
+const snackbarColor = ref('')
+
+// === Auth & User Profile ===
+const currentUserId = ref(null)
+const currentUserProfile = ref({
+  firstName: '',
+  lastName: '',
+  avatarUrl: '',
+  isPublicTutor: false,
+})
 
 const handleLogoutClick = async () => {
   const { error } = await supabase.auth.signOut()
@@ -33,7 +59,6 @@ const handleLogoutClick = async () => {
     return
   }
 
-  // Clear local state
   currentUserId.value = null
   currentUserProfile.value = {
     firstName: '',
@@ -41,33 +66,17 @@ const handleLogoutClick = async () => {
     avatarUrl: '',
     isPublicTutor: false,
   }
-  localStorage.removeItem('theme') // or any session-related key
+  localStorage.removeItem('theme')
 
   snackbarMsg.value = 'Logged out successfully!'
   snackbarColor.value = 'green'
   snackbar.value = true
 
-  // Redirect after short delay
   setTimeout(() => {
     router.push('/')
   }, 1000)
 }
 
-// STATES
-const tutors = ref([])
-const selectedTutor = ref(null)
-const profileDialog = ref(false)
-const appointmentDialog = ref(false)
-const selectedDate = ref('')
-const selectedTime = ref('')
-const messageInput = ref('')
-const snackbar = ref(false)
-const snackbarMsg = ref('')
-const snackbarColor = ref('')
-const currentUserId = ref(null)
-const currentUserProfile = ref({ firstName: '', lastName: '', avatarUrl: '', isPublicTutor: false })
-
-// FETCH USER
 const fetchCurrentUser = async () => {
   const {
     data: { user },
@@ -90,13 +99,21 @@ const fetchCurrentUser = async () => {
   }
 }
 
-// FETCH TUTORS
+// === Tutors & Appointment State ===
+const tutors = ref([])
+const selectedTutor = ref(null)
+const profileDialog = ref(false)
+const appointmentDialog = ref(false)
+const selectedDate = ref('')
+const selectedTime = ref('')
+const messageInput = ref('')
+
+// === Tutor Actions ===
 const fetchTutors = async () => {
   const { data } = await supabase.from('profiles').select('*').eq('is_public_tutor', true)
   tutors.value = data || []
 }
 
-// ACTIONS
 const viewTutor = (tutor) => {
   selectedTutor.value = tutor
   profileDialog.value = true
@@ -106,6 +123,7 @@ const openAppointment = (tutor) => {
   selectedTutor.value = tutor
   appointmentDialog.value = true
 }
+
 const saveAppointment = async () => {
   if (!selectedDate.value || !selectedTime.value || !selectedTutor.value || !currentUserId.value) {
     snackbarMsg.value = 'Please complete all fields before booking.'
@@ -117,7 +135,7 @@ const saveAppointment = async () => {
   const { error } = await supabase.from('appointments').insert({
     student_id: currentUserId.value,
     mentor_id: selectedTutor.value.id,
-    student_name: `${currentUserProfile.firstName} ${currentUserProfile.lastName}`,
+    student_name: `${currentUserProfile.value.firstName} ${currentUserProfile.value.lastName}`,
     appointment_date: selectedDate.value,
     appointment_time: selectedTime.value,
     message: messageInput.value,
@@ -132,7 +150,6 @@ const saveAppointment = async () => {
   } else {
     snackbarMsg.value = 'Appointment booked successfully!'
     snackbarColor.value = 'green'
-
     appointmentDialog.value = false
 
     setTimeout(() => {
@@ -145,42 +162,12 @@ const saveAppointment = async () => {
   }
 }
 
-// MOUNT
-onMounted(async () => {
-  theme.global.name.value = currentTheme.value
-  await fetchCurrentUser()
-  await fetchTutors()
-})
-//for collapsable drawer
-const drawer = ref(false)
-const mini = ref(false)
-const isMobile = ref(false)
-
-const toggleDrawer = () => {
-  drawer.value = !drawer.value
-}
-const checkMobile = () => {
-  isMobile.value = window.innerWidth <= 768
-}
-
-onMounted(() => {
-  checkMobile()
-  window.addEventListener('resize', checkMobile)
-})
-
-onBeforeUnmount(() => {
-  window.removeEventListener('resize', checkMobile)
-})
-
-//search
-
+// === Search ===
 const showSearch = ref(false)
 const searchQuery = ref('')
 
 const toggleSearch = () => {
-  if (showSearch.value) {
-    searchQuery.value = ''
-  }
+  if (showSearch.value) searchQuery.value = ''
   showSearch.value = !showSearch.value
 }
 
@@ -188,13 +175,25 @@ const filteredTutors = computed(() => {
   if (!searchQuery.value.trim()) return tutors.value
 
   const keyword = searchQuery.value.trim().toLowerCase()
-
   return tutors.value.filter((tutor) => {
     const fullName =
       `${tutor.first_name || ''} ${tutor.middle_initial || ''} ${tutor.last_name || ''}`.toLowerCase()
     const expertise = (tutor.expertise || '').toLowerCase()
     return fullName.includes(keyword) || expertise.includes(keyword)
   })
+})
+
+// === Mount Lifecycle ===
+onMounted(async () => {
+  theme.global.name.value = currentTheme.value
+  checkMobile()
+  window.addEventListener('resize', checkMobile)
+  await fetchCurrentUser()
+  await fetchTutors()
+})
+
+onBeforeUnmount(() => {
+  window.removeEventListener('resize', checkMobile)
 })
 </script>
 
