@@ -15,39 +15,14 @@ watch(currentTheme, (val) => {
 })
 const toggleTheme = () => {
   currentTheme.value = currentTheme.value === 'light' ? 'dark' : 'light'
-}
-
-// INITIALIZE THEME ON LOAD
-onMounted(() => {
   theme.global.name.value = currentTheme.value
-  checkMobile()
-  window.addEventListener('resize', checkMobile)
-
-  const storedImage = localStorage.getItem('profileImage')
-  if (storedImage) profileImage.value = storedImage
-})
-
-onBeforeUnmount(() => {
-  window.removeEventListener('resize', checkMobile)
-})
+  localStorage.setItem('theme', currentTheme.value)
+}
 
 // PROFILE IMAGE
 const profileImage = ref('')
 watch(profileImage, (newVal) => {
   if (newVal) localStorage.setItem('profileImage', newVal)
-})
-
-// PROFILE FORM
-const profile = ref({
-  firstName: '',
-  lastName: '',
-  middleInitial: '',
-  age: '',
-  expertise: '',
-  email: '',
-  phone: '',
-  about: '',
-  education: ['', '', ''],
 })
 
 // CURRENT USER
@@ -59,6 +34,38 @@ const currentUserProfile = ref({
 })
 const currentUserId = ref(null)
 
+const fetchCurrentUser = async () => {
+  const {
+    data: { user },
+    error,
+  } = await supabase.auth.getUser()
+
+  if (error) {
+    console.error('Error fetching user:', error)
+    return
+  }
+
+  if (user) {
+    currentUserId.value = user.id
+    const { data, error: profileError } = await supabase
+      .from('profiles')
+      .select('first_name, last_name, avatar_url, is_public_tutor')
+      .eq('id', user.id)
+      .single()
+
+    if (profileError) {
+      console.error('Error fetching profile:', profileError)
+    } else if (data) {
+      currentUserProfile.value = {
+        firstName: data.first_name || '',
+        lastName: data.last_name || '',
+        avatarUrl: data.avatar_url || '',
+        isPublicTutor: data.is_public_tutor || false,
+      }
+    }
+  }
+}
+
 // SNACKBAR
 const snackbar = ref(false)
 const snackbarMsg = ref('')
@@ -68,12 +75,14 @@ const snackbarColor = ref('')
 const drawer = ref(false)
 const mini = ref(false)
 const isMobile = ref(false)
-const showSearch = ref(false)
-const searchQuery = ref('')
+//const showSearch = ref(false)
+//const searchQuery = ref('')
 
 const toggleDrawer = () => {
   drawer.value = !drawer.value
 }
+
+/*
 const toggleSearch = () => {
   if (showSearch.value) searchQuery.value = ''
   showSearch.value = !showSearch.value
@@ -81,7 +90,7 @@ const toggleSearch = () => {
 const closeSearch = () => {
   showSearch.value = false
   searchQuery.value = ''
-}
+}*/
 const checkMobile = () => {
   isMobile.value = window.innerWidth <= 768
 }
@@ -115,12 +124,41 @@ const handleLogoutClick = async () => {
     router.push('/')
   }, 1000)
 }
+
+// PROFILE FORM
+const profile = ref({
+  firstName: '',
+  lastName: '',
+  middleInitial: '',
+  age: '',
+  expertise: '',
+  email: '',
+  phone: '',
+  about: '',
+  education: ['', '', ''],
+})
+
+// INIT
+onMounted(async () => {
+  theme.global.name.value = currentTheme.value
+  checkMobile()
+  window.addEventListener('resize', checkMobile)
+
+  const storedImage = localStorage.getItem('profileImage')
+  if (storedImage) profileImage.value = storedImage
+
+  await fetchCurrentUser()
+})
+
+onBeforeUnmount(() => {
+  window.removeEventListener('resize', checkMobile)
+})
 </script>
 
 <template>
   <v-app id="inspire">
     <!-- Drawer Sidebar (right, collapsible) -->
-    <transition name="fade-slide-up">
+    <transi name="fade-slide-up">
       <v-navigation-drawer
         v-if="drawer"
         :temporary="isMobile"
@@ -218,7 +256,7 @@ const handleLogoutClick = async () => {
           </div>
         </v-list>
       </v-navigation-drawer>
-    </transition  tion>
+    </transi  tion>
     <!-- App Bar -->
     <v-app-bar flat :color="currentTheme === 'light' ? '#1565c0' : 'grey-darken-4'">
       <!-- Menu Icon that toggles drawer size -->
@@ -233,24 +271,7 @@ const handleLogoutClick = async () => {
         }"
       >
         <div class="search-wrapper">
-          <!-- Search Input -->
-          <v-text-field
-            v-if="showSearch"
-            v-model="searchQuery"
-            placeholder="Search..."
-            density="compact"
-            hide-details
-            flat
-            clearable
-            class="search-input large-icon"
-            append-inner-icon="mdi-magnify"
-            @blur="closeSearch"
-            autofocus
-          />
-          <!-- Toggle Button -->
-          <v-btn icon @click="toggleSearch">
-            <v-icon>{{ showSearch ? 'mdi-close' : 'mdi-magnify' }}</v-icon>
-          </v-btn>
+       
           <v-avatar color="#fff" size="50" class="logo me-6">
             <v-img src="image/Teach&Learn.png" alt="Logo" />
           </v-avatar>

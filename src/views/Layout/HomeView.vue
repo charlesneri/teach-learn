@@ -444,6 +444,8 @@ onBeforeUnmount(() => {
                                 Set an Appointment
                               </span>
                               <span v-else class="text-grey text-caption"> (My profile) </span>
+                              <!--display the number of star added to the user as rating-->
+                              <div><v-icon>mdi-star</v-icon>{{  }}</div>
                             </div>
                           </v-fade-transition>
                         </v-col>

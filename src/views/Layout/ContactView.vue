@@ -1,14 +1,14 @@
 <script setup>
-/* Imports */
+/* === Imports === */
 import { ref, onMounted, onBeforeUnmount, watch } from 'vue'
 import { useTheme } from 'vuetify'
 import { useRouter } from 'vue-router'
 import { supabase } from '@/utils/supabase'
 
-/* Router */
+/* === Router === */
 const router = useRouter()
 
-/* Theme Management */
+/* === Theme === */
 const theme = useTheme()
 const currentTheme = ref(localStorage.getItem('theme') || 'light')
 
@@ -23,7 +23,7 @@ watch(currentTheme, (val) => {
   localStorage.setItem('theme', val)
 })
 
-/* Responsive Drawer & Mobile Detection */
+/* === Responsive Drawer & Mobile === */
 const drawer = ref(false)
 const mini = ref(false)
 const isMobile = ref(false)
@@ -36,17 +36,12 @@ const checkMobile = () => {
   isMobile.value = window.innerWidth <= 768
 }
 
-onMounted(() => {
-  theme.global.name.value = currentTheme.value
-  checkMobile()
-  window.addEventListener('resize', checkMobile)
-})
+/* === Snackbar === */
+const snackbar = ref(false)
+const snackbarMsg = ref('')
+const snackbarColor = ref('')
 
-onBeforeUnmount(() => {
-  window.removeEventListener('resize', checkMobile)
-})
-
-/* Supabase Auth & Logout */
+/* === User Profile === */
 const currentUserId = ref(null)
 const currentUserProfile = ref({
   firstName: '',
@@ -55,10 +50,27 @@ const currentUserProfile = ref({
   isPublicTutor: false,
 })
 
-const snackbar = ref(false)
-const snackbarMsg = ref('')
-const snackbarColor = ref('')
+const fetchCurrentUser = async () => {
+  const { data: { user } } = await supabase.auth.getUser()
+  if (user) {
+    currentUserId.value = user.id
+    const { data } = await supabase
+      .from('profiles')
+      .select('first_name, last_name, avatar_url, is_public_tutor')
+      .eq('id', user.id)
+      .single()
+    if (data) {
+      currentUserProfile.value = {
+        firstName: data.first_name || '',
+        lastName: data.last_name || '',
+        avatarUrl: data.avatar_url || '',
+        isPublicTutor: data.is_public_tutor || false,
+      }
+    }
+  }
+}
 
+/* === Logout === */
 const handleLogoutClick = async () => {
   const { error } = await supabase.auth.signOut()
 
@@ -70,7 +82,6 @@ const handleLogoutClick = async () => {
     return
   }
 
-  // Reset session data
   currentUserId.value = null
   currentUserProfile.value = {
     firstName: '',
@@ -90,7 +101,15 @@ const handleLogoutClick = async () => {
   }, 1000)
 }
 
-/* Contact & Messaging Section */
+/* === Tutors === */
+const tutors = ref([])
+
+const fetchTutors = async () => {
+  const { data } = await supabase.from('profiles').select('*').eq('is_public_tutor', true)
+  tutors.value = data || []
+}
+
+/* === Messaging === */
 const messageInput = ref('')
 const contacts = ref([
   {
@@ -129,6 +148,20 @@ const sendMessage = () => {
   console.log('Message sent:', messageInput.value)
   messageInput.value = ''
 }
+
+/* === Lifecycle Hooks === */
+onMounted(async () => {
+  theme.global.name.value = currentTheme.value
+  checkMobile()
+  window.addEventListener('resize', checkMobile)
+
+  await fetchCurrentUser()
+  await fetchTutors()
+})
+
+onBeforeUnmount(() => {
+  window.removeEventListener('resize', checkMobile)
+})
 </script>
 
 <template>

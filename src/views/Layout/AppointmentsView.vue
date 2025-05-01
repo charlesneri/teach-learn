@@ -1,31 +1,28 @@
 <script setup>
-import { ref, onMounted, onBeforeUnmount, watch, computed } from 'vue'
+import { ref, computed, onMounted, onBeforeUnmount, watch } from 'vue'
 import { useTheme } from 'vuetify'
 import { useRouter } from 'vue-router'
 import { supabase } from '@/utils/supabase'
 
-/*  THEME  */
+// THEME
 const theme = useTheme()
 const currentTheme = ref(localStorage.getItem('theme') || 'light')
-
+watch(currentTheme, (val) => {
+  theme.global.name.value = val
+  localStorage.setItem('theme', val)
+})
 const toggleTheme = () => {
   currentTheme.value = currentTheme.value === 'light' ? 'dark' : 'light'
   theme.global.name.value = currentTheme.value
   localStorage.setItem('theme', currentTheme.value)
 }
 
-watch(currentTheme, (val) => {
-  theme.global.name.value = val
-  localStorage.setItem('theme', val)
-})
-
-/*  ROUTER & UI  */
+// ROUTER & UI
 const router = useRouter()
 const drawer = ref(false)
 const mini = ref(false)
 const isMobile = ref(false)
 const showSearch = ref(false)
-
 const toggleDrawer = () => (drawer.value = !drawer.value)
 const toggleSearch = () => {
   if (showSearch.value) searchQuery.value = ''
@@ -39,7 +36,7 @@ const checkMobile = () => {
   isMobile.value = window.innerWidth <= 768
 }
 
-/*  SNACKBAR & NOTIFICATIONS  */
+// SNACKBAR & NOTIFICATIONS
 const snackbar = ref(false)
 const snackbarMsg = ref('')
 const snackbarColor = ref('')
@@ -47,7 +44,7 @@ const notificationMenu = ref(false)
 const notifications = ref([{ id: 1, title: 'No new notifications', time: '' }])
 const toggleMenu = () => (notificationMenu.value = !notificationMenu.value)
 
-/*  USER  */
+// USER
 const profileImage = ref('')
 const currentUserId = ref(null)
 const currentUserProfile = ref({
@@ -56,15 +53,39 @@ const currentUserProfile = ref({
   avatarUrl: '',
   isPublicTutor: false,
 })
-
 watch(profileImage, (newVal) => {
   if (newVal) localStorage.setItem('profileImage', newVal)
 })
 
-/*  LOGOUT  */
+const fetchCurrentUser = async () => {
+  const { data: { user }, error } = await supabase.auth.getUser()
+  if (error) {
+    console.error('Error fetching user:', error)
+    return
+  }
+  if (user) {
+    currentUserId.value = user.id
+    const { data, error: profileError } = await supabase
+      .from('profiles')
+      .select('first_name, last_name, avatar_url, is_public_tutor')
+      .eq('id', user.id)
+      .single()
+    if (profileError) {
+      console.error('Error fetching profile:', profileError)
+    } else if (data) {
+      currentUserProfile.value = {
+        firstName: data.first_name || '',
+        lastName: data.last_name || '',
+        avatarUrl: data.avatar_url || '',
+        isPublicTutor: data.is_public_tutor || false,
+      }
+    }
+  }
+}
+
+// LOGOUT
 const handleLogoutClick = async () => {
   const { error } = await supabase.auth.signOut()
-
   if (error) {
     console.error('Logout failed:', error.message)
     snackbarMsg.value = 'Logout failed. Try again.'
@@ -72,7 +93,6 @@ const handleLogoutClick = async () => {
     snackbar.value = true
     return
   }
-
   currentUserId.value = null
   currentUserProfile.value = {
     firstName: '',
@@ -81,17 +101,15 @@ const handleLogoutClick = async () => {
     isPublicTutor: false,
   }
   localStorage.removeItem('theme')
-
   snackbarMsg.value = 'Logged out successfully!'
   snackbarColor.value = 'green'
   snackbar.value = true
-
   setTimeout(() => {
     router.push('/')
   }, 1000)
 }
 
-/*  APPOINTMENTS  */
+// APPOINTMENTS
 const searchQuery = ref('')
 const selectedSort = ref('')
 const appointments = ref([])
@@ -104,12 +122,10 @@ const fetchStudentAppointments = async () => {
              student:student_id(id, first_name, last_name)`)
     .eq('student_id', currentUserId.value)
     .order('appointment_date', { ascending: true })
-
   if (error) {
     console.error('Error fetching student appointments:', error)
     return []
   }
-
   return data || []
 }
 
@@ -121,12 +137,10 @@ const fetchMentorAppointments = async () => {
              student:student_id(id, first_name, last_name)`)
     .eq('mentor_id', currentUserId.value)
     .order('appointment_date', { ascending: true })
-
   if (error) {
     console.error('Error fetching mentor appointments:', error)
     return []
   }
-
   return data || []
 }
 
@@ -136,20 +150,16 @@ const fetchAppointments = async () => {
     console.error('Error fetching user:', userError)
     return
   }
-
   currentUserId.value = userData.user.id
-
   const [studentAppointments, mentorAppointments] = await Promise.all([
     fetchStudentAppointments(),
     fetchMentorAppointments(),
   ])
-
   appointments.value = [...studentAppointments, ...mentorAppointments]
 }
 
 const filteredAppointments = computed(() => {
   let temp = [...appointments.value]
-
   if (searchQuery.value.trim()) {
     const query = searchQuery.value.toLowerCase()
     temp = temp.filter((appointment) => {
@@ -158,7 +168,6 @@ const filteredAppointments = computed(() => {
       return studentName.includes(query) || mentorName.includes(query)
     })
   }
-
   if (selectedSort.value === 'A-Z') {
     temp.sort((a, b) => {
       const nameA = `${a.student?.first_name || ''} ${a.student?.last_name || ''}`.toLowerCase()
@@ -168,7 +177,6 @@ const filteredAppointments = computed(() => {
   } else if (selectedSort.value === 'Date') {
     temp.sort((a, b) => new Date(a.appointment_date) - new Date(b.appointment_date))
   }
-
   return temp
 })
 
@@ -180,37 +188,31 @@ const performSearch = () => {
   }
 }
 
-/*  APPOINTMENT DETAILS  */
 const selectedAppointment = ref(null)
 const selectedStudentProfile = ref(null)
 const detailsDialog = ref(false)
-
 const openAppointmentDetails = async (appointment) => {
   selectedAppointment.value = appointment
   selectedStudentProfile.value = null
-
   const { data, error } = await supabase
     .from('profiles')
     .select('first_name, last_name, email, phone, about, school, degree, year, expertise, avatar_url')
     .eq('id', appointment.student?.id)
     .single()
-
   if (error) {
     console.error('Error fetching student profile:', error)
   } else {
     selectedStudentProfile.value = data
   }
-
   detailsDialog.value = true
 }
 
-/*  LIFECYCLE  */
-onMounted(() => {
-  fetchAppointments()
+onMounted(async () => {
+  await fetchAppointments()
+  await fetchCurrentUser()
   theme.global.name.value = currentTheme.value
   checkMobile()
   window.addEventListener('resize', checkMobile)
-
   const storedImage = localStorage.getItem('profileImage')
   if (storedImage) profileImage.value = storedImage
 })
@@ -219,6 +221,7 @@ onBeforeUnmount(() => {
   window.removeEventListener('resize', checkMobile)
 })
 </script>
+
 <template>
   <v-app id="inspire">
   
@@ -297,7 +300,7 @@ onBeforeUnmount(() => {
             </div>
           </v-list-item>
 
-          <v-list-item :to="'/appointments'" tag="RouterLink" @click="isMobile && (drawer = false)">
+          <v-list-item  tag="RouterLink" @click="isMobile && (drawer = false)">
             <div class="d-flex align-center" style="gap: 8px; width: 100%">
               <v-icon size="30" style="margin-left: 15px"> mdi-delete-outline</v-icon>
               <span v-if="!mini" class="icon-mdi">Delete History</span>
@@ -336,24 +339,7 @@ onBeforeUnmount(() => {
         }"
       >
         <div class="search-wrapper">
-          <!-- Search Input -->
-          <v-text-field
-            v-if="showSearch"
-            v-model="searchQuery"
-            placeholder="Search..."
-            density="compact"
-            hide-details
-            flat
-            clearable
-            class="search-input large-icon"
-            append-inner-icon="mdi-magnify"
-            @blur="closeSearch"
-            autofocus
-          />
-          <!-- Toggle Button -->
-          <v-btn icon @click="toggleSearch">
-            <v-icon>{{ showSearch ? 'mdi-close' : 'mdi-magnify' }}</v-icon>
-          </v-btn>
+         
           <v-avatar color="#fff" size="50" class="logo me-6">
             <v-img src="image/Teach&Learn.png" alt="Logo" />
           </v-avatar>
@@ -468,12 +454,16 @@ onBeforeUnmount(() => {
   View Details
 </span>
    <v-spacer></v-spacer>
+<!--this delete appointment for  both the user and mentors appointments to cancel appointment there is a pop up where user willl be ask if are you sure you want to delete this appointment  answerable by yes or no-->
 <span
-  @click="openAppointmentDetails(appointment)"
+  @click=""
   class="text-center text-decoration-none text-primary cursor-pointer"
 >
   Delete Appointment
 </span>
+<v-spacer></v-spacer>
+<!--by clicking this there is a pop up with 5 star that colorable, user can fill color of how many star the user give to the mentor as a rate and all total star givein to the user will appear in the home page-->
+<span @click="">Rate</span>
                     </div>
                 
                  
@@ -730,6 +720,138 @@ onBeforeUnmount(() => {
   .appointment-item {
     word-break: break-word;
     text-align: center;
+  }
+}
+
+/*sa drawer*/
+
+
+/* General Styling */
+.active-click {
+  font-weight: 700;
+  text-decoration: none;
+  transition: color 0.3s;
+}
+.active-click:active {
+  color: #d34b4b;
+}
+.active-click:hover {
+  color: #2196f3;
+}
+
+/* Fade Animation */
+.fade-in {
+  animation: fadeIn 0.6s ease-in;
+}
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Drawer & App Bar */
+.v-navigation-drawer {
+  transition: all 0.3s ease;
+}
+.v-main {
+  transition: margin-right 0.3s ease;
+}
+.drawer-hidden {
+  display: none !important;
+}
+
+/* Search Bar Styling */
+.search-wrapper {
+  position: absolute;
+  top: 50%;
+  right: 16px;
+  transform: translateY(-50%);
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 12px;
+  z-index: 10;
+  max-width: none;
+  flex-wrap: nowrap;
+}
+.search-input {
+  width: 240px;
+  max-width: none;
+  transition: width 0.3s ease;
+}
+.logo {
+  width: 50px;
+  height: 50px;
+}
+.large-icon ::v-deep(.v-field__append-inner .v-icon) {
+  font-size: 28px !important;
+}
+
+/* Drawer Animation */
+.fade-slide-up-enter-active {
+  animation: fadeSlideUp 0.6s ease;
+}
+@keyframes fadeSlideUp {
+  0% {
+    opacity: 0;
+    transform: translateY(24px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Transition for Lists */
+.fade-slide-enter-active,
+.fade-slide-leave-active {
+  transition: all 0.4s ease;
+}
+.fade-slide-enter-from {
+  opacity: 0;
+  transform: translateY(16px);
+}
+.fade-slide-leave-to {
+  opacity: 0;
+  transform: scale(0.95);
+}
+.fade-slide-move {
+  transition: transform 0.3s ease;
+}
+
+/* Mobile Responsiveness */
+@media (max-width: 600px) {
+  .v-dialog__content {
+    padding: 8px !important;
+  }
+  .v-card-text,
+  .v-card-actions {
+    padding: 12px !important;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .v-navigation-drawer {
+    width: 100% !important;
+  }
+  .v-main {
+    padding-top: 64px;
+  }
+  .search-input {
+    width: 150px;
+    max-width: 100%;
+  }
+  .search-wrapper {
+    right: 12px;
+    gap: 8px;
+  }
+  .logo {
+    width: 40px;
+    height: 40px;
   }
 }
 </style>
