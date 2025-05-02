@@ -115,9 +115,9 @@ const appointments = ref([])
 const fetchStudentAppointments = async () => {
   const { data, error } = await supabase
     .from('appointments')
-    .select(`id, appointment_date, appointment_time, message,
-             mentor:mentor_id(id, first_name, last_name),
-             student:student_id(id, first_name, last_name)`)
+    .select(`id, appointment_date, appointment_time, message, created_at,
+         mentor:mentor_id(id, first_name, last_name),
+         student:student_id(id, first_name, last_name)`)
     .eq('student_id', currentUserId.value)
     .order('appointment_date', { ascending: true })
   if (error) {
@@ -127,6 +127,14 @@ const fetchStudentAppointments = async () => {
   return data || []
 }
 
+//for the new entry label
+const isNewAppointment = (createdAt) => {
+  if (!createdAt) return false
+  const now = new Date()
+  const created = new Date(createdAt)
+  return (now - created) < 1000 * 60 * 60 * 24 // within 24 hours
+}
+//until here
 const fetchMentorAppointments = async () => {
   const { data, error } = await supabase
     .from('appointments')
@@ -421,9 +429,9 @@ const updateAppointment = async () => {
         app
         :scrim="isMobile"
         :style="{
-          backgroundColor: currentTheme === 'dark' ? '#424242' : '',
-          color: currentTheme === 'dark' ? '#ffffff' : '#000000',
-        }"
+            backgroundColor: currentTheme === 'dark' ? '#424242' : '',
+            color: currentTheme === 'dark' ? '#ffffff' : '#000000',
+          }"
       >
         <!-- Menu Icon that toggles drawer size -->
         <v-btn icon class="ms-5 d-lg-none" @click="toggleDrawer">
@@ -434,9 +442,9 @@ const updateAppointment = async () => {
           class="pa-4 text-center"
           rounded="lg"
           :style="{
-        backgroundColor: currentTheme === 'dark' ? '#424242' : '#fefcf9',
-        color: currentTheme === 'dark' ? '#ffffff' : '#000000',
-      }"  
+            backgroundColor: currentTheme === 'dark' ? '#424242' : '',
+            color: currentTheme === 'dark' ? '#ffffff' : '#000000',
+          }"  
         >
           <v-avatar size="100" class="mb-3">
             <v-img v-if="currentUserProfile.avatarUrl" :src="currentUserProfile.avatarUrl" cover />
@@ -511,7 +519,7 @@ const updateAppointment = async () => {
       </v-navigation-drawer>
     </transition>
     <!-- App Bar -->
-    <v-app-bar flat :color="currentTheme === 'light' ? '#1565c0' : 'grey-darken-4'">
+    <v-app-bar flat :color="currentTheme === 'light' ? '#1565c0' : '#000000'">
       <!-- Menu Icon that toggles drawer size -->
       <v-btn icon class="ms-5" @click="toggleDrawer">
         <v-icon>mdi-menu</v-icon>
@@ -544,20 +552,23 @@ const updateAppointment = async () => {
     </v-snackbar>
 
     <!-- MAIN CONTENT -->
-    <v-main :class="currentTheme === 'dark' ? 'bg-grey-darken-4 text-white' : 'bg-grey-lighten-3'">
+    <v-main       :style="{
+        backgroundColor: currentTheme === 'dark' ? '#222222' : '#fefcf9',
+        color: currentTheme === 'dark' ? '#ffffff' : '#000000',
+      }">
       <v-container fluid class="py-2 px-2">
         <v-row justify="center">
           <v-col cols="12" sm="11" md="8">
             <v-sheet
-              :class="
-                currentTheme === 'dark'
-                  ? 'bg-grey-darken-4 text-white'
-                  : 'bg-white text-grey-darken-4'
-              "
+       
               class="pa-3 pa-sm-4 text-center"
               elevation="1"
               rounded="lg"
               style="max-width: 1200px; min-height: 90vh"
+              :style="{
+            backgroundColor: currentTheme === 'dark' ? '#424242' : '',
+            color: currentTheme === 'dark' ? '#ffffff' : '#000000',
+          }"
             >
               <!-- Title -->
               <h1 class=" mb-3">Appointments</h1>
@@ -566,6 +577,7 @@ const updateAppointment = async () => {
               <v-row class="mb-3" dense>
                 <v-col cols="12" sm="6">
                   <v-text-field
+              
                     v-model="searchQuery"
                     placeholder="Search"
                     variant="solo-filled"
@@ -626,35 +638,35 @@ const updateAppointment = async () => {
 
                     <v-list-item-subtitle class="appointment-subtitle">
                       <div v-if="getRatingForAppointment(appointment.id)" class="text-center mt-2">
-  <v-rating
-    v-model="userRatingsMap[appointment.id]"
-    readonly
-    color="amber"
-    background-color="grey lighten-1"
-    dense
-    half-increments
-    size="20"
-  />
-  <small class="text-grey">You rated this session</small>
-</div>
+                      <v-rating
+                        v-model="userRatingsMap[appointment.id]"
+                        readonly
+                        color="amber"
+                        background-color="grey lighten-1"
+                        dense
+                        half-increments
+                        size="20"
+                      />
+                      <small class="text-grey">You rated this session</small>
+                    </div>
 
                     </v-list-item-subtitle>
 
                     <!-- View Details -->
-                    <div class="d-flex justify-center align-center" style="gap: 16px; flex-wrap: wrap;">
-  <v-btn size="small" color="primary" variant="text" @click="openAppointmentDetails(appointment)">
-    View Details
-  </v-btn>
-  <v-btn size="small" color="error" variant="text" @click="confirmDeleteAppointment(appointment)">
-    Delete
-  </v-btn>
-  <v-btn size="small" color="amber" variant="text" @click="openRatingDialog(appointment)">
-    Rate
-  </v-btn>
-  <v-btn size="small" color="success" variant="text" @click="openEditDialog(appointment)">
-  Edit Appointment
-</v-btn>
-</div>
+                                      <div class="d-flex justify-center align-center" style="gap: 16px; flex-wrap: wrap;">
+                    <v-btn size="small" color="primary" variant="text" @click="openAppointmentDetails(appointment)">
+                      View Details
+                    </v-btn>
+                    <v-btn size="small" color="error" variant="text" @click="confirmDeleteAppointment(appointment)">
+                      Delete
+                    </v-btn>
+                    <v-btn size="small" color="amber" variant="text" @click="openRatingDialog(appointment)">
+                      Rate
+                    </v-btn>
+                    <v-btn size="small" color="success" variant="text" @click="openEditDialog(appointment)">
+                    Edit Appointment
+                  </v-btn>
+                  </div>
                 
                  
                   </v-list-item>
@@ -1113,6 +1125,10 @@ h1 {
   .logo {
     width: 40px;
     height: 40px;
+  }
+  h1 {
+    font-size: 1.8rem;
+    letter-spacing: 0.2rem;
   }
 }
 </style>

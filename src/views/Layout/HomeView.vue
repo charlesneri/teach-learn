@@ -237,9 +237,9 @@ const fetchRatings = async () => {
         app
         :scrim="isMobile"
         :style="{
-        backgroundColor: currentTheme === 'dark' ? '#424242' : '#fefcf9',
-        color: currentTheme === 'dark' ? '#ffffff' : '#000000',
-      }"  
+          backgroundColor: currentTheme === 'dark' ? '#424242' : '#fefcf9',
+          color: currentTheme === 'dark' ? '#ffffff' : '#000000',
+        }"
       >
         <!-- Menu Icon that toggles drawer size -->
         <v-btn icon class="ms-5 d-lg-none" @click="toggleDrawer">
@@ -250,9 +250,9 @@ const fetchRatings = async () => {
           class="pa-4 text-center"
           rounded="lg"
           :style="{
-        backgroundColor: currentTheme === 'dark' ? '#424242' : '#fefcf9',
-        color: currentTheme === 'dark' ? '#ffffff' : '#000000',
-      }"  
+            backgroundColor: currentTheme === 'dark' ? ' #424242' : '#fefcf9',
+            color: currentTheme === 'dark' ? '#ffffff' : '#000000',
+          }"
         >
           <v-avatar size="100" class="mb-3">
             <v-img v-if="currentUserProfile.avatarUrl" :src="currentUserProfile.avatarUrl" cover />
@@ -331,7 +331,7 @@ const fetchRatings = async () => {
       </v-navigation-drawer>
     </transition>
     <!-- App Bar -->
-    <v-app-bar flat :color="currentTheme === 'light' ? '#1565c0' : 'grey-darken-4'">
+    <v-app-bar flat :color="currentTheme === 'light' ? '#1565c0' : '#000000'">
       <!-- Menu Icon that toggles drawer size -->
       <v-btn icon class="ms-5" @click="toggleDrawer">
         <v-icon>mdi-menu</v-icon>
@@ -383,131 +383,196 @@ const fetchRatings = async () => {
     <!-- Main -->
     <transition name="fade-slide-up">
       <v-main
-      :style="{
-        backgroundColor: currentTheme === 'dark' ? '#424242' : '#fefcf9',
-        color: currentTheme === 'dark' ? '#ffffff' : '#000000',
-      }"  
+        :style="{
+          backgroundColor: currentTheme === 'dark' ? '#222222' : '#fefcf9',
+          color: currentTheme === 'dark' ? '#ffffff' : '#000000',
+        }"
       >
-      <v-container fluid class="" style="max-width: 100%; margin: auto">
-  <v-row justify="center">
-    <v-col cols="12" md="11" lg="11">
-      <v-sheet
-        elevation="2"
-        rounded="lg"
-        class="pa-6 ma-auto"
-      style="height: 100vh;"
-      :style="{
-        backgroundColor: currentTheme === 'dark' ? '#424242' : '#fefcf9',
-        color: currentTheme === 'dark' ? '#ffffff' : '#000000',
-      }"  
-      >
-        <!-- Header -->
-        <h1 class=" mb-6" style="color: #1565c0">
-          Mentors
-        </h1>
-        <v-divider :thickness="2" class="mb-6"></v-divider>
-
-        <!-- Mentor Grid -->
-        <v-row
-          v-if="filteredTutors.length"
-          class="gx-6 gy-6"
-          :justify="filteredTutors.length < 3 ? 'center' : 'start'"
-        >
-          <v-col
-            v-for="tutor in filteredTutors"
-            :key="tutor.id"
-            cols="12"
-            sm="6"
-            md="4"
-            lg="3"
-          >
-            <v-fade-transition>
-              <v-card
-             variant="outlined"
-                class="pa-5 d-flex flex-column align-center text-center"
-                rounded="xl"
+        <v-container fluid class="" style="max-width: 100%; margin: auto">
+          <v-row justify="center">
+            <v-col cols="12" md="11" lg="11">
+              <v-sheet
+                elevation="2"
+                rounded="lg"
+                class="pa-6 ma-auto"
+                style="height: 100vh"
                 :style="{
-                  backgroundColor: currentTheme === 'dark' ? '#424242' : '#ffffff',
-                  color: currentTheme === 'dark' ? '#fff' : '#000',
+                  backgroundColor: currentTheme === 'dark' ? '#424242' : '#fefcf9',
+                  color: currentTheme === 'dark' ? '#ffffff' : '#000000',
                 }"
               >
-                <!-- Avatar -->
-                <v-avatar size="80" class="mb-3">
-                  <v-img v-if="tutor.avatar_url" :src="tutor.avatar_url" cover>
-                    <template #error>
-                      <v-icon size="60" color="grey-darken-1">mdi-account</v-icon>
-                    </template>
-                  </v-img>
-                  <v-icon v-else size="60" color="grey-darken-1">mdi-account</v-icon>
-                </v-avatar>
+                <!-- Header -->
+                <h1 class="mb-6" style="color: #1565c0">Mentors</h1>
+                <v-divider :thickness="2" class="mb-6"></v-divider>
 
-                <!-- Name & Expertise -->
-                <h3 class="text-subtitle-1 font-weight-bold mb-1">
-                  {{ tutor?.first_name || 'First' }} {{ tutor?.last_name || 'Last' }}
-                </h3>
-                <p class="text-caption mb-3">
-                  {{ tutor?.expertise || 'Subject Area' }}
-                </p>
+                <!-- Mentor Grid -->
+                <v-row
+                  v-if="filteredTutors.length"
+                  class="gx-6 gy-6"
+                  :justify="filteredTutors.length < 3 ? 'center' : 'start'"
+                >
+                  <v-col
+                    v-for="tutor in filteredTutors"
+                    :key="tutor.id"
+                    cols="12"
+                    sm="6"
+                    md="4"
+                    lg="3"
+                  >
+                    <v-fade-transition>
+                      <v-card
+                        variant="outlined"
+                        class="pa-5 d-flex flex-column align-center text-center"
+                        rounded="xl"
+                        :style="{
+                          backgroundColor: currentTheme === 'dark' ? '#424242' : '#ffffff',
+                          color: currentTheme === 'dark' ? '#fff' : '#000',
+                        }"
+                      >
+                        <!-- Avatar -->
+                        <v-avatar size="80" class="mb-3">
+                          <v-img v-if="tutor.avatar_url" :src="tutor.avatar_url" cover>
+                            <template #error>
+                              <v-icon size="60" color="grey-darken-1">mdi-account</v-icon>
+                            </template>
+                          </v-img>
+                          <v-icon v-else size="60" color="grey-darken-1">mdi-account</v-icon>
+                        </v-avatar>
 
-                <!-- Action Links -->
-           <!-- View More -->
-<v-btn
-  variant="text"
-  color="primary"
-  @click="viewTutor(tutor)"
-  style="text-transform: none"
->
-  View More
-</v-btn>
+                        <!-- Name & Expertise -->
+                        <h3 class="text-subtitle-1 font-weight-bold mb-1">
+                          {{ tutor?.first_name || 'First' }} {{ tutor?.last_name || 'Last' }}
+                        </h3>
+                        <p class="text-caption mb-3">
+                          {{ tutor?.expertise || 'Subject Area' }}
+                        </p>
 
-<!-- Set Appointment / My Profile -->
-<div
-  style="min-height: 40px;"
-  class="d-flex align-center justify-center"
->
-  <v-btn
-    v-if="tutor?.id !== currentUserId"
-    variant="text"
-    color="primary"
-    @click="openAppointment(tutor)"
-    style="text-transform: none"
-  >
-    Set an Appointment
-  </v-btn>
-  <span
-    v-else
-    class="text-caption text-grey"
-    style="line-height: 36px"
-  >
-    (My profile)
-  </span>
-</div>
+                        <!-- Action Links -->
+                        <!-- View More -->
+                        <v-btn
+                          variant="text"
+                          color="primary"
+                          @click="viewTutor(tutor)"
+                          style="text-transform: none"
+                        >
+                          View More
+                        </v-btn>
 
+                        <!-- Set Appointment / My Profile -->
+                        <div style="min-height: 40px" class="d-flex align-center justify-center">
+                          <v-btn
+                            v-if="tutor?.id !== currentUserId"
+                            variant="text"
+                            color="primary"
+                            @click="openAppointment(tutor)"
+                            style="text-transform: none"
+                          >
+                            Set an Appointment
+                          </v-btn>
+                          <span v-else class="text-caption text-grey" style="line-height: 36px">
+                            (My profile)
+                          </span>
+                        </div>
 
-                <!-- Rating -->
-                <div class="mt-3">
-                  <v-icon color="amber" size="18">mdi-star</v-icon>
-                  <span v-if="ratingsMap[tutor.id]">
-                    <strong>{{ ratingsMap[tutor.id] }}</strong>
-                  </span>
-                  <span v-else class="text-caption text-grey">Not rated yet</span>
+                        <!-- Rating -->
+                        <div class="mt-3">
+                          <v-icon color="amber" size="18">mdi-star</v-icon>
+                          <span v-if="ratingsMap[tutor.id]">
+                            <strong>{{ ratingsMap[tutor.id] }}</strong>
+                          </span>
+                          <span v-else class="text-caption text-grey">Not rated yet</span>
+                        </div>
+                        <v-spacer></v-spacer>
+                      </v-card>
+                    </v-fade-transition>
+                  </v-col>
+                </v-row>
+
+                <!-- Empty State -->
+                <div v-else class="text-center mt-10">
+                  <v-icon size="64" color="grey">mdi-account-search</v-icon>
+                  <p class="mt-2 text-subtitle-2">No mentors available yet.</p>
                 </div>
-                <v-spacer></v-spacer>
-              </v-card>
-            </v-fade-transition>
-          </v-col>
-        </v-row>
+              </v-sheet>
+            </v-col>
+          </v-row>
+        </v-container>
+        <!--for the view more -->
+        <v-dialog v-model="profileDialog" max-width="600px">
+          <v-card>
+            <!-- Title -->
+            <v-card-title class="text-h6 font-weight-bold justify-center py-4">
+              Mentor Profile
+            </v-card-title>
 
-        <!-- Empty State -->
-        <div v-else class="text-center mt-10">
-          <v-icon size="64" color="grey">mdi-account-search</v-icon>
-          <p class="mt-2 text-subtitle-2">No mentors available yet.</p>
-        </div>
-      </v-sheet>
-    </v-col>
-  </v-row>
-</v-container>
+            <!-- Avatar and Name -->
+            <v-card-text class="text-center pb-0">
+              <v-avatar size="100" class="mb-4">
+                <v-img :src="selectedTutor.avatar_url" cover>
+                  <template #error>
+                    <v-icon size="80" color="grey-darken-1">mdi-account</v-icon>
+                  </template>
+                </v-img>
+              </v-avatar>
 
+              <div class="text-h6 font-weight-bold mb-1">
+                {{ selectedTutor.first_name }} {{ selectedTutor.last_name }}
+              </div>
+              <div class="text-caption mb-3 grey--text">
+                {{ selectedTutor.expertise || 'Subject Area' }}
+              </div>
+            </v-card-text>
+
+            <v-divider class="my-2" />
+
+            <!-- Details -->
+            <v-card-text>
+              <v-row dense>
+                <v-col cols="12" sm="6">
+                  <strong>Email:</strong><br />
+                  <span>{{ selectedTutor.email || 'N/A' }}</span>
+                </v-col>
+                <v-col cols="12" sm="6">
+                  <strong>School:</strong><br />
+                  <span>{{ selectedTutor.school || 'N/A' }}</span>
+                </v-col>
+                <v-col cols="12" sm="6">
+                  <strong>Expertise:</strong><br />
+                  <span>{{ selectedTutor.expertise || 'N/A' }}</span>
+                </v-col>
+                <v-col cols="12" sm="6">
+                  <strong>About:</strong><br />
+                  <span>{{ selectedTutor.about || 'N/A' }}</span>
+                </v-col>
+              </v-row>
+            </v-card-text>
+
+            <!-- Actions -->
+            <v-card-actions class="justify-center pb-4">
+              <v-btn color="primary" @click="profileDialog = false">Close</v-btn>
+            </v-card-actions>
+          </v-card>
+        </v-dialog>
+
+        <!--set appointment-->
+        <v-dialog v-model="appointmentDialog" max-width="500px">
+          <v-card>
+            <v-card-title class="text-h6 text-center">Set Appointment</v-card-title>
+            <v-card-text>
+              <p v-if="selectedTutor">
+                Booking with:
+                <strong>{{ selectedTutor.first_name }} {{ selectedTutor.last_name }}</strong>
+              </p>
+              <v-text-field v-model="selectedDate" label="Date" type="date" dense />
+              <v-text-field v-model="selectedTime" label="Time" type="time" dense />
+              <v-textarea v-model="messageInput" label="Message" rows="3" dense />
+            </v-card-text>
+            <v-card-actions class="justify-center">
+              <v-btn text @click="appointmentDialog = false">Cancel</v-btn>
+              <v-btn color="primary" @click="saveAppointment">Book</v-btn>
+            </v-card-actions>
+          </v-card>
+        </v-dialog>
       </v-main>
     </transition>
   </v-app>
@@ -552,13 +617,13 @@ const fetchRatings = async () => {
 
 /* Text Styles */
 h1 {
-  font-size: 2.5rem; 
+  font-size: 2.5rem;
   font-weight: 700;
-  color: #1565c0; 
-  text-align: center; 
-  margin-bottom: 20px; 
-  text-transform: uppercase; 
-  letter-spacing: 2px; 
+  color: #1565c0;
+  text-align: center;
+  margin-bottom: 20px;
+  text-transform: uppercase;
+  letter-spacing: 2px;
 }
 .user-name {
   font-family: 'Roboto', sans-serif;
@@ -770,7 +835,7 @@ h1 {
     height: 40px;
   }
 
-  h1.head {
+  h1 {
     font-size: 1.8rem;
     letter-spacing: 0.2rem;
   }

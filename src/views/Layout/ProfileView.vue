@@ -486,7 +486,7 @@ onBeforeUnmount(() => {
       </v-navigation-drawer>
     </transi  tion>
     <!-- App Bar -->
-    <v-app-bar flat :color="currentTheme === 'light' ? '#1565c0' : 'grey-darken-4'">
+    <v-app-bar flat :color="currentTheme === 'light' ? '#1565c0' : '#000000'">
       <!-- Menu Icon that toggles drawer size -->
       <v-btn icon class="ms-5" @click="toggleDrawer">
         <v-icon>mdi-menu</v-icon>
@@ -520,7 +520,7 @@ onBeforeUnmount(() => {
 
     <!-- MAIN CONTENT -->
     <v-main    :style="{
-        backgroundColor: currentTheme === 'dark' ? '#424242' : '#fefcf9',
+        backgroundColor: currentTheme === 'dark' ? '#222222' : '#fefcf9',
         color: currentTheme === 'dark' ? '#ffffff' : '#000000',
       }">
       <v-container fluid class="py-6 px-4 px-sm-6">
@@ -909,6 +909,10 @@ onBeforeUnmount(() => {
   .logo {
     width: 40px;
     height: 40px;
+  }
+  h1 {
+    font-size: 1.8rem;
+    letter-spacing: 0.2rem;
   }
 }
 </style>

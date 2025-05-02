@@ -294,7 +294,7 @@ onBeforeUnmount(() => {
     </transition>
 
     <!-- App Bar -->
-    <v-app-bar flat :color="currentTheme === 'light' ? '#1565c0' : 'grey-darken-4'">
+    <v-app-bar flat :color="currentTheme === 'light' ? '#1565c0' : '#000000'">
       <v-btn icon class="ms-5" @click="toggleDrawer">
         <v-icon>mdi-menu</v-icon>
       </v-btn>
@@ -315,20 +315,23 @@ onBeforeUnmount(() => {
     </v-snackbar>
 
     <!-- Main Content -->
-    <v-main :class="currentTheme === 'dark' ? 'bg-grey-darken-4 text-white' : 'bg-grey-lighten-3'">
+    <v-main  :style="{
+        backgroundColor: currentTheme === 'dark' ? '#222222' : '#fefcf9',
+        color: currentTheme === 'dark' ? '#ffffff' : '#000000',
+      }">
       <v-container fluid class="py-2 px-2">
         <v-row justify="center">
           <v-col cols="12" sm="11" md="8">
             <v-sheet
-              :class="
-                currentTheme === 'dark'
-                  ? 'bg-grey-darken-4 text-white'
-                  : 'bg-white text-grey-darken-4'
-              "
+            
               class="pa-3 pa-sm-4 text-center"
               elevation="1"
               rounded="lg"
               style="max-width: 1200px; min-height: 90vh"
+              :style="{
+            backgroundColor: currentTheme === 'dark' ? '#424242' : '',
+            color: currentTheme === 'dark' ? '#ffffff' : '#000000',
+          }"
             >
               <h1 class=" mb-3">Deleted History</h1>
 
@@ -540,6 +543,10 @@ h1 {
   .v-avatar {
     width: 80px;
     height: 80px;
+  }
+  h1 {
+    font-size: 1.5rem;
+    letter-spacing: 0.2rem;
   }
 }
 </style>

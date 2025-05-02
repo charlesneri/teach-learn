@@ -267,7 +267,7 @@ onBeforeUnmount(() => {
       </v-navigation-drawer>
     </transition>
     <!-- App Bar -->
-    <v-app-bar flat :color="currentTheme === 'light' ? '#1565c0' : 'grey-darken-4'">
+    <v-app-bar flat :color="currentTheme === 'light' ? '#1565c0' : '#000000'">
       <!-- Menu Icon that toggles drawer size -->
       <v-btn icon class="ms-5" @click="toggleDrawer">
         <v-icon>mdi-menu</v-icon>
@@ -298,7 +298,7 @@ onBeforeUnmount(() => {
     </v-snackbar>
     <!-- Main Content -->
     <v-main  :style="{
-                backgroundColor: currentTheme === 'dark' ? '#424242' : '#fefcf9',
+                backgroundColor: currentTheme === 'dark' ? '#222222' : '#fefcf9',
                 color: currentTheme === 'dark' ? '#ffffff' : '#000000',
               }">
       <v-container fluid class="py-6 px-4 px-sm-6">
@@ -318,43 +318,51 @@ onBeforeUnmount(() => {
             >
               <h1 class=" mb-5">Contact</h1>
 
-              <v-row dense class="mt-6" justify="center" align="stretch">
-                <v-col cols="12" sm="6" md="4" v-for="(contact, index) in contacts" :key="index">
-                  <v-card
-                  :style="{
-                backgroundColor: currentTheme === 'dark' ? '#424242' : '#fefcf9',
-                color: currentTheme === 'dark' ? '#ffffff' : '#000000',
-              }"
-                   variant="outlined"
-                    class="contact-card"
-                  >
-                    <v-img :src="contact.photo" height="200" cover class="rounded-t"></v-img>
+              <v-row class="mt-6" justify="center" align="stretch">
+  <v-col
+    cols="12"
+    sm="6"
+    md="4"
+    class="mb-6 px-3"
+    v-for="(contact, index) in contacts"
+    :key="index"
+  >
+    <v-card
+      :style="{
+        backgroundColor: currentTheme === 'dark' ? '#424242' : '#fefcf9',
+        color: currentTheme === 'dark' ? '#ffffff' : '#000000',
+      }"
+      variant="outlined"
+      class="contact-card"
+    >
+      <v-img :src="contact.photo" height="200" cover class="rounded-t"></v-img>
 
-                    <v-card-title class="font-weight-bold">{{ contact.name }}</v-card-title>
-                    <v-card-subtitle>{{ contact.position }}</v-card-subtitle>
+      <v-card-title class="font-weight-bold">{{ contact.name }}</v-card-title>
+      <v-card-subtitle>{{ contact.position }}</v-card-subtitle>
 
-                    <v-card-text>
-                      <div><strong>Email:</strong> {{ contact.email }}</div>
-                      <div><strong>Phone:</strong> {{ contact.phone }}</div>
+      <v-card-text>
+        <div><strong>Email:</strong> {{ contact.email }}</div>
+        <div><strong>Phone:</strong> {{ contact.phone }}</div>
 
-                      <!-- Contact Description -->
-                      <div
-                        class="mt-4 mb-2 text-justify"
-                        style="
-                          min-height: 80px;
-                          max-height: 120px;
-                          overflow-y: auto;
-                          background-color: rgba(0, 0, 0, 0.05);
-                          padding: 8px;
-                          border-radius: 4px;
-                        "
-                      >
-                        <small>{{ contact.description }}</small>
-                      </div>
-                    </v-card-text>
-                  </v-card>
-                </v-col>
-              </v-row>
+        <!-- Contact Description -->
+        <div
+          class="mt-4 mb-2 text-justify"
+          style="
+            min-height: 80px;
+            max-height: 120px;
+            overflow-y: auto;
+            background-color: rgba(0, 0, 0, 0.05);
+            padding: 8px;
+            border-radius: 4px;
+          "
+        >
+          <small>{{ contact.description }}</small>
+        </div>
+      </v-card-text>
+    </v-card>
+  </v-col>
+</v-row>
+
 
               <!-- Single Text Area for Message Input -->
               <v-card class="mt-6"  :style="{
@@ -509,6 +517,10 @@ body[data-theme='dark'] h1 {
   .logo {
     width: 40px;
     height: 40px;
+  }
+  h1 {
+    font-size: 1.8rem;
+    letter-spacing: 0.2rem;
   }
 }
 </style>
