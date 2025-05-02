@@ -286,7 +286,7 @@ const fetchRatings = async () => {
             </div>
           </v-list-item>
 
-          <v-list-item :to="'/appointments'" tag="RouterLink" @click="isMobile && (drawer = false)">
+          <v-list-item :to="'/DeleteHistory'" tag="RouterLink" @click="isMobile && (drawer = false)">
             <div class="d-flex align-center" style="gap: 8px; width: 100%">
               <v-icon size="30" style="margin-left: 15px"> mdi-delete-outline</v-icon>
               <span v-if="!mini" class="icon-mdi">Delete History</span>
