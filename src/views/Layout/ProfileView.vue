@@ -96,8 +96,32 @@ const getUserProfile = async () => {
     console.error('Error fetching profile:', error)
   }
 }
+//save profile function
+const validateProfile = () => {
+  const requiredFields = ['firstName', 'lastName', 'age', 'expertise', 'email', 'phone', 'about']
+  for (const field of requiredFields) {
+    if (!profile.value[field] || profile.value[field].toString().trim() === '') {
+      snackbarMsg.value = `Please fill in the ${field.replace(/([A-Z])/g, ' $1').toLowerCase()}.`
+      snackbarColor.value = 'red'
+      snackbar.value = true
+      return false
+    }
+  }
+
+  // Check education fields
+  if (profile.value.education.some(e => !e || e.toString().trim() === '')) {
+    snackbarMsg.value = 'Please complete your educational background.'
+    snackbarColor.value = 'red'
+    snackbar.value = true
+    return false
+  }
+
+  return true
+}
 
 const saveProfile = async () => {
+  if (!validateProfile()) return
+
   isEditing.value = false
   loading.value = true
 
@@ -105,7 +129,7 @@ const saveProfile = async () => {
     const {
       data: { user },
     } = await supabase.auth.getUser()
-    if (!user) return
+    if (!user) throw new Error('User not authenticated')
 
     const { error } = await supabase
       .from('profiles')
@@ -128,9 +152,13 @@ const saveProfile = async () => {
     if (error) throw error
 
     snackbarMsg.value = 'Profile saved successfully!'
+    snackbarColor.value = 'green'
     snackbar.value = true
   } catch (error) {
     console.error('Error saving profile:', error)
+    snackbarMsg.value = 'An error occurred while saving. Please try again.'
+    snackbarColor.value = 'red'
+    snackbar.value = true
   } finally {
     loading.value = false
   }
@@ -263,39 +291,48 @@ onMounted(() => {
 // Apply as Tutor
 const applyAsTutor = async () => {
   loading.value = true
+
   try {
     const {
       data: { user },
+      error: userError
     } = await supabase.auth.getUser()
-    if (!user) throw new Error('User not authenticated')
+    if (userError || !user) throw new Error('User not authenticated')
 
-    const { error } = await supabase
+    const { data, error } = await supabase
       .from('profiles')
-      .update({ is_public_tutor: !profile.value.isPublicTutor }) // Toggle apply/cancel
+      .update({ is_public_tutor: !profile.value.isPublicTutor })
       .eq('id', user.id)
 
-    if (error) throw error
+    console.log('Update Result:', { data, error }) // 🪵 log for debugging
 
-    profile.value.isPublicTutor = !profile.value.isPublicTutor // Update frontend state
+    if (error) throw error
+    if (!data) console.warn('No data returned from update')
+
+    profile.value.isPublicTutor = !profile.value.isPublicTutor
 
     snackbarMsg.value = profile.value.isPublicTutor
       ? 'You are now listed as a tutor!'
       : 'You have canceled your tutor application.'
-
     snackbar.value = true
+
     dialog.value = false
 
-    await fetchTutors() // Refresh mentor list in HomeView
+    // Optional: safeguard against fetchTutors() failure
+    if (typeof fetchTutors === 'function') {
+      await fetchTutors()
+    }
   } catch (error) {
     console.error('Error applying as tutor:', error)
-    snackbarMsg.value = 'Failed to apply/cancel. Please try again.'
+    snackbarMsg.value = 'An error occurred. Please try again.'
     snackbar.value = true
   } finally {
     loading.value = false
   }
 }
+
+
 //drawer function
-/* === Responsive Drawer & Mobile === */
 const drawer = ref(false)
 //const mini = ref(false)
 const isMobile = ref(false)
@@ -509,14 +546,17 @@ onBeforeUnmount(() => {
     </v-app-bar>
     <!--pop up alert-->
     <v-snackbar
-      v-model="snackbar"
-      timeout="3000"
-      :color="snackbarColor"
-      location="top center"
-      style="top: 80px"
-    >
-      {{ snackbarMsg }}
-    </v-snackbar>
+  v-model="snackbar"
+  timeout="3000"
+  :color="snackbarColor || 'success'"
+  location="top"
+>
+  {{ snackbarMsg }}
+  <template #actions>
+    <v-btn icon="mdi-close" variant="text" @click="snackbar = false" />
+  </template>
+</v-snackbar>
+
 
     <!-- MAIN CONTENT -->
     <v-main    :style="{
@@ -604,7 +644,7 @@ onBeforeUnmount(() => {
 </div>
            
               <!-- Confirm Dialog: Apply as Tutor -->
-              <v-dialog v-model="dialog" max-width="500" persistent>
+              <v-dialog v-model="dialog" max-width="500" persistent transition="fade-transition">
                 <v-card>
                   <v-card-title class="text-h6">
                     <v-icon class="me-2">mdi-alert-circle-outline</v-icon> Confirm Application
@@ -649,13 +689,7 @@ onBeforeUnmount(() => {
                 </v-card>
               </v-dialog>
 
-              <!-- Snackbar -->
-              <v-snackbar v-model="snackbar" timeout="3000" color="success" location="top">
-                {{ snackbarMsg }}
-                <template #actions>
-                  <v-btn icon="mdi-close" variant="text" @click="snackbar = false" />
-                </template>
-              </v-snackbar>
+           
 
               <v-divider class="my-4" />
 
