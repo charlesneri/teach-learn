@@ -122,22 +122,23 @@ const fetchDeletedAppointments = async () => {
 
   deletedAppointments.value = data || []
 }
-
+//open details before deletion
 const openAppointmentDetails = async (appointment) => {
   selectedAppointment.value = appointment
   selectedStudentProfile.value = null
+
   const { data, error } = await supabase
     .from('profiles')
-    .select(
-      'first_name, last_name, email, phone, about, school, degree, year, expertise, avatar_url',
-    )
-    .eq('id', appointment.student?.id)
+    .select('first_name, last_name, email, phone, about, school, degree, year, expertise, avatar_url')
+    .eq('id', appointment.student_id) // FIXED: use student_id directly
     .single()
+
   if (error) {
     console.error('Error fetching student profile:', error)
   } else {
     selectedStudentProfile.value = data
   }
+
   detailsDialog.value = true
 }
 
@@ -152,7 +153,7 @@ const confirmDeleteAppointment = (appointment) => {
 
 //delete history logic
 const deleteAppointment = async () => {
-  if (!appointmentToDelete.value?.id) return;
+  if (!appointmentToDelete.value?.id) return
 
   const { data, error } = await supabase
     .from('deleted_appointments')
@@ -197,7 +198,7 @@ onBeforeUnmount(() => {
     <!-- Drawer Sidebar -->
     <transition name="fade-slide-up">
       <v-navigation-drawer
- v-model="drawer"
+        v-model="drawer"
         :temporary="isMobile"
         :permanent="!isMobile"
         :width="isMobile ? '100%' : 280"
@@ -315,25 +316,26 @@ onBeforeUnmount(() => {
     </v-snackbar>
 
     <!-- Main Content -->
-    <v-main  :style="{
+    <v-main
+      :style="{
         backgroundColor: currentTheme === 'dark' ? '#222222' : '#fefcf9',
         color: currentTheme === 'dark' ? '#ffffff' : '#000000',
-      }">
+      }"
+    >
       <v-container fluid class="py-2 px-2">
         <v-row justify="center">
           <v-col cols="12" sm="11" md="8">
             <v-sheet
-            
               class="pa-3 pa-sm-4 text-center"
               elevation="1"
               rounded="lg"
               style="max-width: 1200px; min-height: 90vh"
               :style="{
-            backgroundColor: currentTheme === 'dark' ? '#424242' : '',
-            color: currentTheme === 'dark' ? '#ffffff' : '#000000',
-          }"
+                backgroundColor: currentTheme === 'dark' ? '#424242' : '',
+                color: currentTheme === 'dark' ? '#ffffff' : '#000000',
+              }"
             >
-              <h1 class=" mb-3">Deleted History</h1>
+              <h1 class="mb-3">Deleted History</h1>
 
               <div v-if="deletedAppointments.length > 0" class="Delete-container">
                 <v-list class="Delete-list">
@@ -398,6 +400,7 @@ onBeforeUnmount(() => {
                     </v-card-title>
                     <v-card-text>
                       <div v-if="selectedStudentProfile" class="text-center">
+                        <!-- Student Profile -->
                         <v-avatar size="100" class="mb-4">
                           <v-img
                             v-if="selectedStudentProfile.avatar_url"
@@ -442,7 +445,33 @@ onBeforeUnmount(() => {
                           }}
                         </p>
                       </div>
+
+                      <!-- Divider -->
+                      <v-divider class="my-6"></v-divider>
+
+                      <!-- Deleted Appointment Info -->
+                      <div v-if="selectedAppointment" class="text-center">
+                        <h3 class="font-weight-bold mb-4">Deleted Appointment Info</h3>
+                        <p>
+                          <strong>Date:</strong><br />{{ selectedAppointment.appointment_date }}
+                        </p>
+                        <p>
+                          <strong>Time:</strong><br />{{ selectedAppointment.appointment_time }}
+                        </p>
+                        <p>
+                          <strong>Message:</strong><br />{{
+                            selectedAppointment.message || 'No message provided'
+                          }}
+                        </p>
+                        <p>
+                          <strong>Mentor:</strong><br />{{
+                            selectedAppointment.mentor?.first_name
+                          }}
+                          {{ selectedAppointment.mentor?.last_name }}
+                        </p>
+                      </div>
                     </v-card-text>
+
                     <v-card-actions class="justify-center">
                       <v-btn color="primary" @click="detailsDialog = false">Close</v-btn>
                     </v-card-actions>
@@ -479,13 +508,13 @@ onBeforeUnmount(() => {
 
 <style scoped>
 h1 {
-  font-size: 2.5rem; 
+  font-size: 2.5rem;
   font-weight: 700;
-  color: #1565c0; 
-  text-align: center; 
-  margin-bottom: 20px; 
-  text-transform: uppercase; 
-  letter-spacing: 1px; 
+  color: #1565c0;
+  text-align: center;
+  margin-bottom: 20px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
 }
 .Delete-container {
   max-width: 960px;
