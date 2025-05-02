@@ -145,8 +145,6 @@ const saveAppointment = async () => {
     snackbarMsg.value = 'Failed to save appointment.'
     snackbarColor.value = 'red'
     snackbar.value = true
-<<<<<<< HEAD
-=======
     return
   }
 
@@ -176,7 +174,6 @@ const saveAppointment = async () => {
       datePickerOpen.value = false
       timePickerOpen.value = false
     }, 300)
->>>>>>> development2
   }
 }
 
