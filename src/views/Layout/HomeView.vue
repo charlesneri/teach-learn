@@ -122,7 +122,7 @@ const viewTutor = (tutor) => {
   selectedTutor.value = tutor
   profileDialog.value = true
 }
-//appointment 
+//appointment
 const openAppointment = (tutor) => {
   selectedTutor.value = tutor
   appointmentDialog.value = true
@@ -145,6 +145,38 @@ const saveAppointment = async () => {
     snackbarMsg.value = 'Failed to save appointment.'
     snackbarColor.value = 'red'
     snackbar.value = true
+<<<<<<< HEAD
+=======
+    return
+  }
+
+  const { error } = await supabase.from('appointments').insert({
+    student_id: currentUserId.value,
+    mentor_id: selectedTutor.value.id,
+    student_name: `${currentUserProfile.value.firstName} ${currentUserProfile.value.lastName}`,
+    appointment_date: selectedDate.value,
+    appointment_time: selectedTime.value,
+    message: messageInput.value,
+  })
+
+  snackbar.value = true
+  if (error) {
+    console.error('Error saving appointment:', error)
+    snackbarMsg.value = 'Failed to book appointment. Try again.'
+    snackbarColor.value = 'red'
+  } else {
+    snackbarMsg.value = 'Appointment booked successfully!'
+    snackbarColor.value = 'green'
+    appointmentDialog.value = false
+
+    setTimeout(() => {
+      selectedDate.value = ''
+      selectedTime.value = ''
+      messageInput.value = ''
+      datePickerOpen.value = false
+      timePickerOpen.value = false
+    }, 300)
+>>>>>>> development2
   }
 }
 
@@ -222,7 +254,7 @@ const fetchRatings = async () => {
         app
         :scrim="isMobile"
         :style="{
-          backgroundColor: currentTheme === 'dark' ? '#424242' : '',
+          backgroundColor: currentTheme === 'dark' ? '#424242' : '#fefcf9',
           color: currentTheme === 'dark' ? '#ffffff' : '#000000',
         }"
       >
@@ -235,7 +267,7 @@ const fetchRatings = async () => {
           class="pa-4 text-center"
           rounded="lg"
           :style="{
-            backgroundColor: currentTheme === 'dark' ? '#424242' : '',
+            backgroundColor: currentTheme === 'dark' ? ' #424242' : '#fefcf9',
             color: currentTheme === 'dark' ? '#ffffff' : '#000000',
           }"
         >
@@ -286,7 +318,11 @@ const fetchRatings = async () => {
             </div>
           </v-list-item>
 
-          <v-list-item :to="'/DeleteHistory'" tag="RouterLink" @click="isMobile && (drawer = false)">
+          <v-list-item
+            :to="'/DeleteHistory'"
+            tag="RouterLink"
+            @click="isMobile && (drawer = false)"
+          >
             <div class="d-flex align-center" style="gap: 8px; width: 100%">
               <v-icon size="30" style="margin-left: 15px"> mdi-delete-outline</v-icon>
               <span v-if="!mini" class="icon-mdi">Delete History</span>
@@ -312,7 +348,7 @@ const fetchRatings = async () => {
       </v-navigation-drawer>
     </transition>
     <!-- App Bar -->
-    <v-app-bar flat :color="currentTheme === 'light' ? '#1565c0' : 'grey-darken-4'">
+    <v-app-bar flat :color="currentTheme === 'light' ? '#1565c0' : '#000000'">
       <!-- Menu Icon that toggles drawer size -->
       <v-btn icon class="ms-5" @click="toggleDrawer">
         <v-icon>mdi-menu</v-icon>
@@ -365,273 +401,195 @@ const fetchRatings = async () => {
     <transition name="fade-slide-up">
       <v-main
         :style="{
-          backgroundColor: currentTheme === 'dark' ? '#424242' : '#fefcf9',
+          backgroundColor: currentTheme === 'dark' ? '#222222' : '#fefcf9',
           color: currentTheme === 'dark' ? '#ffffff' : '#000000',
         }"
       >
-        <v-container fluid class="pa-0" style="max-width: 100%; margin: auto">
+        <v-container fluid class="" style="max-width: 100%; margin: auto">
           <v-row justify="center">
-            <!-- Main Area -->
-            <v-col cols="12" md="10">
-              <div class="floating-wrapper">
-                <v-sheet
-                  max-width="1500"
-                  width="100%"
-                  rounded="lg"
-                  class="pa-6"
-                  :style="{
-                    backgroundColor: currentTheme === 'dark' ? '#424242' : '#fefcf9',
-                    color: currentTheme === 'dark' ? '#ffffff' : '#000000',
-                  }"
+            <v-col cols="12" md="11" lg="11">
+              <v-sheet
+                elevation="2"
+                rounded="lg"
+                class="pa-6 ma-auto"
+                style="height: 100vh"
+                :style="{
+                  backgroundColor: currentTheme === 'dark' ? '#424242' : '#fefcf9',
+                  color: currentTheme === 'dark' ? '#ffffff' : '#000000',
+                }"
+              >
+                <!-- Header -->
+                <h1 class="mb-6" style="color: #1565c0">Mentors</h1>
+                <v-divider :thickness="2" class="mb-6"></v-divider>
+
+                <!-- Mentor Grid -->
+                <v-row
+                  v-if="filteredTutors.length"
+                  class="gx-6 gy-6"
+                  :justify="filteredTutors.length < 3 ? 'center' : 'start'"
                 >
-                  <h1 class="head">Mentors</h1>
-                  <v-divider class="divider" :thickness="3"></v-divider>
-
-                  <!-- Profile Container -->
-                  <div class="profile-container">
-                    <div
-                      v-if="tutors.length"
-                      class="profile-container"
-                      style="flex-wrap: wrap; gap: 24px"
-                    >
-                      <v-row
-                        :justify="filteredTutors.length < 3 ? 'center' : 'start'"
-                        align="stretch"
-                        class="gx-4 gy-4"
+                  <v-col
+                    v-for="tutor in filteredTutors"
+                    :key="tutor.id"
+                    cols="12"
+                    sm="6"
+                    md="4"
+                    lg="3"
+                  >
+                    <v-fade-transition>
+                      <v-card
+                        variant="outlined"
+                        class="pa-5 d-flex flex-column align-center text-center"
+                        rounded="xl"
+                        :style="{
+                          backgroundColor: currentTheme === 'dark' ? '#424242' : '#ffffff',
+                          color: currentTheme === 'dark' ? '#fff' : '#000',
+                        }"
                       >
-                        <v-col
-                          v-for="tutor in filteredTutors"
-                          :key="tutor.id"
-                          cols="12"
-                          sm="6"
-                          md="3"
-                          lg="3"
+                        <!-- Avatar -->
+                        <v-avatar size="80" class="mb-3">
+                          <v-img v-if="tutor.avatar_url" :src="tutor.avatar_url" cover>
+                            <template #error>
+                              <v-icon size="60" color="grey-darken-1">mdi-account</v-icon>
+                            </template>
+                          </v-img>
+                          <v-icon v-else size="60" color="grey-darken-1">mdi-account</v-icon>
+                        </v-avatar>
+
+                        <!-- Name & Expertise -->
+                        <h3 class="text-subtitle-1 font-weight-bold mb-1">
+                          {{ tutor?.first_name || 'First' }} {{ tutor?.last_name || 'Last' }}
+                        </h3>
+                        <p class="text-caption mb-3">
+                          {{ tutor?.expertise || 'Subject Area' }}
+                        </p>
+
+                        <!-- Action Links -->
+                        <!-- View More -->
+                        <v-btn
+                          variant="text"
+                          color="primary"
+                          @click="viewTutor(tutor)"
+                          style="text-transform: none"
                         >
-                          <v-fade-transition>
-                            <div
-                              class="mentor-card fade-in pa-4 d-flex flex-column align-center"
-                              :style="{
-                                minWidth: '260px',
-                                maxWidth: '100%',
-                                width: '100%',
-                                backgroundColor: currentTheme === 'dark' ? '#424242' : '#fff',
-                                color: currentTheme === 'dark' ? '#fff' : '#000',
-                              }"
-                            >
-                              <!-- Avatar -->
-                              <v-avatar size="100" class="mb-3">
-                                <v-img v-if="tutor?.avatar_url" :src="tutor.avatar_url" cover>
-                                  <template #error>
-                                    <v-icon size="60" color="grey-darken-1">mdi-account</v-icon>
-                                  </template>
-                                </v-img>
-                                <v-icon v-else size="60" color="grey-darken-1">mdi-account</v-icon>
-                              </v-avatar>
+                          View More
+                        </v-btn>
 
-                              <!-- Name -->
-                              <h3 class="user-name font-weight-medium mb-2">
-                                <b>
-                                  {{ tutor?.first_name || 'First' }}
-                                  {{ tutor?.middle_initial || '' }}
-                                  {{ tutor?.last_name || 'Last' }}
-                                </b>
-                              </h3>
+                        <!-- Set Appointment / My Profile -->
+                        <div style="min-height: 40px" class="d-flex align-center justify-center">
+                          <v-btn
+                            v-if="tutor?.id !== currentUserId"
+                            variant="text"
+                            color="primary"
+                            @click="openAppointment(tutor)"
+                            style="text-transform: none"
+                          >
+                            Set an Appointment
+                          </v-btn>
+                          <span v-else class="text-caption text-grey" style="line-height: 36px">
+                            (My profile)
+                          </span>
+                        </div>
 
-                              <!-- Expertise -->
-                              <p class="text-caption mb-3">
-                                {{ tutor?.expertise || 'No expertise listed' }}
-                              </p>
+                        <!-- Rating -->
+                        <div class="mt-3">
+                          <v-icon color="amber" size="18">mdi-star</v-icon>
+                          <span v-if="ratingsMap[tutor.id]">
+                            <strong>{{ ratingsMap[tutor.id] }}</strong>
+                          </span>
+                          <span v-else class="text-caption text-grey">Not rated yet</span>
+                        </div>
+                        <v-spacer></v-spacer>
+                      </v-card>
+                    </v-fade-transition>
+                  </v-col>
+                </v-row>
 
-                              <!-- View More -->
-                              <span @click="viewTutor(tutor)" class="link-text cursor-pointer mb-2">
-                                View More
-                              </span>
-
-                              <!-- Set Appointment -->
-                              <span
-                                v-if="tutor?.id !== currentUserId"
-                                @click="openAppointment(tutor)"
-                                class="link-text cursor-pointer"
-                              >
-                                Set an Appointment
-                              </span>
-                              <span v-else class="text-grey text-caption"> (My profile) </span>
-                              <!--display the number of star added to the user as rating-->
-                              <div class="text-center mt-2">
-                                <v-icon color="amber" size="20">mdi-star</v-icon>
-                                <span v-if="ratingsMap[tutor.id]">
-                                  <strong>{{ ratingsMap[tutor.id] }}</strong>
-                                </span>
-                                <span v-else class="text-caption text-grey"> Not rated yet </span>
-                              </div>
-                            </div>
-                          </v-fade-transition>
-                        </v-col>
-                      </v-row>
-                    </div>
-
-                    <div v-else class="text-center mt-6">
-                      <v-icon size="60">mdi-account-search</v-icon>
-                      <p>No mentors available yet.</p>
-                    </div>
-
-                    <v-container>
-                      <!-- View More (Profile Details) Dialog -->
-                      <v-dialog
-                        v-model="profileDialog"
-                        max-width="500px"
-                        transition="scale-transition"
-                      >
-                        <v-card
-                          :class="
-                            currentTheme === 'dark'
-                              ? 'bg-grey-darken-3 text-white'
-                              : 'bg-white text-black'
-                          "
-                        >
-                          <v-card-text class="text-center py-6 px-4">
-                            <h2 class="font-weight-bold mb-4">
-                              {{ selectedTutor?.first_name }} {{ selectedTutor?.middle_initial }}
-                              {{ selectedTutor?.last_name }}
-                            </h2>
-
-                            <v-avatar size="120" class="mb-4 mx-auto">
-                              <v-img
-                                v-if="selectedTutor?.avatar_url"
-                                :src="selectedTutor?.avatar_url"
-                                cover
-                              >
-                                <template #error>
-                                  <v-icon size="80" color="grey-darken-1">mdi-account</v-icon>
-                                </template>
-                              </v-img>
-                              <v-icon v-else size="80" color="grey-darken-1">mdi-account</v-icon>
-                            </v-avatar>
-
-                            <div class="text-start" style="margin: 0 auto; max-width: 300px">
-                              <p>
-                                <strong>Expertise:</strong>
-                                {{ selectedTutor?.expertise || 'No expertise listed' }}
-                              </p>
-                              <p>
-                                <strong>Email:</strong>
-                                {{ selectedTutor?.email || 'No email provided' }}
-                              </p>
-                              <p>
-                                <strong>Phone:</strong>
-                                {{ selectedTutor?.phone || 'No phone number' }}
-                              </p>
-                              <p>
-                                <strong>About:</strong>
-                                {{ selectedTutor?.about || 'No description' }}
-                              </p>
-                              <p>
-                                <strong>School:</strong>
-                                {{ selectedTutor?.school || 'No school listed' }}
-                              </p>
-                              <p>
-                                <strong>Degree:</strong>
-                                {{ selectedTutor?.degree || 'No degree listed' }}
-                              </p>
-                              <p>
-                                <strong>Year:</strong>
-                                {{ selectedTutor?.year || 'No year provided' }}
-                              </p>
-                            </div>
-                          </v-card-text>
-
-                          <v-card-actions class="justify-center pb-4">
-                            <v-btn
-                              color="primary"
-                              @click="profileDialog = false"
-                              class="font-weight-bold"
-                              >CLOSE</v-btn
-                            >
-                          </v-card-actions>
-                        </v-card>
-                      </v-dialog>
-
-                        <!-- Appointment Dialog -->
-                        <v-dialog
-                        v-model="appointmentDialog"
-                        max-width="500px"
-                        transition="scale-transition"
-                      >
-                        <v-card
-                          :class="
-                            currentTheme === 'dark'
-                              ? 'bg-grey-darken-3 text-white'
-                              : 'bg-white text-black'
-                          "
-                        >
-                          <v-card-text class="text-center py-6 px-4">
-                            <h2 class="font-weight-bold mb-4">
-                              Appointment with {{ selectedTutor?.first_name || 'Mentor' }}
-                            </h2>
-
-                            <div class="d-flex flex-column align-center" style="gap: 20px">
-                              <!-- Date Picker -->
-
-                              <v-date-picker
-                                v-model="selectedDate"
-                                v-model:dialog="datePickerOpen"
-                                color="primary"
-                                class="mx-auto"
-                                style="max-width: 300px"
-                              />
-
-                              <!-- Time Picker -->
-                              <v-time-picker
-                                v-if="selectedDate"
-                                v-model="selectedTime"
-                                v-model:dialog="timePickerOpen"
-                                format="12hr"
-                                color="primary"
-                                class="mx-auto"
-                                style="max-width: 300px"
-                                :disabled="!selectedDate"
-                              />
-
-                              <!-- Message Input -->
-                              <v-textarea
-                                v-if="selectedDate"
-                                v-model="messageInput"
-                                label="Your Message"
-                                placeholder="Type your message here..."
-                                rows="3"
-                                density="compact"
-                                hide-details
-                                style="max-width: 300px"
-                              ></v-textarea>
-                            </div>
-                          </v-card-text>
-
-                          <v-card-actions class="justify-center pb-4">
-                            <v-btn
-                              color="grey"
-                              variant="outlined"
-                              @click="appointmentDialog = false"
-                              class="font-weight-bold"
-                            >
-                              CANCEL
-                            </v-btn>
-                            <v-btn
-                              color="primary"
-                              @click="saveAppointment"
-                              class="font-weight-bold"
-                            >
-                              SAVE
-                            </v-btn>
-                          </v-card-actions>
-                        </v-card>
-                      </v-dialog>
-                    </v-container>
-                  </div>
-                </v-sheet>
-              </div>
+                <!-- Empty State -->
+                <div v-else class="text-center mt-10">
+                  <v-icon size="64" color="grey">mdi-account-search</v-icon>
+                  <p class="mt-2 text-subtitle-2">No mentors available yet.</p>
+                </div>
+              </v-sheet>
             </v-col>
           </v-row>
         </v-container>
+        <!--for the view more -->
+        <v-dialog v-model="profileDialog" max-width="600px">
+          <v-card>
+            <!-- Title -->
+            <v-card-title class="text-h6 font-weight-bold justify-center py-4">
+              Mentor Profile
+            </v-card-title>
+
+            <!-- Avatar and Name -->
+            <v-card-text class="text-center pb-0">
+              <v-avatar size="100" class="mb-4">
+                <v-img :src="selectedTutor.avatar_url" cover>
+                  <template #error>
+                    <v-icon size="80" color="grey-darken-1">mdi-account</v-icon>
+                  </template>
+                </v-img>
+              </v-avatar>
+
+              <div class="text-h6 font-weight-bold mb-1">
+                {{ selectedTutor.first_name }} {{ selectedTutor.last_name }}
+              </div>
+              <div class="text-caption mb-3 grey--text">
+                {{ selectedTutor.expertise || 'Subject Area' }}
+              </div>
+            </v-card-text>
+
+            <v-divider class="my-2" />
+
+            <!-- Details -->
+            <v-card-text>
+              <v-row dense>
+                <v-col cols="12" sm="6">
+                  <strong>Email:</strong><br />
+                  <span>{{ selectedTutor.email || 'N/A' }}</span>
+                </v-col>
+                <v-col cols="12" sm="6">
+                  <strong>School:</strong><br />
+                  <span>{{ selectedTutor.school || 'N/A' }}</span>
+                </v-col>
+                <v-col cols="12" sm="6">
+                  <strong>Expertise:</strong><br />
+                  <span>{{ selectedTutor.expertise || 'N/A' }}</span>
+                </v-col>
+                <v-col cols="12" sm="6">
+                  <strong>About:</strong><br />
+                  <span>{{ selectedTutor.about || 'N/A' }}</span>
+                </v-col>
+              </v-row>
+            </v-card-text>
+
+            <!-- Actions -->
+            <v-card-actions class="justify-center pb-4">
+              <v-btn color="primary" @click="profileDialog = false">Close</v-btn>
+            </v-card-actions>
+          </v-card>
+        </v-dialog>
+
+        <!--set appointment-->
+        <v-dialog v-model="appointmentDialog" max-width="500px">
+          <v-card>
+            <v-card-title class="text-h6 text-center">Set Appointment</v-card-title>
+            <v-card-text>
+              <p v-if="selectedTutor">
+                Booking with:
+                <strong>{{ selectedTutor.first_name }} {{ selectedTutor.last_name }}</strong>
+              </p>
+              <v-text-field v-model="selectedDate" label="Date" type="date" dense />
+              <v-text-field v-model="selectedTime" label="Time" type="time" dense />
+              <v-textarea v-model="messageInput" label="Message" rows="3" dense />
+            </v-card-text>
+            <v-card-actions class="justify-center">
+              <v-btn text @click="appointmentDialog = false">Cancel</v-btn>
+              <v-btn color="primary" @click="saveAppointment">Book</v-btn>
+            </v-card-actions>
+          </v-card>
+        </v-dialog>
       </v-main>
     </transition>
   </v-app>
@@ -676,15 +634,14 @@ const fetchRatings = async () => {
 }
 
 /* Text Styles */
-h1.head {
-  font-family: 'Ubuntu', sans-serif;
-  font-size: 2.4rem;
-  font-weight: 800;
+h1 {
+  font-size: 2.5rem;
+  font-weight: 700;
   color: #1565c0;
   text-align: center;
-  margin-bottom: 24px;
-  letter-spacing: 1px;
+  margin-bottom: 20px;
   text-transform: uppercase;
+  letter-spacing: 2px;
 }
 .user-name {
   font-family: 'Roboto', sans-serif;
@@ -893,7 +850,7 @@ h1.head {
     height: 40px;
   }
 
-  h1.head {
+  h1 {
     font-size: 1.8rem;
     letter-spacing: 0.2rem;
   }

@@ -127,7 +127,7 @@ const contacts = ref([
     position: 'Analyst',
     email: 'charlesneri0201@gmail.com',
     phone: '',
-    photo: 'public/image/neri.png',
+    photo: 'public/image/charles-neri.png',
     description:
       'As a data analyst, I look at how students use the platform to find patterns and ways to improve the system. I use data to help make the booking process better, so students can find the right mentor quickly and easily.',
     newMessage: '',
@@ -267,7 +267,7 @@ onBeforeUnmount(() => {
       </v-navigation-drawer>
     </transition>
     <!-- App Bar -->
-    <v-app-bar flat :color="currentTheme === 'light' ? '#1565c0' : 'grey-darken-4'">
+    <v-app-bar flat :color="currentTheme === 'light' ? '#1565c0' : '#000000'">
       <!-- Menu Icon that toggles drawer size -->
       <v-btn icon class="ms-5" @click="toggleDrawer">
         <v-icon>mdi-menu</v-icon>
@@ -298,7 +298,7 @@ onBeforeUnmount(() => {
     </v-snackbar>
     <!-- Main Content -->
     <v-main  :style="{
-                backgroundColor: currentTheme === 'dark' ? '#424242' : '#fefcf9',
+                backgroundColor: currentTheme === 'dark' ? '#222222' : '#fefcf9',
                 color: currentTheme === 'dark' ? '#ffffff' : '#000000',
               }">
       <v-container fluid class="py-6 px-4 px-sm-6">
@@ -316,45 +316,53 @@ onBeforeUnmount(() => {
               elevation="2"
               rounded="lg"
             >
-              <h1 class="font-weight-bold mb-5">Contact</h1>
+              <h1 class=" mb-5">Contact</h1>
 
-              <v-row dense class="mt-6" justify="center" align="stretch">
-                <v-col cols="12" sm="6" md="4" v-for="(contact, index) in contacts" :key="index">
-                  <v-card
-                  :style="{
-                backgroundColor: currentTheme === 'dark' ? '#424242' : '#fefcf9',
-                color: currentTheme === 'dark' ? '#ffffff' : '#000000',
-              }"
-                    elevation="5"
-                    class="contact-card"
-                  >
-                    <v-img :src="contact.photo" height="200" cover class="rounded-t"></v-img>
+              <v-row class="mt-6" justify="center" align="stretch">
+  <v-col
+    cols="12"
+    sm="6"
+    md="4"
+    class="mb-6 px-3"
+    v-for="(contact, index) in contacts"
+    :key="index"
+  >
+    <v-card
+      :style="{
+        backgroundColor: currentTheme === 'dark' ? '#424242' : '#fefcf9',
+        color: currentTheme === 'dark' ? '#ffffff' : '#000000',
+      }"
+      variant="outlined"
+      class="contact-card"
+    >
+      <v-img :src="contact.photo" height="200" cover class="rounded-t"></v-img>
 
-                    <v-card-title class="font-weight-bold">{{ contact.name }}</v-card-title>
-                    <v-card-subtitle>{{ contact.position }}</v-card-subtitle>
+      <v-card-title class="font-weight-bold">{{ contact.name }}</v-card-title>
+      <v-card-subtitle>{{ contact.position }}</v-card-subtitle>
 
-                    <v-card-text>
-                      <div><strong>Email:</strong> {{ contact.email }}</div>
-                      <div><strong>Phone:</strong> {{ contact.phone }}</div>
+      <v-card-text>
+        <div><strong>Email:</strong> {{ contact.email }}</div>
+        <div><strong>Phone:</strong> {{ contact.phone }}</div>
 
-                      <!-- Contact Description -->
-                      <div
-                        class="mt-4 mb-2 text-justify"
-                        style="
-                          min-height: 80px;
-                          max-height: 120px;
-                          overflow-y: auto;
-                          background-color: rgba(0, 0, 0, 0.05);
-                          padding: 8px;
-                          border-radius: 4px;
-                        "
-                      >
-                        <small>{{ contact.description }}</small>
-                      </div>
-                    </v-card-text>
-                  </v-card>
-                </v-col>
-              </v-row>
+        <!-- Contact Description -->
+        <div
+          class="mt-4 mb-2 text-justify"
+          style="
+            min-height: 80px;
+            max-height: 120px;
+            overflow-y: auto;
+            background-color: rgba(0, 0, 0, 0.05);
+            padding: 8px;
+            border-radius: 4px;
+          "
+        >
+          <small>{{ contact.description }}</small>
+        </div>
+      </v-card-text>
+    </v-card>
+  </v-col>
+</v-row>
+
 
               <!-- Single Text Area for Message Input -->
               <v-card class="mt-6"  :style="{
@@ -400,13 +408,13 @@ onBeforeUnmount(() => {
 }
 /* Custom styling for heading */
 h1 {
-  font-size: 2.5rem; /* Make it bigger */
-  font-weight: 700; /* Bold text */
-  color: #1565c0; /* Primary color */
-  text-align: center; /* Center the heading */
-  margin-bottom: 20px; /* Space below the heading */
-  text-transform: uppercase; /* Capitalize the text */
-  letter-spacing: 1px; /* Add some spacing between letters */
+  font-size: 2.5rem; 
+  font-weight: 700;
+  color: #1565c0; 
+  text-align: center; 
+  margin-bottom: 20px; 
+  text-transform: uppercase; 
+  letter-spacing: 2px;  
 }
 
 /* Adjust heading color for dark theme */
@@ -449,9 +457,7 @@ body[data-theme='dark'] h1 {
   width: 50px;
   height: 50px;
 }
-.large-icon ::v-deep(.v-field__append-inner .v-icon) {
-  font-size: 28px !important;
-}
+
 
 /* Animations */
 .fade-slide-up-enter-active {
@@ -467,19 +473,19 @@ body[data-theme='dark'] h1 {
     transform: translateY(0);
   }
 }
-.fade-slide-enter-active,
+.fade-slide-up-enter-active,
 .fade-slide-leave-active {
   transition: all 0.4s ease;
 }
-.fade-slide-enter-from {
+.fade-slide-up-enter-from {
   opacity: 0;
   transform: translateY(16px);
 }
-.fade-slide-leave-to {
+.fade-slide-up-leave-to {
   opacity: 0;
   transform: scale(0.95);
 }
-.fade-slide-move {
+.fade-slide-up-move {
   transition: transform 0.3s ease;
 }
 
@@ -511,6 +517,10 @@ body[data-theme='dark'] h1 {
   .logo {
     width: 40px;
     height: 40px;
+  }
+  h1 {
+    font-size: 1.8rem;
+    letter-spacing: 0.2rem;
   }
 }
 </style>

@@ -258,7 +258,7 @@ onBeforeUnmount(() => {
       </v-navigation-drawer>
     </transi  tion>
     <!-- App Bar -->
-    <v-app-bar flat :color="currentTheme === 'light' ? '#1565c0' : 'grey-darken-4'">
+    <v-app-bar flat :color="currentTheme === 'light' ? '#1565c0' : '#000000'">
       <!-- Menu Icon that toggles drawer size -->
       <v-btn icon class="ms-5" @click="toggleDrawer">
         <v-icon>mdi-menu</v-icon>
@@ -293,7 +293,7 @@ onBeforeUnmount(() => {
     <!-- Main Content -->
     <v-main
       :style="{
-        backgroundColor: currentTheme === 'dark' ? '#424242' : '#fefcf9',
+        backgroundColor: currentTheme === 'dark' ? '#222222' : '#fefcf9',
         color: currentTheme === 'dark' ? '#ffffff' : '#000000',
       }"
     >
@@ -301,18 +301,17 @@ onBeforeUnmount(() => {
         <v-row justify="center">
           <v-col cols="12" sm="10" md="10" lg="10">
             <v-sheet
-              :style="{
-                backgroundColor: currentTheme === 'dark' ? '#424242' : '#fefcf9',
-                color: currentTheme === 'dark' ? '#ffffff' : '#000000',
-              }"
-              class="pa-6"
-              elevation="2"
+            :style="{
+        backgroundColor: currentTheme === 'dark' ? '#424242' : '#fefcf9',
+        color: currentTheme === 'dark' ? '#ffffff' : '#000000',
+      }"              class="border-sheet pa-6"
+             elevation="2"
               rounded="lg"
             >
               <!-- Header -->
               <div class="text-center mb-8">
                 <v-responsive class="mb-4">
-                  <h1 class="text-h4 font-weight-bold">About Teach & Learn</h1>
+                  <h1 >About Teach & Learn</h1>
                 </v-responsive>
                 <v-responsive>
                   <p class="text-body-1">
@@ -334,10 +333,10 @@ onBeforeUnmount(() => {
                 <!-- Step 1 -->
                 <v-col cols="12" sm="6" md="4" class="mb-4 d-flex" >
                   <v-card class="pa-4 flex-grow-1 fade-in" variant="outlined" rounded="lg"  :style="{
-                    backgroundColor: currentTheme === 'dark' ? '#424242' : '#1565c0',
+                    backgroundColor: currentTheme === 'dark' ? '#424242' : '#fefcf9',
                     color: currentTheme === 'dark' ? '#ffffff' : '#000000',
                   }">
-                    <v-icon size="32" class="mb-2" color="white">mdi-account-plus</v-icon>
+                    <v-icon size="32" class="mb-2" color="primary " >mdi-account-plus</v-icon>
                     <v-card-title class="text-subtitle-1 font-weight-bold white-font"
                    >Step 1: Create Your Profile</v-card-title
                     >
@@ -350,7 +349,7 @@ onBeforeUnmount(() => {
                 <!-- Step 2 -->
                 <v-col cols="12" sm="6" md="4" class="mb-4 d-flex">
                   <v-card class="pa-4 flex-grow-1 fade-in" variant="outlined" rounded="lg" :style="{
-                    backgroundColor: currentTheme === 'dark' ? '#424242' : '#1565c0',
+                    backgroundColor: currentTheme === 'dark' ? '#424242' : '#fefcf9',
                     color: currentTheme === 'dark' ? '#ffffff' : '#000000',
                   }">
                     <v-icon size="32" class="mb-2 white-font" color="primary">mdi-magnify</v-icon>
@@ -366,10 +365,10 @@ onBeforeUnmount(() => {
                 <!-- Step 3 -->
                 <v-col cols="12" sm="6" md="4" class="mb-4 d-flex">
                   <v-card class="pa-4 flex-grow-1 fade-in" variant="outlined" rounded="lg" :style="{
-                    backgroundColor: currentTheme === 'dark' ? '#424242' : '#1565c0',
+                    backgroundColor: currentTheme === 'dark' ? '#424242' : '#fefcf9',
                     color: currentTheme === 'dark' ? '#ffffff' : '#000000',
                   }">
-                    <v-icon size="32" class="mb-2" color="primary white-font" >mdi-calendar-clock</v-icon>
+                    <v-icon size="32" class="mb-2 white-font" color="primary " >mdi-calendar-clock</v-icon>
                     <v-card-title class="text-subtitle-1 font-weight-bold white-font"
                       >Step 3: Book an Appointment</v-card-title
                     >
@@ -382,7 +381,7 @@ onBeforeUnmount(() => {
                 <!-- Step 4 -->
                 <v-col cols="12" sm="6" md="4" class="mb-4 d-flex">
                   <v-card class="pa-4 flex-grow-1 fade-in" variant="outlined" rounded="lg" :style="{
-                    backgroundColor: currentTheme === 'dark' ? '#424242' : '#1565c0',
+                    backgroundColor: currentTheme === 'dark' ? '#424242' : '#fefcf9',
                     color: currentTheme === 'dark' ? '#ffffff' : '#000000',
                   }">
                     <v-icon size="32" class="mb-2" color="primary">mdi-school</v-icon>
@@ -398,7 +397,7 @@ onBeforeUnmount(() => {
                 <!-- Step 5 -->
                 <v-col cols="12" sm="6" md="4" class="mb-4 d-flex">
                   <v-card class="pa-4 flex-grow-1 fade-in" variant="outlined" rounded="lg" :style="{
-                    backgroundColor: currentTheme === 'dark' ? '#424242' : '#1565c0',
+                    backgroundColor: currentTheme === 'dark' ? '#424242' : '#fefcf9',
                     color: currentTheme === 'dark' ? '#ffffff' : '#000000',
                   }">
                     <v-icon size="32" class="mb-2" color="primary">mdi-star-check</v-icon>
@@ -426,6 +425,16 @@ onBeforeUnmount(() => {
   </v-app>
 </template>
 <style scoped>
+h1 {
+  font-size: 2.5rem; 
+  font-weight: 700;
+  color: #1565c0; 
+  text-align: center; 
+  margin-bottom: 20px; 
+  text-transform: uppercase; 
+  letter-spacing: 2px; 
+}
+
 /* Remove underline on link */
 .active-click {
   font-weight: 700;
@@ -540,6 +549,10 @@ onBeforeUnmount(() => {
     width: 40px;
     height: 40px;
   }
+  h1 {
+    font-size: 1.8rem;
+    letter-spacing: 0.2rem;
+  }
 }
 @keyframes fadeIn {
   from {
@@ -550,8 +563,8 @@ onBeforeUnmount(() => {
     opacity: 1;
     transform: translateY(0);
   }
+  
 }
-.white-font{
-  color:white
-}
+
+
 </style>
