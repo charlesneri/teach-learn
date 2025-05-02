@@ -385,7 +385,7 @@ onBeforeUnmount(() => {
 
 <template>
   <v-app id="inspire">
-   <!-- Drawer Sidebar (right, collapsible) -->
+   <!-- Drawer Sidebar-->
    <transi name="fade-slide-up">
       <v-navigation-drawer
     v-if="drawer"
@@ -401,7 +401,7 @@ onBeforeUnmount(() => {
         }"
       >
         <!-- Menu Icon that toggles drawer size -->
-        <v-btn icon class="ms-5 d-lg-none" @click="toggleDrawer">
+        <v-btn icon class="ms-5 mt-5 d-lg-none" @click="toggleDrawer">
           <v-icon>mdi-menu</v-icon>
         </v-btn>
         <!-- Profile -->
@@ -498,7 +498,7 @@ onBeforeUnmount(() => {
           'no-transition': isMobile,
         }"
       >
-        <div class="search-wrapper">
+        <div class="logo-wrapper">
        
           <v-avatar color="#fff" size="50" class="logo me-6">
             <v-img src="image/Teach&Learn.png" alt="Logo" />
@@ -816,8 +816,8 @@ onBeforeUnmount(() => {
   animation: fadeSlideUp 1.6s ease-in both;
 }
 /* for the logo*/
-/* Search Styles */
-.search-wrapper {
+
+.logo-wrapper {
   position: absolute;
   top: 50%;
   right: 16px;
@@ -830,7 +830,7 @@ onBeforeUnmount(() => {
   max-width: none;
   flex-wrap: nowrap;
 }
-.search-input {
+.logo-input {
   width: 240px;
   max-width: none;
   transition: width 0.3s ease;
@@ -898,11 +898,11 @@ onBeforeUnmount(() => {
  /* .v-main {
     padding-top: 64px;
   }*/
-  .search-input {
+  .logo-input {
     width: 150px;
     max-width: 100%;
   }
-  .search-wrapper {
+  .logo-wrapper {
     right: 12px;
     gap: 8px;
   }

@@ -173,7 +173,7 @@ onBeforeUnmount(() => {
         }"
       >
         <!-- Menu Icon that toggles drawer size -->
-        <v-btn icon class="ms-5 d-lg-none" @click="toggleDrawer">
+        <v-btn icon class="ms-5 mt-5 d-lg-none" @click="toggleDrawer">
           <v-icon>mdi-menu</v-icon>
         </v-btn>
         <!-- Profile -->
