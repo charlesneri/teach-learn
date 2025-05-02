@@ -198,7 +198,7 @@ onBeforeUnmount(() => {
     <!-- Drawer Sidebar -->
     <transition name="fade-slide-up">
       <v-navigation-drawer
-        v-model="drawer"
+       v-if="drawer"
         :temporary="isMobile"
         :permanent="!isMobile"
         :width="isMobile ? '100%' : 280"
@@ -210,7 +210,7 @@ onBeforeUnmount(() => {
           color: currentTheme === 'dark' ? '#ffffff' : '#000000',
         }"
       >
-        <v-btn icon class="ms-5 d-lg-none" @click="toggleDrawer">
+        <v-btn icon class="ms-5 mt-5 d-lg-none" @click="toggleDrawer">
           <v-icon>mdi-menu</v-icon>
         </v-btn>
         <v-sheet
@@ -552,6 +552,7 @@ h1 {
 }
 
 /* Mobile adjustments */
+
 @media (max-width: 600px) {
   .Delete-container {
     padding: 16px;
@@ -559,6 +560,9 @@ h1 {
 
   .appointment-title {
     font-size: 1.1rem;
+  }
+  .v-navigation-drawer {
+    width: 100% !important;
   }
 
   .v-dialog {
@@ -578,4 +582,5 @@ h1 {
     letter-spacing: 0.2rem;
   }
 }
+
 </style>
