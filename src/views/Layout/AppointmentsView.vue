@@ -270,7 +270,7 @@ const submitRating = async () => {
 
   console.log('Submitting rating payload:', payload)
 
-  const { error } = await supabase.from('ratings').upsert(payload)
+  const { error } = await supabase.from('ratings').insert(payload)
 
   if (error) {
     console.error('Rating error:', error)
@@ -284,6 +284,22 @@ const submitRating = async () => {
 
   snackbar.value = true
 }
+
+//for rating ru;e
+const canRateAppointment = (appointment) => {
+  return currentUserId.value === appointment.student?.id
+}
+//for the rate button
+const handleRateClick = (appointment) => {
+  if (canRateAppointment(appointment)) {
+    openRatingDialog(appointment)
+  } else {
+    snackbarMsg.value = 'Only the person who booked this appointment can rate.'
+    snackbarColor.value = 'red'
+    snackbar.value = true
+  }
+}
+
 
 //for delete function
 const deleteDialog = ref(false)
@@ -374,9 +390,8 @@ const getAverageRatingForMentor = async (mentorId) => {
   }
 
   if (data.length === 0) return null
-
-  const total = data.reduce((sum, entry) => sum + entry.rating, 0)
-  return (total / data.length).toFixed(1)
+const total = data.reduce((sum, entry) => sum + entry.rating, 0)
+return (total / data.length).toFixed(1)
 }
 
 //for edit appointments
@@ -550,6 +565,7 @@ const updateAppointment = async () => {
     >
       {{ snackbarMsg }}
     </v-snackbar>
+    
 
     <!-- MAIN CONTENT -->
     <v-main       :style="{
@@ -660,9 +676,24 @@ const updateAppointment = async () => {
                     <v-btn size="small" color="error" variant="text" @click="confirmDeleteAppointment(appointment)">
                       Delete
                     </v-btn>
-                    <v-btn size="small" color="amber" variant="text" @click="openRatingDialog(appointment)">
-                      Rate
-                    </v-btn>
+                    <v-btn
+  size="small"
+  color="amber"
+  variant="text"
+  @click="() => {
+    if (canRateAppointment(appointment)) {
+      handleRateClick(appointment)
+    } else {
+      snackbarMsg = 'You cannot rate this session. Only the person who booked it can rate.'
+      snackbarColor = 'red'
+      snackbar = true
+    }
+  }"
+>
+  Rate
+</v-btn>
+
+
                     <v-btn size="small" color="success" variant="text" @click="openEditDialog(appointment)">
                     Edit Appointment
                   </v-btn>

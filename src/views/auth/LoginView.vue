@@ -33,14 +33,14 @@ onMounted(() => {
 // Form Data
 const formData = ref({
   email: '',
-  password: ''
+  password: '',
 })
 
 // Form State
 const formAction = ref({
   formProcess: false,
   formErrorMessage: '',
-  formSuccessMessage: ''
+  formSuccessMessage: '',
 })
 
 // Login Logic
@@ -80,7 +80,7 @@ const onLogin = async () => {
   // STEP 2: Email exists, now try to sign in
   const { data, error: loginError } = await supabase.auth.signInWithPassword({
     email,
-    password
+    password,
   })
 
   if (loginError) {
@@ -190,7 +190,6 @@ const onFormSubmit = () => {
                           class="mt-2 signup-btn"
                           type="submit"
                           prepend-icon="mdi-login"
-                          
                         >
                           Login
                         </v-btn>
@@ -355,7 +354,7 @@ body.dark .active-click:hover {
   .signup-btn {
     font-size: 14px;
     padding: 10px 20px;
-    max-width: 100%;        /* fill available width */
+    max-width: 100%; /* fill available width */
   }
 }
 </style>
