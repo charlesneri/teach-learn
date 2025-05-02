@@ -1,32 +1,26 @@
 <script setup>
-import { requiredValidator, emailValidator } from '@/utils/validators.js'
 import { ref, onMounted, watch } from 'vue'
-import { supabase } from '@/utils/supabase.js'
 import { useRouter } from 'vue-router'
+import { supabase } from '@/utils/supabase.js'
+import { requiredValidator, emailValidator } from '@/utils/validators.js'
 import AlertNotification from '@/components/common/AlertNotification.vue'
 
+const router = useRouter()
 const visible = ref(false)
+const refVForm = ref()
 
-// Get theme preference from localStorage or system
+// Theme Setup
 const getPreferredTheme = () => {
-  const savedTheme = localStorage.getItem('theme')
-  if (savedTheme) return savedTheme
-  return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
+  const saved = localStorage.getItem('theme')
+  return saved || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light')
 }
-
 const theme = ref(getPreferredTheme())
 
-// Toggle theme
 const toggleTheme = () => {
   theme.value = theme.value === 'light' ? 'dark' : 'light'
 }
+watch(theme, (val) => localStorage.setItem('theme', val))
 
-// Save theme change
-watch(theme, (val) => {
-  localStorage.setItem('theme', val)
-})
-
-// Watch for system changes if no saved preference
 onMounted(() => {
   const media = window.matchMedia('(prefers-color-scheme: dark)')
   media.addEventListener('change', (e) => {
@@ -36,58 +30,87 @@ onMounted(() => {
   })
 })
 
-const refVForm = ref()
-const router = useRouter()
-
-// Reactive state for form data
+// Form Data
 const formData = ref({
   email: '',
-  password: '',
+  password: ''
 })
 
-// Reactive state for form action (processing status)
+// Form State
 const formAction = ref({
   formProcess: false,
   formErrorMessage: '',
-  formSuccessMessage: '',
+  formSuccessMessage: ''
 })
 
-// Login function
+// Login Logic
 const onLogin = async () => {
   formAction.value.formProcess = true
   formAction.value.formErrorMessage = ''
   formAction.value.formSuccessMessage = ''
-  const { data, error } = await supabase.auth.signInWithPassword({
-    email: formData.value.email,
-    password: formData.value.password,
-  })
 
-  // Handle success and error responses
-  formAction.value.formProcess = false
-  if (error) {
-    formAction.value.formErrorMessage = error.message = 'Failed to login!'
+  const email = formData.value.email.trim()
+  const password = formData.value.password.trim()
+
+  if (!email || !password) {
+    formAction.value.formErrorMessage = 'Please enter both email and password.'
+    formAction.value.formProcess = false
     return
   }
 
-  if (data) {
-    formAction.value.formSuccessMessage = 'Successfully Logged In!'
+  // STEP 1: Check if email exists in your `profiles` table
+  const { data: profileMatch, error: profileError } = await supabase
+    .from('profiles')
+    .select('id')
+    .eq('email', email)
+    .maybeSingle()
 
-    // Wait for a bit so the user can see the alert
-    setTimeout(() => {
-      router.replace('/home')
-    }, 1500) // 1.5 seconds
+  if (profileError) {
+    formAction.value.formErrorMessage = 'Something went wrong while verifying your email.'
+    formAction.value.formProcess = false
+    return
   }
+
+  if (!profileMatch) {
+    formAction.value.formErrorMessage = 'Account not found. Please register first.'
+    formAction.value.formProcess = false
+    return
+  }
+
+  // STEP 2: Email exists, now try to sign in
+  const { data, error: loginError } = await supabase.auth.signInWithPassword({
+    email,
+    password
+  })
+
+  if (loginError) {
+    formAction.value.formErrorMessage = 'Incorrect password. Please try again.'
+    formAction.value.formProcess = false
+    return
+  }
+
+  // STEP 3: Check if user was returned
+  const user = data?.user
+  if (!user) {
+    formAction.value.formErrorMessage = 'Authentication failed. Try again.'
+    formAction.value.formProcess = false
+    return
+  }
+
+  // STEP 4: Successful login
+  formAction.value.formSuccessMessage = 'Successfully Logged In!'
+  formAction.value.formProcess = false
+  setTimeout(() => {
+    router.replace('/home')
+  }, 1500)
 }
 
-// Form submission handler
+// Form submit handler
 const onFormSubmit = () => {
   refVForm.value?.validate().then(({ valid }) => {
-    if (valid) {
-      onLogin()
-    }
+    if (valid) onLogin()
   })
 }
-const showSuccess = ref(true)
 </script>
 
 <template>
