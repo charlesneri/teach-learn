@@ -34,8 +34,19 @@ const refVForm = ref()
 const showDialog = ref(false)
 
 const formData = ref({
-  firstname: '', lastname: '', middleinitial: '', age: '', phone: '', expertise: '',
-  about: '', school: '', course: '', yearLevel: '', email: '', password: '', confirm_password: ''
+  firstname: '',
+  lastname: '',
+  middleinitial: '',
+  age: '',
+  phone: '',
+  expertise: '',
+  about: '',
+  school: '',
+  course: '',
+  yearLevel: '',
+  email: '',
+  password: '',
+  confirm_password: '',
 })
 
 const formAction = ref({ ...formActionDefault })
@@ -92,7 +103,7 @@ const onSubmit = async () => {
       school: formData.value.school,
       degree: formData.value.course,
       year: Number(formData.value.yearLevel),
-      avatar_url: ''
+      avatar_url: '',
     })
 
     if (profileError) {
@@ -121,21 +132,30 @@ const onSubmit = async () => {
     <v-main>
       <v-container
         fluid
-        class="d-flex justify-center align-center container-bg"
+        class="d-flex justify-center py-10 container-bg"
         :style="{ backgroundColor: theme === 'light' ? '#1565c0' : '#121212', minHeight: '100vh' }"
       >
         <v-btn
           icon
           @click="toggleTheme"
           class="theme-toggle"
-          width="48"
-          height="48"
+          width="35"
+          height="35"
           rounded="circle"
         >
           <v-icon>{{ theme === 'light' ? 'mdi-weather-night' : 'mdi-weather-sunny' }}</v-icon>
         </v-btn>
 
-        <v-card class="rounded-xl hover-card" max-width="1200" width="100%" :style="{ backgroundColor: theme === 'light' ? '#fefcf9' : '#222222' }">
+        <v-card
+          class="rounded-xl hover-card"
+          max-width="800"
+          width="100%"
+          :style="{
+          
+            backgroundColor: theme === 'light' ? '#fefcf9' : '#222222',
+       
+          }"
+        >
           <template #title>
             <v-img src="/image/Teach&Learn.png" width="150" class="mx-auto" cover />
             <v-divider class="my-4" thickness="3" color="black" />
@@ -146,7 +166,7 @@ const onSubmit = async () => {
             :form-success-message="formAction.formSuccessMessage"
             :form-error-message="formAction.formErrorMessage"
           />
-
+          <!--
           <v-card-text>
             <v-form ref="refVForm" fast-fail @submit.prevent="onFormSubmit">
               <v-row dense>
@@ -209,6 +229,168 @@ const onSubmit = async () => {
                 </v-col>
               </v-row>
             </v-form>
+          </v-card-text>-->
+          <v-card-text>
+            <v-form ref="refVForm" fast-fail @submit.prevent="onFormSubmit">
+              <v-row dense>
+                <v-col cols="12" md="6">
+                  <v-text-field
+                    v-model="formData.firstname"
+                    label="First Name"
+                    :rules="[requiredValidator]"
+                    variant="filled"
+                    :color="theme === 'dark' ? 'white' : 'primary'"
+                  />
+                </v-col>
+
+                <v-col cols="12" md="6">
+                  <v-text-field
+                    v-model="formData.lastname"
+                    label="Last Name"
+                    :rules="[requiredValidator]"
+                    variant="filled"
+                    :color="theme === 'dark' ? 'white' : 'primary'"
+                  />
+                </v-col>
+                <v-col cols="12" md="4">
+                  <v-text-field
+                    v-model="formData.middleinitial"
+                    label="Middle Initial"
+                    variant="filled"
+                    :color="theme === 'dark' ? 'white' : 'primary'"
+                  />
+                </v-col>
+
+                <v-col cols="12" md="4">
+                  <v-text-field
+                    v-model="formData.age"
+                    label="Age"
+                    type="number"
+                    :rules="[requiredValidator]"
+                    variant="filled"
+                    :color="theme === 'dark' ? 'white' : 'primary'"
+                  />
+                </v-col>
+
+                <v-col cols="12" md="4">
+                  <v-text-field
+                    v-model="formData.phone"
+                    label="Phone"
+                    :rules="[requiredValidator]"
+                    variant="filled"
+                    :color="theme === 'dark' ? 'white' : 'primary'"
+                  />
+                </v-col>
+
+                <v-col cols="12" md="4">
+                  <v-text-field
+                    v-model="formData.school"
+                    label="School"
+                    :rules="[requiredValidator]"
+                    variant="filled"
+                    :color="theme === 'dark' ? 'white' : 'primary'"
+                  />
+                </v-col>
+
+                <v-col cols="12" md="4">
+                  <v-text-field
+                    v-model="formData.course"
+                    label="Course"
+                    :rules="[requiredValidator]"
+                    variant="filled"
+                    :color="theme === 'dark' ? 'white' : 'primary'"
+                  />
+                </v-col>
+
+                <v-col cols="12" md="4">
+                  <v-text-field
+                    v-model="formData.yearLevel"
+                    label="Year Level"
+                    type="number"
+                    :rules="[requiredValidator]"
+                    variant="filled"
+                    :color="theme === 'dark' ? 'white' : 'primary'"
+                  />
+                </v-col>
+                <v-col cols="12" md="6">
+                  <v-textarea
+                    v-model="formData.expertise"
+                    label="Expertise"
+                    variant="filled"
+                    rows="3"
+                    :color="theme === 'dark' ? 'white' : 'primary'"
+                  />
+                </v-col>
+
+                <v-col cols="12" md="6">
+                  <v-textarea
+                    v-model="formData.about"
+                    label="About Me"
+                    auto-grow
+                    rows="3"
+                    :rules="[requiredValidator]"
+                    variant="filled"
+                    :color="theme === 'dark' ? 'white' : 'primary'"
+                  />
+                </v-col>
+
+                <v-col cols="12" md="4">
+                  <v-text-field
+                    v-model="formData.email"
+                    label="Email"
+                    :rules="[requiredValidator]"
+                    variant="filled"
+                    :color="theme === 'dark' ? 'white' : 'primary'"
+                  />
+                </v-col>
+
+                <v-col cols="12" md="4">
+                  <v-text-field
+                    v-model="formData.password"
+                    :type="visible ? 'text' : 'password'"
+                    label="Password"
+                    :append-inner-icon="visible ? 'mdi-eye-off' : 'mdi-eye'"
+                    @click:append-inner="visible = !visible"
+                    :rules="[requiredValidator]"
+                    variant="filled"
+                    :color="theme === 'dark' ? 'white' : 'primary'"
+                  />
+                </v-col>
+
+                <v-col cols="12" md="4">
+                  <v-text-field
+                    v-model="formData.confirm_password"
+                    :type="visible ? 'text' : 'password'"
+                    label="Confirm Password"
+                    :append-inner-icon="visible ? 'mdi-eye-off' : 'mdi-eye'"
+                    @click:append-inner="visible = !visible"
+                    :rules="[requiredValidator]"
+                    variant="filled"
+                    :color="theme === 'dark' ? 'white' : 'primary'"
+                  />
+                </v-col>
+
+                <v-col cols="12" class="d-flex justify-center">
+                  <v-btn
+                    class="signup-btn"
+                    type="submit"
+                    prepend-icon="mdi-account-plus"
+                    :disabled="formAction.formProcess"
+                    :loading="formAction.formProcess"
+                  >
+                    Signup
+                  </v-btn>
+                </v-col>
+
+                <v-col cols="12">
+                  <v-divider class="my-5" />
+                  <p class="text-center text-primary">
+                    Already have an account?
+                    <RouterLink class="active-click" to="/">Login now!</RouterLink>
+                  </p>
+                </v-col>
+              </v-row>
+            </v-form>
           </v-card-text>
         </v-card>
 
@@ -234,7 +416,7 @@ const onSubmit = async () => {
   right: 24px;
 }
 .hover-card:hover {
-  transform: scale(1.05);
+  transform: scale(1.01);
   box-shadow: 0 6px 18px rgba(33, 150, 243, 0.6);
 }
 .signup-btn {
