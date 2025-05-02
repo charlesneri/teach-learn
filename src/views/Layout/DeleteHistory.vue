@@ -485,7 +485,7 @@ h1 {
   text-align: center; 
   margin-bottom: 20px; 
   text-transform: uppercase; 
-  letter-spacing: 2px; 
+  letter-spacing: 1px; 
 }
 .Delete-container {
   max-width: 960px;
