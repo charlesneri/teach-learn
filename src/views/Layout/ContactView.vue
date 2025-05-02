@@ -449,9 +449,7 @@ body[data-theme='dark'] h1 {
   width: 50px;
   height: 50px;
 }
-.large-icon ::v-deep(.v-field__append-inner .v-icon) {
-  font-size: 28px !important;
-}
+
 
 /* Animations */
 .fade-slide-up-enter-active {
@@ -467,19 +465,19 @@ body[data-theme='dark'] h1 {
     transform: translateY(0);
   }
 }
-.fade-slide-enter-active,
+.fade-slide-up-enter-active,
 .fade-slide-leave-active {
   transition: all 0.4s ease;
 }
-.fade-slide-enter-from {
+.fade-slide-up-enter-from {
   opacity: 0;
   transform: translateY(16px);
 }
-.fade-slide-leave-to {
+.fade-slide-up-leave-to {
   opacity: 0;
   transform: scale(0.95);
 }
-.fade-slide-move {
+.fade-slide-up-move {
   transition: transform 0.3s ease;
 }
 
