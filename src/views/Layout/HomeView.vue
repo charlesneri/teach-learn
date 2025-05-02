@@ -256,13 +256,8 @@ const fetchRatings = async () => {
         }"
       >
         <!-- Menu Icon that toggles drawer size -->
-<<<<<<< HEAD
-        <v-btn icon class="ms-10 mt-10 d-lg-none" @click="toggleDrawer">
-          <v-icon size="50">mdi-menu</v-icon>
-=======
         <v-btn icon class="ms-5 mt-5 d-lg-none" @click="toggleDrawer">
           <v-icon>mdi-menu</v-icon>
->>>>>>> development2
         </v-btn>
         <!-- Profile -->
         <v-sheet
