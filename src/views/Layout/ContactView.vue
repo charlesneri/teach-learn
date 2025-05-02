@@ -127,7 +127,7 @@ const contacts = ref([
     position: 'Analyst',
     email: 'charlesneri0201@gmail.com',
     phone: '',
-    photo: 'public/image/neri.png',
+    photo: 'public/image/charles-neri.png',
     description:
       'As a data analyst, I look at how students use the platform to find patterns and ways to improve the system. I use data to help make the booking process better, so students can find the right mentor quickly and easily.',
     newMessage: '',
@@ -316,7 +316,7 @@ onBeforeUnmount(() => {
               elevation="2"
               rounded="lg"
             >
-              <h1 class="font-weight-bold mb-5">Contact</h1>
+              <h1 class=" mb-5">Contact</h1>
 
               <v-row dense class="mt-6" justify="center" align="stretch">
                 <v-col cols="12" sm="6" md="4" v-for="(contact, index) in contacts" :key="index">
@@ -325,7 +325,7 @@ onBeforeUnmount(() => {
                 backgroundColor: currentTheme === 'dark' ? '#424242' : '#fefcf9',
                 color: currentTheme === 'dark' ? '#ffffff' : '#000000',
               }"
-                    elevation="5"
+                   variant="outlined"
                     class="contact-card"
                   >
                     <v-img :src="contact.photo" height="200" cover class="rounded-t"></v-img>
@@ -400,13 +400,13 @@ onBeforeUnmount(() => {
 }
 /* Custom styling for heading */
 h1 {
-  font-size: 2.5rem; /* Make it bigger */
-  font-weight: 700; /* Bold text */
-  color: #1565c0; /* Primary color */
-  text-align: center; /* Center the heading */
-  margin-bottom: 20px; /* Space below the heading */
-  text-transform: uppercase; /* Capitalize the text */
-  letter-spacing: 1px; /* Add some spacing between letters */
+  font-size: 2.5rem; 
+  font-weight: 700;
+  color: #1565c0; 
+  text-align: center; 
+  margin-bottom: 20px; 
+  text-transform: uppercase; 
+  letter-spacing: 2px;  
 }
 
 /* Adjust heading color for dark theme */

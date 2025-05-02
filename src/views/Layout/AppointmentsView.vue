@@ -434,9 +434,9 @@ const updateAppointment = async () => {
           class="pa-4 text-center"
           rounded="lg"
           :style="{
-            backgroundColor: currentTheme === 'dark' ? '#424242' : '',
-            color: currentTheme === 'dark' ? '#ffffff' : '#000000',
-          }"
+        backgroundColor: currentTheme === 'dark' ? '#424242' : '#fefcf9',
+        color: currentTheme === 'dark' ? '#ffffff' : '#000000',
+      }"  
         >
           <v-avatar size="100" class="mb-3">
             <v-img v-if="currentUserProfile.avatarUrl" :src="currentUserProfile.avatarUrl" cover />
@@ -560,7 +560,7 @@ const updateAppointment = async () => {
               style="max-width: 1200px; min-height: 90vh"
             >
               <!-- Title -->
-              <h1 class="text-h6 text-sm-h5 font-weight-bold mb-3">Appointments</h1>
+              <h1 class=" mb-3">Appointments</h1>
 
               <!-- Search & Sort -->
               <v-row class="mb-3" dense>
@@ -832,6 +832,15 @@ const updateAppointment = async () => {
 </template>
 
 <style scoped>
+h1 {
+  font-size: 2.5rem; 
+  font-weight: 700;
+  color: #1565c0; 
+  text-align: center; 
+  margin-bottom: 20px; 
+  text-transform: uppercase; 
+  letter-spacing: 2px; 
+}
 /* Links */
 .active-click {
   font-weight: 700;

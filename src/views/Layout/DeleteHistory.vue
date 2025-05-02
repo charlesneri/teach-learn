@@ -159,7 +159,7 @@ const deleteAppointment = async () => {
     .delete()
     .eq('id', appointmentToDelete.value.id)
 
-  // ✅ Add this line right here:
+  // Add this line right here:
   console.log('Delete response:', { data, error })
 
   if (error) {
@@ -197,7 +197,7 @@ onBeforeUnmount(() => {
     <!-- Drawer Sidebar -->
     <transition name="fade-slide-up">
       <v-navigation-drawer
-        v-if="drawer"
+ v-model="drawer"
         :temporary="isMobile"
         :permanent="!isMobile"
         :width="isMobile ? '100%' : 280"
@@ -330,7 +330,7 @@ onBeforeUnmount(() => {
               rounded="lg"
               style="max-width: 1200px; min-height: 90vh"
             >
-              <h1 class="text-h6 text-sm-h5 font-weight-bold mb-3">Deleted History</h1>
+              <h1 class=" mb-3">Deleted History</h1>
 
               <div v-if="deletedAppointments.length > 0" class="Delete-container">
                 <v-list class="Delete-list">
@@ -475,6 +475,15 @@ onBeforeUnmount(() => {
 </template>
 
 <style scoped>
+h1 {
+  font-size: 2.5rem; 
+  font-weight: 700;
+  color: #1565c0; 
+  text-align: center; 
+  margin-bottom: 20px; 
+  text-transform: uppercase; 
+  letter-spacing: 2px; 
+}
 .Delete-container {
   max-width: 960px;
   margin: auto;

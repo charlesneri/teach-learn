@@ -246,9 +246,9 @@ const cancelEdit = () => {
 }
 
 const getEducationPlaceholder = (index) => {
-  if (index === 0) return 'Enter your school/university'
-  if (index === 1) return 'Enter your course or degree'
-  if (index === 2) return 'Enter your year level'
+  if (index === 0) return 'School or university'
+  if (index === 1) return 'Course or degree'
+  if (index === 2) return 'Year level'
   return ''
 }
 
@@ -525,7 +525,7 @@ onBeforeUnmount(() => {
       }">
       <v-container fluid class="py-6 px-4 px-sm-6">
         <v-row justify="center">
-          <v-col cols="12" sm="10" md="8" lg="8">
+          <v-col cols="12" sm="10" md="11" lg="11">
             <v-sheet
               :class="currentTheme === 'dark' ? 'bg-grey-darken-3 text-white' : 'bg-white'"
               class="fade-slide-up pa-4 pa-sm-6 text-sm-center"
@@ -659,65 +659,127 @@ onBeforeUnmount(() => {
 
               <v-divider class="my-4" />
 
-              <!-- Profile Fields -->
-              <div class="text-start">
-                <v-row
-                  v-for="(fieldKey, label) in fieldMappings"
-                  :key="fieldKey"
-                  class="py-1"
-                  dense
-                >
-                  <v-col cols="12" sm="6" class="font-weight-medium">{{ label }}:</v-col>
-                  <v-col cols="12" sm="6">
-                    <div v-if="!isEditing">{{ profile[fieldKey] }}</div>
-                    <v-text-field
-                      v-else
-                      v-model="profile[fieldKey]"
-                      :placeholder="`Enter your ${label}`"
-                      density="compact"
-                      hide-details
-                      :type="fieldKey === 'age' ? 'number' : 'text'"
-                    />
-                  </v-col>
-                </v-row>
+              <v-card
+  variant="outlined"
+  class="pa-6"
+  rounded="xl"
+  :class="currentTheme === 'dark' ? 'bg-grey-darken-4 text-white' : 'bg-grey-lighten-5'"
+>
 
-                <!-- About Me -->
-                <v-row class="py-1" dense>
-                  <v-col cols="12" sm="6" class="font-weight-medium">About Me:</v-col>
-                  <v-col cols="12" sm="6">
-                    <div v-if="!isEditing">{{ profile.about }}</div>
-                    <v-textarea
-                      v-else
-                      v-model="profile.about"
-                      placeholder="Write something about yourself"
-                      rows="2"
-                      auto-grow
-                      density="compact"
-                      hide-details
-                    />
-                  </v-col>
-                </v-row>
+  <!-- PERSONAL INFORMATION SECTION -->
+  <v-sheet
+    class="pa-4 mb-6 text-start"
+    elevation="1"
+    rounded="lg"
+    :class="currentTheme === 'dark' ? 'bg-grey-darken-3' : 'bg-white'"
+  >
+    <v-card-title class="text-h6 mb-2 d-flex align-start text-start">
+      <v-icon class="me-2" color="primary">mdi-account</v-icon>
+      Personal Information
+    </v-card-title>
+    <v-divider class="mb-4" />
 
-                <!-- Educational Background -->
-                <v-row class="py-1" dense>
-                  <v-col cols="12" sm="6" class="font-weight-medium">Educational Background:</v-col>
-                  <v-col cols="12" sm="6">
-                    <div v-if="!isEditing">
-                      <div v-for="(item, index) in profile.education" :key="index">{{ item }}</div>
-                    </div>
-                    <div v-else>
-                      <v-text-field
-                        v-for="(item, index) in profile.education"
-                        :key="index"
-                        v-model="profile.education[index]"
-                        :placeholder="getEducationPlaceholder(index)"
-                        density="compact"
-                        hide-details
-                      />
-                    </div>
-                  </v-col>
-                </v-row>
-              </div>
+    <v-row
+      v-for="(fieldKey, label) in fieldMappings"
+      :key="fieldKey"
+      class="pb-2 text-start"
+      dense
+    >
+      <v-col cols="12" sm="6" class="font-weight-medium text-start">{{ label }}:</v-col>
+      <v-col cols="12" sm="6" class="text-start">
+        <div v-if="!isEditing" class="py-1">{{ profile[fieldKey] }}</div>
+        <v-text-field
+          v-else
+          v-model="profile[fieldKey]"
+          :placeholder="`Enter your ${label}`"
+          density="compact"
+          hide-details
+          variant="outlined"
+          :type="fieldKey === 'age' ? 'number' : 'text'"
+          class="text-start"
+        />
+      </v-col>
+    </v-row>
+  </v-sheet>
+
+  <!-- ABOUT ME SECTION -->
+  <v-sheet
+    class="pa-4 mb-6 text-start"
+    elevation="1"
+    rounded="lg"
+    :class="currentTheme === 'dark' ? 'bg-grey-darken-3' : 'bg-white'"
+  >
+    <v-card-title class="text-h6 mb-2 d-flex align-start text-start">
+      <v-icon class="me-2" color="primary">mdi-text-box-outline</v-icon>
+      About Me
+    </v-card-title>
+    <v-divider class="mb-4" />
+
+    <v-row>
+      <v-col cols="12" class="text-start">
+        <div v-if="!isEditing" class="py-1">{{ profile.about }}</div>
+        <v-textarea
+          v-else
+          v-model="profile.about"
+          auto-grow
+          density="compact"
+          hide-details
+          variant="outlined"
+          placeholder="Write something about yourself"
+          class="text-start"
+        />
+      </v-col>
+    </v-row>
+  </v-sheet>
+
+  <!-- EDUCATIONAL BACKGROUND SECTION -->
+  <v-sheet
+    class="pa-4 text-start"
+    elevation="1"
+    rounded="lg"
+    :class="currentTheme === 'dark' ? 'bg-grey-darken-3' : 'bg-white'"
+  >
+    <v-card-title class="text-h6 mb-2 d-flex align-start text-start">
+      <v-icon class="me-2" color="primary">mdi-school-outline</v-icon>
+      Educational Background
+    </v-card-title>
+    <v-divider class="mb-4" />
+
+    <v-row>
+      <v-col cols="12" class="text-start">
+        <!-- View Mode -->
+        <div v-if="!isEditing">
+          <div
+            v-for="(item, index) in profile.education"
+            :key="index"
+            class="py-1"
+          >
+            <div class="text-subtitle-2 font-weight-medium">
+              {{ getEducationPlaceholder(index) }}:
+            </div>
+            <div>{{ item }}</div>
+          </div>
+        </div>
+
+        <!-- Edit Mode -->
+        <div v-else>
+          <v-text-field
+            v-for="(item, index) in profile.education"
+            :key="index"
+            v-model="profile.education[index]"
+            :label="getEducationPlaceholder(index)"
+            density="compact"
+            hide-details
+            variant="outlined"
+            class="mb-3 text-start"
+          />
+        </div>
+      </v-col>
+    </v-row>
+  </v-sheet>
+
+</v-card>
+
 
               <v-divider class="my-4" />
 

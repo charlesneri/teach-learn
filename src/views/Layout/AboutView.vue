@@ -293,7 +293,7 @@ onBeforeUnmount(() => {
     <!-- Main Content -->
     <v-main
       :style="{
-        backgroundColor: currentTheme === 'dark' ? '#424242' : '#FAF1E3',
+        backgroundColor: currentTheme === 'dark' ? '#424242' : '#fefcf9',
         color: currentTheme === 'dark' ? '#ffffff' : '#000000',
       }"
     >
@@ -302,7 +302,7 @@ onBeforeUnmount(() => {
           <v-col cols="12" sm="10" md="10" lg="10">
             <v-sheet
             :style="{
-        backgroundColor: currentTheme === 'dark' ? '#424242' : '#FAF1E3',
+        backgroundColor: currentTheme === 'dark' ? '#424242' : '#fefcf9',
         color: currentTheme === 'dark' ? '#ffffff' : '#000000',
       }"              class="border-sheet pa-6"
              elevation="2"
@@ -311,7 +311,7 @@ onBeforeUnmount(() => {
               <!-- Header -->
               <div class="text-center mb-8">
                 <v-responsive class="mb-4">
-                  <h1 class="text-h4 font-weight-bold">About Teach & Learn</h1>
+                  <h1 >About Teach & Learn</h1>
                 </v-responsive>
                 <v-responsive>
                   <p class="text-body-1">
@@ -333,7 +333,7 @@ onBeforeUnmount(() => {
                 <!-- Step 1 -->
                 <v-col cols="12" sm="6" md="4" class="mb-4 d-flex" >
                   <v-card class="pa-4 flex-grow-1 fade-in" variant="outlined" rounded="lg"  :style="{
-                    backgroundColor: currentTheme === 'dark' ? '#424242' : '#FAF1E3',
+                    backgroundColor: currentTheme === 'dark' ? '#424242' : '#fefcf9',
                     color: currentTheme === 'dark' ? '#ffffff' : '#000000',
                   }">
                     <v-icon size="32" class="mb-2" color="primary " >mdi-account-plus</v-icon>
@@ -349,7 +349,7 @@ onBeforeUnmount(() => {
                 <!-- Step 2 -->
                 <v-col cols="12" sm="6" md="4" class="mb-4 d-flex">
                   <v-card class="pa-4 flex-grow-1 fade-in" variant="outlined" rounded="lg" :style="{
-                    backgroundColor: currentTheme === 'dark' ? '#424242' : '#FAF1E3',
+                    backgroundColor: currentTheme === 'dark' ? '#424242' : '#fefcf9',
                     color: currentTheme === 'dark' ? '#ffffff' : '#000000',
                   }">
                     <v-icon size="32" class="mb-2 white-font" color="primary">mdi-magnify</v-icon>
@@ -365,7 +365,7 @@ onBeforeUnmount(() => {
                 <!-- Step 3 -->
                 <v-col cols="12" sm="6" md="4" class="mb-4 d-flex">
                   <v-card class="pa-4 flex-grow-1 fade-in" variant="outlined" rounded="lg" :style="{
-                    backgroundColor: currentTheme === 'dark' ? '#424242' : '#FAF1E3',
+                    backgroundColor: currentTheme === 'dark' ? '#424242' : '#fefcf9',
                     color: currentTheme === 'dark' ? '#ffffff' : '#000000',
                   }">
                     <v-icon size="32" class="mb-2 white-font" color="primary " >mdi-calendar-clock</v-icon>
@@ -381,7 +381,7 @@ onBeforeUnmount(() => {
                 <!-- Step 4 -->
                 <v-col cols="12" sm="6" md="4" class="mb-4 d-flex">
                   <v-card class="pa-4 flex-grow-1 fade-in" variant="outlined" rounded="lg" :style="{
-                    backgroundColor: currentTheme === 'dark' ? '#424242' : '#FAF1E3',
+                    backgroundColor: currentTheme === 'dark' ? '#424242' : '#fefcf9',
                     color: currentTheme === 'dark' ? '#ffffff' : '#000000',
                   }">
                     <v-icon size="32" class="mb-2" color="primary">mdi-school</v-icon>
@@ -397,7 +397,7 @@ onBeforeUnmount(() => {
                 <!-- Step 5 -->
                 <v-col cols="12" sm="6" md="4" class="mb-4 d-flex">
                   <v-card class="pa-4 flex-grow-1 fade-in" variant="outlined" rounded="lg" :style="{
-                    backgroundColor: currentTheme === 'dark' ? '#424242' : '#FAF1E3',
+                    backgroundColor: currentTheme === 'dark' ? '#424242' : '#fefcf9',
                     color: currentTheme === 'dark' ? '#ffffff' : '#000000',
                   }">
                     <v-icon size="32" class="mb-2" color="primary">mdi-star-check</v-icon>
@@ -432,7 +432,7 @@ h1 {
   text-align: center; 
   margin-bottom: 20px; 
   text-transform: uppercase; 
-  letter-spacing: 1px; 
+  letter-spacing: 2px; 
 }
 
 /* Remove underline on link */
