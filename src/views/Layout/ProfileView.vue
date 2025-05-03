@@ -70,141 +70,179 @@ const checkAuth = async () => {
 }
 const getUserProfile = async () => {
   try {
-    const { data: { user }, error } = await supabase.auth.getUser();
-    if (error) throw error;
-    if (!user) return;
+    const { data: { user }, error: userError } = await supabase.auth.getUser();
+    if (userError || !user?.id) {
+      console.error('Error fetching user:', userError);
+      return;
+    }
 
-    // Fetch user metadata directly from auth.user
-    profile.value = {
-      firstName: user.user_metadata.firstName || '',
-      lastName: user.user_metadata.lastName || '',
-      middleInitial: user.user_metadata.middleInitial || '',
-      age: user.user_metadata.age || '',
-      expertise: user.user_metadata.expertise || '',
-      email: user.email,
-      phone: user.user_metadata.phone || '',
-      about: user.user_metadata.about || '',
-      education: [
-        user.user_metadata.school || '',
-        user.user_metadata.course || '',
-        user.user_metadata.yearLevel || ''
-      ],
-      isPublicTutor: user.user_metadata.isPublicTutor || false,
+    const { data, error } = await supabase
+      .from('profiles')
+      .select('firstname, lastname, is_public_tutor, middleinitial, age, expertise, about, school, course, year, phone, avatar_url') 
+      .eq('id', user.id)
+      .single();
+
+    if (error) {
+      console.error('Error fetching profile:', error);
+      return;
+    }
+
+    const email = user.email; 
+
+    const profileData = {
+      firstName: data.firstname || '', 
+      lastName: data.lastname || '',   
+      middleInitial: data.middleinitial || '',
+      age: data.age || '',
+      expertise: data.expertise || '',
+      about: data.about || '',
+      school: data.school || '',      
+      course: data.course || '',      
+      year: data.year || '',         
+      phone: data.phone || '',       
+      email: email,                  
+      isPublicTutor: data.is_public_tutor || false,
+      education: [data.school || '', data.course || '', data.year || ''],
+      avatarUrl: data.avatar_url || '', // Store the avatar URL in profile data
     };
-    
-    // Log to check if the education data is correct
-    console.log(profile.value.education);
-    
+
+    // Store the fetched profile data in localStorage
+    localStorage.setItem('userProfile', JSON.stringify(profileData));
+
+    profile.value = profileData;
+
+    // Set the profileImage state from avatar_url
+    profileImage.value = data.avatar_url || ''; 
+
+    console.log('Populated profile data:', profile.value.firstname, profile.value.lastname);
   } catch (error) {
-    console.error('Error fetching profile:', error);
+    console.error('Error fetching user profile:', error);
   }
 };
 
+
+
+
 //save profile function
 const validateProfile = () => {
-  const requiredFields = ['firstName', 'lastName', 'age', 'expertise', 'email', 'phone', 'about']
+  const requiredFields = ['firstName', 'lastName', 'age', 'expertise', 'email', 'phone', 'about'];
   for (const field of requiredFields) {
     if (!profile.value[field] || profile.value[field].toString().trim() === '') {
-      snackbarMsg.value = `Please fill in the ${field.replace(/([A-Z])/g, ' $1').toLowerCase()}.`
-      snackbarColor.value = 'red'
-      snackbar.value = true
-      return false
+      snackbarMsg.value = `Please fill in the ${field.replace(/([A-Z])/g, ' $1').toLowerCase()}.`;
+      snackbarColor.value = 'red';
+      snackbar.value = true;
+      return false;
     }
   }
 
   // Check education fields
   if (profile.value.education.some(e => !e || e.toString().trim() === '')) {
-    snackbarMsg.value = 'Please complete your educational background.'
-    snackbarColor.value = 'red'
-    snackbar.value = true
-    return false
+    snackbarMsg.value = 'Please complete your educational background.';
+    snackbarColor.value = 'red';
+    snackbar.value = true;
+    return false;
   }
 
-  return true
-}
-const saveProfile = async () => {
-  if (!validateProfile()) return
+  return true;
+};
 
-  isEditing.value = false
-  loading.value = true
+const saveProfile = async () => {
+  // Validate the profile before saving
+  if (!validateProfile()) return;
+
+  isEditing.value = false;
+  loading.value = true;
 
   try {
-    const { data: { user }, error } = await supabase.auth.getUser()
-    if (error || !user) throw new Error('User not authenticated')
+    const { data: { user }, error } = await supabase.auth.getUser();
+    if (error || !user) throw new Error('User not authenticated');
 
-    const { error: updateError } = await supabase.auth.updateUser({
-      data: {
-        firstName: profile.value.firstName,
-        lastName: profile.value.lastName,
-        middleInitial: profile.value.middleInitial,
+    // Update the user's profile information in Supabase
+    const { error: updateError } = await supabase
+      .from('profiles')
+      .update({
+        firstname: profile.value.firstName,
+        lastname: profile.value.lastName,
+        middleinitial: profile.value.middleInitial,
         age: profile.value.age,
         phone: profile.value.phone,
         expertise: profile.value.expertise,
         about: profile.value.about,
-        school: profile.value.education[0],
-        degree: profile.value.education[1],
-        year: profile.value.education[2],
-        avatar_url: profileImage.value,
-        isPublicTutor: profile.value.isPublicTutor,
-      },
-    })
+        school: profile.value.education[0], // School name
+        year: profile.value.education[2], // Year level
+        avatar_url: profileImage.value, // Update the avatar URL if modified
+        is_public_tutor: profile.value.isPublicTutor,
+      })
+      .eq('id', user.id); // Only update the current user's profile
 
-    if (updateError) throw updateError
+    if (updateError) throw updateError;
 
-    snackbarMsg.value = 'Profile saved successfully!'
-    snackbarColor.value = 'green'
-    snackbar.value = true
+    // Save the updated profile data to localStorage
+    localStorage.setItem('userProfile', JSON.stringify(profile.value));
+
+    // Show success message
+    snackbarMsg.value = 'Profile saved successfully!';
+    snackbarColor.value = 'green';
+    snackbar.value = true;
   } catch (error) {
-    console.error('Error saving profile:', error)
-    snackbarMsg.value = 'An error occurred while saving. Please try again.'
-    snackbarColor.value = 'red'
-    snackbar.value = true
+    console.error('Error saving profile:', error);
+    snackbarMsg.value = 'An error occurred while saving. Please try again.';
+    snackbarColor.value = 'red';
+    snackbar.value = true;
   } finally {
-    loading.value = false
+    loading.value = false;
   }
-}
+};
+
+
 
 const onImageSelected = async (event) => {
-  const file = event.target.files[0]
-  if (!file) return
+  const file = event.target.files[0];
+  if (!file) return;
 
-  selectedFile.value = file
-  imageLoading.value = true
+  selectedFile.value = file;
+  imageLoading.value = true;
 
   try {
-    const { data: { user }, error } = await supabase.auth.getUser()
-    if (error || !user) throw new Error('User not authenticated')
+    const { data: { user }, error } = await supabase.auth.getUser();
+    if (error || !user) throw new Error('User not authenticated');
 
-    const fileExt = file.name.split('.').pop()
-    const fileName = `${user.id}_${Date.now()}.${fileExt}`
+    const fileExt = file.name.split('.').pop();
+    const fileName = `${user.id}_${Date.now()}.${fileExt}`;
 
+    // Upload the image to the Supabase Storage bucket
     const { error: uploadError } = await supabase.storage.from('avatars').upload(fileName, file, {
       cacheControl: '3600',
       upsert: true,
-    })
-    if (uploadError) throw uploadError
+    });
+    if (uploadError) throw uploadError;
 
+    // Get the public URL of the uploaded image
     const { data: publicData, error: publicUrlError } = await supabase.storage
       .from('avatars')
-      .getPublicUrl(fileName)
-    if (publicUrlError || !publicData?.publicUrl) throw publicUrlError
+      .getPublicUrl(fileName);
+    if (publicUrlError || !publicData?.publicUrl) throw publicUrlError;
 
-    profileImage.value = publicData.publicUrl
+    const profileImageUrl = publicData.publicUrl;
 
-    // Update the user metadata with the new avatar URL
-    const { error: updateError } = await supabase.auth.updateUser({
-      data: { avatar_url: profileImage.value }
-    })
-    if (updateError) throw updateError
+    // Update the user's profile image URL in the profiles table
+    const { error: updateError } = await supabase
+      .from('profiles')
+      .update({ avatar_url: profileImageUrl })
+      .eq('id', user.id);
+    if (updateError) throw updateError;
 
-    snackbarMsg.value = 'Profile picture updated!'
-    snackbar.value = true
+    // Save the profile image URL in the profile state and update UI
+    profileImage.value = profileImageUrl;
+
+    snackbarMsg.value = 'Profile picture updated!';
+    snackbar.value = true;
   } catch (error) {
-    console.error('Error uploading profile image:', error)
+    console.error('Error uploading profile image:', error);
   } finally {
-    imageLoading.value = false
+    imageLoading.value = false;
   }
-}
+};
 
 
 const confirmRemoveImage = () => {
@@ -280,35 +318,51 @@ const getEducationPlaceholder = (index) => {
 
 // MOUNTED
 onMounted(() => {
-  theme.global.name.value = currentTheme.value
-  checkAuth()  // This checks if the user is logged in
-  getUserProfile()  // Fetch the user profile from auth.user metadata
-})
+  theme.global.name.value = currentTheme.value;
+  checkAuth(); // This checks if the user is logged in
+  getUserProfile(); // Fetch the user profile from auth.user metadata
+
+  // Retrieve the isPublicTutor state from localStorage
+  const storedPublicTutorStatus = localStorage.getItem('isPublicTutor');
+  if (storedPublicTutorStatus !== null) {
+    profile.value.isPublicTutor = JSON.parse(storedPublicTutorStatus);
+  }
+});
+
 
 //functional for public profile
 // Apply as Tutor
 
 const applyAsTutor = async () => {
-  const { data: { user }, error: userError } = await supabase.auth.getUser()
-  if (userError || !user?.id) return console.error('User error:', userError)
+  const { data: { user }, error: userError } = await supabase.auth.getUser();
+  if (userError || !user?.id) return console.error('User error:', userError);
 
-  const toggleStatus = !profile.value.isPublicTutor
+  const toggleStatus = !profile.value.isPublicTutor; // Toggle the status
 
+  // Update the tutor status in the database
   const { error } = await supabase
     .from('profiles')
     .update({ is_public_tutor: toggleStatus })
-    .eq('id', user.id)
+    .eq('id', user.id);
 
-  if (error) return console.error('Error updating tutor status:', error)
+  if (error) return console.error('Error updating tutor status:', error);
 
-  profile.value.isPublicTutor = toggleStatus
-  currentUserProfile.value.isPublicTutor = toggleStatus
+  profile.value.isPublicTutor = toggleStatus; // Update the local state
+  
+  // Persist the state in localStorage
+  localStorage.setItem('isPublicTutor', toggleStatus);
+
   snackbarMsg.value = toggleStatus
     ? 'You are now visible as a public tutor.'
-    : 'You have canceled your public tutor status.'
-  snackbarColor.value = 'green'
-  snackbar.value = true
-}
+    : 'You have canceled your public tutor status.';
+  snackbarColor.value = 'green';
+  snackbar.value = true;
+
+  // Close the dialog after the action is completed
+  dialog.value = false;
+};
+
+
 
 
 //drawer function
@@ -339,7 +393,7 @@ const fetchCurrentUser = async () => {
     currentUserId.value = user.id
     const { data } = await supabase
       .from('profiles')
-      .select('first_name,last_name,avatar_url,is_public_tutor')
+      .select('firstname,lastname,is_public_tutor')
       .eq('id', user.id)
       .single()
     if (data) {
@@ -357,12 +411,14 @@ const handleLogoutClick = async () => {
   const { error } = await supabase.auth.signOut()
 
   if (error) {
-    console.error('Logout failed:', error.message)
-    snackbarMsg.value = 'Logout failed. Try again.'
-    snackbarColor.value = 'red'
-    snackbar.value = true
-    return
-  }
+  snackbarMsg.value = 'An error occurred. Please try again.';
+  snackbarColor.value = 'red';
+  snackbar.value = true;
+} else {
+  snackbarMsg.value = 'Profile updated successfully.';
+  snackbarColor.value = 'green';
+  snackbar.value = true;
+}
 
   // Reset the profile data
   profile.value = {
@@ -388,17 +444,18 @@ const handleLogoutClick = async () => {
   }, 1000)
 }
 
-onMounted(async () => {
-  theme.global.name.value = currentTheme.value
-  checkMobile()
-  window.addEventListener('resize', checkMobile)
+onMounted(() => {
+  // Check if profile data exists in localStorage
+  const storedProfile = localStorage.getItem('userProfile');
+  if (storedProfile) {
+    profile.value = JSON.parse(storedProfile);
+  } else {
+    getUserProfile(); // If no profile in localStorage, fetch from Supabase
+  }
 
-  const storedImage = localStorage.getItem('profileImage')
-  if (storedImage) profileImage.value = storedImage
-
-  await fetchCurrentUser()
-})
-
+  theme.global.name.value = currentTheme.value;
+  checkAuth(); // This checks if the user is logged in
+});
 onBeforeUnmount(() => {
   window.removeEventListener('resize', checkMobile)
 })
@@ -618,7 +675,7 @@ onBeforeUnmount(() => {
 
               <!-- button for apply as tutor or cancel -->
               <div class="d-flex justify-center mb-3">
-  <v-btn
+                <v-btn
   :color="profile.isPublicTutor ? 'red' : 'primary'"
   @click="dialog = true"
   :loading="loading"
@@ -629,28 +686,29 @@ onBeforeUnmount(() => {
 </div>
            
               <!-- Confirm Dialog: Apply as Tutor -->
-              <v-dialog v-model="dialog" max-width="500" persistent transition="fade-transition">
-                <v-card>
-                  <v-card-title class="text-h6">
-                    <v-icon class="me-2">mdi-alert-circle-outline</v-icon> Confirm Application
-                  </v-card-title>
-                  <v-card-text>
-                    Your personal information will be public. Do you still wish to proceed?
-                  </v-card-text>
-                  <v-card-actions class="justify-end">
-                    <v-btn
-                      color="grey"
-                      variant="outlined"
-                      @click="dialog = false"
-                      :disabled="loading"
-                      >No</v-btn
-                    >
-                    <v-btn color="green" @click="applyAsTutor" :loading="loading">
-                      Yes, Apply
-                    </v-btn>
-                  </v-card-actions>
-                </v-card>
-              </v-dialog>
+            <!-- Confirm Dialog: Apply as Tutor -->
+<v-dialog v-model="dialog" max-width="500" persistent transition="fade-transition">
+  <v-card>
+    <v-card-title class="text-h6">
+      <v-icon class="me-2">mdi-alert-circle-outline</v-icon> Confirm Application
+    </v-card-title>
+    <v-card-text>
+      Your personal information will be public. Do you still wish to proceed?
+    </v-card-text>
+    <v-card-actions class="justify-end">
+      <v-btn
+        color="grey"
+        variant="outlined"
+        @click="dialog = false"
+        :disabled="loading"
+        >No</v-btn
+      >
+      <v-btn color="green" @click="applyAsTutor" :loading="loading">
+        Yes, Apply
+      </v-btn>
+    </v-card-actions>
+  </v-card>
+</v-dialog>
 
               <!-- Confirm Dialog: Remove Profile Image -->
               <v-dialog v-model="confirmRemove" max-width="400" persistent>
@@ -817,11 +875,11 @@ onBeforeUnmount(() => {
                 </v-btn>
                 <template v-else>
                   <v-btn size="small" variant="text" color="red" @click="cancelEdit">
-                    Cancel
-                  </v-btn>
-                  <v-btn size="small" color="green" @click="saveProfile" :loading="loading">
-                    Save
-                  </v-btn>
+    Cancel
+  </v-btn>
+  <v-btn size="small" color="green" @click="saveProfile" :loading="loading">
+    Save
+  </v-btn>
                 </template>
               </div>
             </v-sheet>

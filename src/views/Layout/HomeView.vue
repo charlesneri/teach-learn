@@ -114,9 +114,9 @@ const timePickerOpen = ref(false)
 
 // === Tutor Actions ===
 const fetchTutors = async () => {
-  const { data, error } = await supabase.from('profiles').select('*').eq('is_public_tutor', true)
-  tutors.value = data || []
-}
+  const { data, error } = await supabase.from('profiles').select('*').eq('is_public_tutor', true);
+  tutors.value = data || [];
+};
 
 
 const viewTutor = (tutor) => {
@@ -189,15 +189,15 @@ const toggleSearch = () => {
 }
 
 const filteredTutors = computed(() => {
-  if (!searchQuery.value.trim()) return tutors.value
+  if (!searchQuery.value.trim()) return tutors.value;
 
-  const keyword = searchQuery.value.trim().toLowerCase()
+  const keyword = searchQuery.value.trim().toLowerCase();
   return tutors.value.filter((tutor) => {
-    const fullName = `${tutor.first_name || ''} ${tutor.middle_initial || ''} ${tutor.last_name || ''}`.toLowerCase()
-    const expertise = (tutor.expertise || '').toLowerCase()
-    return fullName.includes(keyword) || expertise.includes(keyword)
-  })
-})
+    const fullName = `${tutor.first_name || ''} ${tutor.middle_initial || ''} ${tutor.last_name || ''}`.toLowerCase();
+    const expertise = (tutor.expertise || '').toLowerCase();
+    return fullName.includes(keyword) || expertise.includes(keyword);
+  });
+});
 
 // === Mount Lifecycle ===
 onMounted(async () => {
