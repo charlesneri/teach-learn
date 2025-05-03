@@ -6,6 +6,10 @@ import ProfileView from '@/views/Layout/ProfileView.vue'
 import AboutView from '@/views/Layout/AboutView.vue'
 import ContactView from '@/views/Layout/ContactView.vue'
 import AppointmentsView from '@/views/Layout/AppointmentsView.vue'
+<<<<<<< HEAD
+=======
+import DeleteHistory from '@/views/Layout/DeleteHistory.vue'
+>>>>>>> main
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -45,7 +49,16 @@ const router = createRouter({
       name: 'appointments',
       component: AppointmentsView,
     },
+<<<<<<< HEAD
  
+=======
+    {
+      path: '/DeleteHistory',
+      name: 'DeleteHistory',
+      component: DeleteHistory,
+    },
+   
+>>>>>>> main
   ],
 })
 
