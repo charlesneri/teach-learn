@@ -1,59 +1,29 @@
 <script setup>
-import { ref, watch } from 'vue'
-
 const props = defineProps(['formSuccessMessage', 'formErrorMessage'])
-
-const showSuccess = ref(false)
-const showError = ref(false)
-
-// Auto-dismiss logic
-watch(
-  () => props.formSuccessMessage,
-  (msg) => {
-    if (msg) {
-      showSuccess.value = true
-      setTimeout(() => {
-        showSuccess.value = false
-      }, 4000) // auto-hide after 4s
-    }
-  }
-)
-
-watch(
-  () => props.formErrorMessage,
-  (msg) => {
-    if (msg) {
-      showError.value = true
-      setTimeout(() => {
-        showError.value = false
-      }, 2000) 
-    }
-  }
-)
 </script>
 
 <template>
+  <!--Alert-->
   <v-alert
-    v-if="showSuccess"
+    v-if="props.formSuccessMessage"
     :text="props.formSuccessMessage"
-    title="Success"
+    title="success"
     type="success"
-    variant="tonal"
+    variant="submit"
     density="compact"
     border="start"
     closable
-    @click:close="showSuccess = false"
-  />
-
+  >
+  </v-alert>
   <v-alert
-    v-if="showError"
+    v-if="props.formErrorMessage"
     :text="props.formErrorMessage"
-    title="Oops!"
-    type="error"
+    title="Ooopps!"
     variant="tonal"
+    type="error"
     density="compact"
     border="start"
     closable
-    @click:close="showError = false"
-  />
+  >
+  </v-alert>
 </template>

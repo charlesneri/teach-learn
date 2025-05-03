@@ -33,14 +33,14 @@ onMounted(() => {
 // Form Data
 const formData = ref({
   email: '',
-  password: ''
+  password: '',
 })
 
 // Form State
 const formAction = ref({
   formProcess: false,
   formErrorMessage: '',
-  formSuccessMessage: ''
+  formSuccessMessage: '',
 })
 
 // Login Logic
@@ -58,7 +58,7 @@ const onLogin = async () => {
     return
   }
 
-  // STEP 1: Check if email exists in your `profiles` table
+  //  Check if email exists in your `profiles` table
   const { data: profileMatch, error: profileError } = await supabase
     .from('profiles')
     .select('id')
@@ -77,10 +77,10 @@ const onLogin = async () => {
     return
   }
 
-  // STEP 2: Email exists, now try to sign in
+  //  Email exists, now try to sign in
   const { data, error: loginError } = await supabase.auth.signInWithPassword({
     email,
-    password
+    password,
   })
 
   if (loginError) {
@@ -89,7 +89,7 @@ const onLogin = async () => {
     return
   }
 
-  // STEP 3: Check if user was returned
+  // : Check if user was returned
   const user = data?.user
   if (!user) {
     formAction.value.formErrorMessage = 'Authentication failed. Try again.'
@@ -97,7 +97,7 @@ const onLogin = async () => {
     return
   }
 
-  // STEP 4: Successful login
+  //  Successful login
   formAction.value.formSuccessMessage = 'Successfully Logged In!'
   formAction.value.formProcess = false
   setTimeout(() => {
@@ -190,7 +190,6 @@ const onFormSubmit = () => {
                           class="mt-2 signup-btn"
                           type="submit"
                           prepend-icon="mdi-login"
-                          
                         >
                           Login
                         </v-btn>
@@ -355,7 +354,7 @@ body.dark .active-click:hover {
   .signup-btn {
     font-size: 14px;
     padding: 10px 20px;
-    max-width: 100%;        /* fill available width */
+    max-width: 100%; /* fill available width */
   }
 }
 </style>
