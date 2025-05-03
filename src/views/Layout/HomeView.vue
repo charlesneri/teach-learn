@@ -42,11 +42,12 @@ const snackbarColor = ref('')
 // === Auth & User Profile ===
 const currentUserId = ref(null)
 const currentUserProfile = ref({
-  firstName: '',
-  lastName: '',
-  avatarUrl: '',
-  isPublicTutor: false,
+  first_name: '',      // updated to match the column name in the table
+  last_name: '',       // updated to match the column name in the table
+  avatar_url: '',      // updated to match the column name in the table
+  is_public_tutor: false,  // updated to match the column name in the table
 })
+
 
 const handleLogoutClick = async () => {
   const { error } = await supabase.auth.signOut()
@@ -76,30 +77,30 @@ const handleLogoutClick = async () => {
     router.push('/')
   }, 1000)
 }
-
 const fetchCurrentUser = async () => {
   const {
     data: { user },
   } = await supabase.auth.getUser()
+
   if (user) {
     currentUserId.value = user.id
     const { data, error } = await supabase
-  .from('profiles')
-  .select('first_name, last_name, avatar_url, is_public_tutor')
-  .eq('id', user.id) // Make sure 'user.id' is a valid UUID type
-  .single()
-  
-if (error) {
-  console.error('Error fetching user profile:', error)
-  return
-}
+      .from('profiles')
+      .select('first_name, last_name, avatar_url, is_public_tutor')
+      .eq('id', user.id)   // Make sure 'user.id' is valid and matches the profiles table
+      .single()
+
+    if (error) {
+      console.error('Error fetching user profile:', error)
+      return
+    }
 
     if (data) {
       currentUserProfile.value = {
-        firstName: data.first_name || '',
-        lastName: data.last_name || '',
-        avatarUrl: data.avatar_url || '',
-        isPublicTutor: data.is_public_tutor || false,
+        first_name: data.first_name || '',  // matched with column name in the table
+        last_name: data.last_name || '',    // matched with column name in the table
+        avatar_url: data.avatar_url || '',  // matched with column name in the table
+        is_public_tutor: data.is_public_tutor || false,  // matched with column name in the table
       }
     }
   }
@@ -113,30 +114,21 @@ const appointmentDialog = ref(false)
 const selectedDate = ref('')
 const selectedTime = ref('')
 const messageInput = ref('')
+const datePickerOpen = ref(false)
+const timePickerOpen = ref(false)
 
 // === Tutor Actions ===
 const fetchTutors = async () => {
-  const { data, error } = await supabase
-    .from('profiles')
-    .select('*')
-    .eq('is_public_tutor', true);
-
-  if (error) {
-    console.error('Error fetching tutors:', error);
-    return;
-  }
-  tutors.value = data || [];
-};
-
-onMounted(async () => {
-  await fetchTutors();  // Ensuring it's called after component is mounted
-});
+  const { data, error } = await supabase.from('profiles').select('*').eq('is_public_tutor', true)
+  tutors.value = data || []
+}
 
 
 const viewTutor = (tutor) => {
   selectedTutor.value = tutor
   profileDialog.value = true
 }
+
 //appointment
 const openAppointment = (tutor) => {
   selectedTutor.value = tutor
@@ -144,8 +136,20 @@ const openAppointment = (tutor) => {
 }
 
 const saveAppointment = async () => {
-  if (!selectedDate.value || !selectedTime.value || !selectedTutor.value || !currentUserId.value) {
-    snackbarMsg.value = 'Please complete all fields before booking.'
+  try {
+    if (!selectedTutor.value || !selectedDate.value || !selectedTime.value) {
+      snackbarMsg.value = 'Please fill all fields!'
+      snackbarColor.value = 'red'
+      snackbar.value = true
+      return
+    }
+
+    // continue with logic...
+    // e.g., await supabase insert logic
+
+  } catch (error) {
+    console.error('Error saving appointment:', error)
+    snackbarMsg.value = 'Failed to save appointment.'
     snackbarColor.value = 'red'
     snackbar.value = true
     return
@@ -190,17 +194,15 @@ const toggleSearch = () => {
 }
 
 const filteredTutors = computed(() => {
-  if (!searchQuery.value.trim()) return tutors.value;
+  if (!searchQuery.value.trim()) return tutors.value
 
-  const keyword = searchQuery.value.trim().toLowerCase();
+  const keyword = searchQuery.value.trim().toLowerCase()
   return tutors.value.filter((tutor) => {
-    const fullName =
-      `${tutor.first_name || ''} ${tutor.middle_initial || ''} ${tutor.last_name || ''}`.toLowerCase();
-    const expertise = (tutor.expertise || '').toLowerCase();
-    return fullName.includes(keyword) || expertise.includes(keyword);
-  });
-});
-
+    const fullName = `${tutor.first_name || ''} ${tutor.middle_initial || ''} ${tutor.last_name || ''}`.toLowerCase()
+    const expertise = (tutor.expertise || '').toLowerCase()
+    return fullName.includes(keyword) || expertise.includes(keyword)
+  })
+})
 
 // === Mount Lifecycle ===
 onMounted(async () => {
@@ -243,7 +245,6 @@ const fetchRatings = async () => {
   ratingsMap.value = result
 }
 </script>
-
 <template>
   <v-app id="inspire">
     <!-- Drawer Sidebar (right, collapsible) -->
@@ -597,6 +598,7 @@ const fetchRatings = async () => {
     </transition>
   </v-app>
 </template>
+
 <style scoped>
 /* Layout Wrappers */
 .floating-wrapper {
@@ -688,10 +690,7 @@ h1 {
   transition: none !important;
 }
 /* Components Enhancements */
-.v-text-field {
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  border-radius: 10px;
-}
+
 .v-btn {
   transition: transform 0.3s ease;
 }

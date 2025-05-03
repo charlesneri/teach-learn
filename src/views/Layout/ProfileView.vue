@@ -287,43 +287,28 @@ onMounted(() => {
 
 //functional for public profile
 // Apply as Tutor
+
 const applyAsTutor = async () => {
-  loading.value = true;
+  const { data: { user }, error: userError } = await supabase.auth.getUser()
+  if (userError || !user?.id) return console.error('User error:', userError)
 
-  try {
-    const { data: { user }, error: userError } = await supabase.auth.getUser();
-    if (userError || !user) throw new Error('User not authenticated');
+  const toggleStatus = !profile.value.isPublicTutor
 
-    // Update the user profile to make it public or private
-    const { data, error } = await supabase
-      .from('profiles')
-      .update({ isPublicTutor: !profile.value.isPublicTutor })
-      .eq('id', user.id);
+  const { error } = await supabase
+    .from('profiles')
+    .update({ is_public_tutor: toggleStatus })
+    .eq('id', user.id)
 
-    if (error) throw error;
+  if (error) return console.error('Error updating tutor status:', error)
 
-    // Toggle the visibility in the local profile state
-    profile.value.isPublicTutor = !profile.value.isPublicTutor;
-
-    snackbarMsg.value = profile.value.isPublicTutor
-      ? 'You are now listed as a tutor!'
-      : 'You have canceled your tutor application.';
-    snackbar.value = true;
-
-    // Optionally refetch the list of public tutors to reflect changes
-    await fetchTutors();  // This function should refresh the tutor list if needed.
-
-    // Close the dialog after applying
-    dialog.value = false;
-
-  } catch (error) {
-    console.error('Error applying as tutor:', error);
-    snackbarMsg.value = 'An error occurred. Please try again.';
-    snackbar.value = true;
-  } finally {
-    loading.value = false;
-  }
-};
+  profile.value.isPublicTutor = toggleStatus
+  currentUserProfile.value.isPublicTutor = toggleStatus
+  snackbarMsg.value = toggleStatus
+    ? 'You are now visible as a public tutor.'
+    : 'You have canceled your public tutor status.'
+  snackbarColor.value = 'green'
+  snackbar.value = true
+}
 
 
 //drawer function
@@ -354,7 +339,7 @@ const fetchCurrentUser = async () => {
     currentUserId.value = user.id
     const { data } = await supabase
       .from('profiles')
-      .select('first_name, last_name, avatar_url, is_public_tutor')
+      .select('first_name,last_name,avatar_url,is_public_tutor')
       .eq('id', user.id)
       .single()
     if (data) {
