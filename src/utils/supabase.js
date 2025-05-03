@@ -25,6 +25,7 @@ export const getUserInfo = async() =>{
 return user_metadata
  
 }*/
+/*
 export const getUserInfo = async () => {
   const { data, error } = await supabase.auth.getUser()
 
@@ -39,4 +40,4 @@ export const getUserInfo = async () => {
   }
 
   return data.user.user_metadata
-}
+}*/

@@ -68,34 +68,38 @@ const checkAuth = async () => {
   } = await supabase.auth.getUser()
   if (!user) router.push('/login')
 }
-
 const getUserProfile = async () => {
   try {
-    const {
-      data: { user },
-    } = await supabase.auth.getUser()
-    if (!user) return
+    const { data: { user }, error } = await supabase.auth.getUser();
+    if (error) throw error;
+    if (!user) return;
 
-    const { data, error } = await supabase.from('profiles').select('*').eq('id', user.id).single()
-    if (error) throw error
-
+    // Fetch user metadata directly from auth.user
     profile.value = {
-      firstName: data.first_name || '',
-      lastName: data.last_name || '',
-      middleInitial: data.middle_initial || '',
-      age: data.age || '',
-      expertise: data.expertise || '',
-      email: data.email || user.email,
-      phone: data.phone || '',
-      about: data.about || '',
-      education: [data.school || '', data.degree || '', data.year || ''],
-      isPublicTutor: data.is_public_tutor || false, // <-- ADD THIS
-    }
-    profileImage.value = data.avatar_url || ''
+      firstName: user.user_metadata.firstName || '',
+      lastName: user.user_metadata.lastName || '',
+      middleInitial: user.user_metadata.middleInitial || '',
+      age: user.user_metadata.age || '',
+      expertise: user.user_metadata.expertise || '',
+      email: user.email,
+      phone: user.user_metadata.phone || '',
+      about: user.user_metadata.about || '',
+      education: [
+        user.user_metadata.school || '',
+        user.user_metadata.course || '',
+        user.user_metadata.yearLevel || ''
+      ],
+      isPublicTutor: user.user_metadata.isPublicTutor || false,
+    };
+    
+    // Log to check if the education data is correct
+    console.log(profile.value.education);
+    
   } catch (error) {
-    console.error('Error fetching profile:', error)
+    console.error('Error fetching profile:', error);
   }
-}
+};
+
 //save profile function
 const validateProfile = () => {
   const requiredFields = ['firstName', 'lastName', 'age', 'expertise', 'email', 'phone', 'about']
@@ -118,7 +122,6 @@ const validateProfile = () => {
 
   return true
 }
-
 const saveProfile = async () => {
   if (!validateProfile()) return
 
@@ -126,30 +129,27 @@ const saveProfile = async () => {
   loading.value = true
 
   try {
-    const {
-      data: { user },
-    } = await supabase.auth.getUser()
-    if (!user) throw new Error('User not authenticated')
+    const { data: { user }, error } = await supabase.auth.getUser()
+    if (error || !user) throw new Error('User not authenticated')
 
-    const { error } = await supabase
-      .from('profiles')
-      .update({
-        first_name: profile.value.firstName,
-        last_name: profile.value.lastName,
-        middle_initial: profile.value.middleInitial,
+    const { error: updateError } = await supabase.auth.updateUser({
+      data: {
+        firstName: profile.value.firstName,
+        lastName: profile.value.lastName,
+        middleInitial: profile.value.middleInitial,
         age: profile.value.age,
-        expertise: profile.value.expertise,
-        email: profile.value.email,
         phone: profile.value.phone,
+        expertise: profile.value.expertise,
         about: profile.value.about,
         school: profile.value.education[0],
         degree: profile.value.education[1],
         year: profile.value.education[2],
         avatar_url: profileImage.value,
-      })
-      .eq('id', user.id)
+        isPublicTutor: profile.value.isPublicTutor,
+      },
+    })
 
-    if (error) throw error
+    if (updateError) throw updateError
 
     snackbarMsg.value = 'Profile saved successfully!'
     snackbarColor.value = 'green'
@@ -172,10 +172,8 @@ const onImageSelected = async (event) => {
   imageLoading.value = true
 
   try {
-    const {
-      data: { user },
-    } = await supabase.auth.getUser()
-    if (!user) throw new Error('User not authenticated')
+    const { data: { user }, error } = await supabase.auth.getUser()
+    if (error || !user) throw new Error('User not authenticated')
 
     const fileExt = file.name.split('.').pop()
     const fileName = `${user.id}_${Date.now()}.${fileExt}`
@@ -193,10 +191,10 @@ const onImageSelected = async (event) => {
 
     profileImage.value = publicData.publicUrl
 
-    const { error: updateError } = await supabase
-      .from('profiles')
-      .update({ avatar_url: profileImage.value })
-      .eq('id', user.id)
+    // Update the user metadata with the new avatar URL
+    const { error: updateError } = await supabase.auth.updateUser({
+      data: { avatar_url: profileImage.value }
+    })
     if (updateError) throw updateError
 
     snackbarMsg.value = 'Profile picture updated!'
@@ -207,6 +205,7 @@ const onImageSelected = async (event) => {
     imageLoading.value = false
   }
 }
+
 
 const confirmRemoveImage = () => {
   confirmRemove.value = true
@@ -272,64 +271,59 @@ const enableEdit = () => {
 const cancelEdit = () => {
   isEditing.value = false
 }
-
 const getEducationPlaceholder = (index) => {
-  if (index === 0) return 'School or university'
-  if (index === 1) return 'Course or degree'
-  if (index === 2) return 'Year level'
-  return ''
-}
+  if (index === 0) return 'School or university';
+  if (index === 1) return 'Course or degree';
+  if (index === 2) return 'Year level';
+  return '';
+};
 
 // MOUNTED
 onMounted(() => {
   theme.global.name.value = currentTheme.value
-  checkAuth()
-  getUserProfile()
+  checkAuth()  // This checks if the user is logged in
+  getUserProfile()  // Fetch the user profile from auth.user metadata
 })
 
 //functional for public profile
 // Apply as Tutor
 const applyAsTutor = async () => {
-  loading.value = true
+  loading.value = true;
 
   try {
-    const {
-      data: { user },
-      error: userError
-    } = await supabase.auth.getUser()
-    if (userError || !user) throw new Error('User not authenticated')
+    const { data: { user }, error: userError } = await supabase.auth.getUser();
+    if (userError || !user) throw new Error('User not authenticated');
 
+    // Update the user profile to make it public or private
     const { data, error } = await supabase
       .from('profiles')
-      .update({ is_public_tutor: !profile.value.isPublicTutor })
-      .eq('id', user.id)
+      .update({ isPublicTutor: !profile.value.isPublicTutor })
+      .eq('id', user.id);
 
-    console.log('Update Result:', { data, error }) // 🪵 log for debugging
+    if (error) throw error;
 
-    if (error) throw error
-    if (!data) console.warn('No data returned from update')
-
-    profile.value.isPublicTutor = !profile.value.isPublicTutor
+    // Toggle the visibility in the local profile state
+    profile.value.isPublicTutor = !profile.value.isPublicTutor;
 
     snackbarMsg.value = profile.value.isPublicTutor
       ? 'You are now listed as a tutor!'
-      : 'You have canceled your tutor application.'
-    snackbar.value = true
+      : 'You have canceled your tutor application.';
+    snackbar.value = true;
 
-    dialog.value = false
+    // Optionally refetch the list of public tutors to reflect changes
+    await fetchTutors();  // This function should refresh the tutor list if needed.
 
-    // Optional: safeguard against fetchTutors() failure
-    if (typeof fetchTutors === 'function') {
-      await fetchTutors()
-    }
+    // Close the dialog after applying
+    dialog.value = false;
+
   } catch (error) {
-    console.error('Error applying as tutor:', error)
-    snackbarMsg.value = 'An error occurred. Please try again.'
-    snackbar.value = true
+    console.error('Error applying as tutor:', error);
+    snackbarMsg.value = 'An error occurred. Please try again.';
+    snackbar.value = true;
   } finally {
-    loading.value = false
+    loading.value = false;
   }
-}
+};
 
 
 //drawer function
@@ -385,16 +379,21 @@ const handleLogoutClick = async () => {
     return
   }
 
-  currentUserId.value = null
-  currentUserProfile.value = {
+  // Reset the profile data
+  profile.value = {
     firstName: '',
     lastName: '',
-    avatarUrl: '',
-    isPublicTutor: false,
+    middleInitial: '',
+    age: '',
+    expertise: '',
+    email: '',
+    phone: '',
+    about: '',
+    education: ['', '', ''],
+    isPublicTutor: false, 
   }
-
-  localStorage.removeItem('theme')
-
+  profileImage.value = ''
+  
   snackbarMsg.value = 'Logged out successfully!'
   snackbarColor.value = 'green'
   snackbar.value = true
@@ -454,7 +453,7 @@ onBeforeUnmount(() => {
             <v-img v-if="currentUserProfile.avatarUrl" :src="currentUserProfile.avatarUrl" cover />
             <v-icon v-else size="80">mdi-account</v-icon>
           </v-avatar>
-          <h3 v-if="!mini">{{ currentUserProfile.firstName }} {{ currentUserProfile.lastName }}</h3>
+          <h3 v-if="!mini" class="ma-3">{{ profile.firstName }} {{ profile.lastName }}</h3>
         </v-sheet>
 
         <v-divider class="my-2" />
@@ -635,12 +634,13 @@ onBeforeUnmount(() => {
               <!-- button for apply as tutor or cancel -->
               <div class="d-flex justify-center mb-3">
   <v-btn
-    :color="profile.isPublicTutor ? 'red' : 'primary'"
-    @click="dialog = true"
-    :loading="loading"
-  >
-    {{ profile.isPublicTutor ? 'Cancel Apply' : 'Apply as Tutor?' }}
-  </v-btn>
+  :color="profile.isPublicTutor ? 'red' : 'primary'"
+  @click="dialog = true"
+  :loading="loading"
+>
+  {{ profile.isPublicTutor ? 'Cancel Apply' : 'Apply as Tutor?' }}
+</v-btn>
+
 </div>
            
               <!-- Confirm Dialog: Apply as Tutor -->
@@ -767,50 +767,52 @@ onBeforeUnmount(() => {
   </v-sheet>
 
   <!-- EDUCATIONAL BACKGROUND SECTION -->
-  <v-sheet
-    class="pa-4 text-start"
-    elevation="1"
-    rounded="lg"
-    :class="currentTheme === 'dark' ? 'bg-grey-darken-3' : 'bg-white'"
-  >
-    <v-card-title class="text-h6 mb-2 d-flex align-start text-start">
-      <v-icon class="me-2" color="primary">mdi-school-outline</v-icon>
-      Educational Background
-    </v-card-title>
-    <v-divider class="mb-4" />
+ 
+<v-sheet
+  class="pa-4 text-start"
+  elevation="1"
+  rounded="lg"
+  :class="currentTheme === 'dark' ? 'bg-grey-darken-3' : 'bg-white'"
+>
+  <v-card-title class="text-h6 mb-2 d-flex align-start text-start">
+    <v-icon class="me-2" color="primary">mdi-school-outline</v-icon>
+    Educational Background
+  </v-card-title>
+  <v-divider class="mb-4" />
 
-    <v-row>
-      <v-col cols="12" class="text-start">
-        <!-- View Mode -->
-        <div v-if="!isEditing">
-          <div
-            v-for="(item, index) in profile.education"
-            :key="index"
-            class="py-1"
-          >
-            <div class="text-subtitle-2 font-weight-medium">
-              {{ getEducationPlaceholder(index) }}:
-            </div>
-            <div>{{ item }}</div>
+  <v-row>
+    <v-col cols="12" class="text-start">
+      <!-- View Mode -->
+      <div v-if="!isEditing">
+        <div
+          v-for="(item, index) in profile.education"
+          :key="index"
+          class="py-1"
+        >
+          <div class="text-subtitle-2 font-weight-medium">
+            {{ getEducationPlaceholder(index) }}:
           </div>
+          <div>{{ item }}</div>
         </div>
+      </div>
 
-        <!-- Edit Mode -->
-        <div v-else>
-          <v-text-field
-            v-for="(item, index) in profile.education"
-            :key="index"
-            v-model="profile.education[index]"
-            :label="getEducationPlaceholder(index)"
-            density="compact"
-            hide-details
-            variant="outlined"
-            class="mb-3 text-start"
-          />
-        </div>
-      </v-col>
-    </v-row>
-  </v-sheet>
+      <!-- Edit Mode -->
+      <div v-else>
+        <v-text-field
+          v-for="(item, index) in profile.education"
+          :key="index"
+          v-model="profile.education[index]"
+          :label="getEducationPlaceholder(index)"
+          density="compact"
+          hide-details
+          variant="outlined"
+          class="mb-3 text-start"
+        />
+      </div>
+    </v-col>
+  </v-row>
+</v-sheet>
+
 
 </v-card>
 

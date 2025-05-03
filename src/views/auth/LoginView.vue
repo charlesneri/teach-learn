@@ -58,26 +58,7 @@ const onLogin = async () => {
     return
   }
 
-  //  Check if email exists in your `profiles` table
-  const { data: profileMatch, error: profileError } = await supabase
-    .from('profiles')
-    .select('id')
-    .eq('email', email)
-    .maybeSingle()
-
-  if (profileError) {
-    formAction.value.formErrorMessage = 'Something went wrong while verifying your email.'
-    formAction.value.formProcess = false
-    return
-  }
-
-  if (!profileMatch) {
-    formAction.value.formErrorMessage = 'Account not found. Please register first.'
-    formAction.value.formProcess = false
-    return
-  }
-
-  //  Email exists, now try to sign in
+  // Try to sign in
   const { data, error: loginError } = await supabase.auth.signInWithPassword({
     email,
     password,
@@ -89,7 +70,7 @@ const onLogin = async () => {
     return
   }
 
-  // : Check if user was returned
+  // Check if user was returned
   const user = data?.user
   if (!user) {
     formAction.value.formErrorMessage = 'Authentication failed. Try again.'
@@ -97,11 +78,18 @@ const onLogin = async () => {
     return
   }
 
-  //  Successful login
+  // Fetch user metadata directly from the auth user
+  const userMetadata = user?.user_metadata
+  if (userMetadata) {
+    // You can perform additional logic based on the user's metadata, for example:
+    console.log('User metadata:', userMetadata)
+  }
+
+  // Successful login
   formAction.value.formSuccessMessage = 'Successfully Logged In!'
   formAction.value.formProcess = false
   setTimeout(() => {
-    router.replace('/home')
+    router.replace('/home')  // Redirect to the home page or dashboard
   }, 1500)
 }
 
@@ -339,22 +327,7 @@ body.dark .active-click:hover {
   }
 
   .hover-card {
-    width: 100% !important;
-    max-width: 100%;
-    margin: 0 auto;
-  }
-
-  .v-card-text {
-    padding: 16px !important;
-  }
-
-  .v-img {
-    max-width: 120px;
-  }
-  .signup-btn {
-    font-size: 14px;
-    padding: 10px 20px;
-    max-width: 100%; /* fill available width */
+    width: 
   }
 }
 </style>

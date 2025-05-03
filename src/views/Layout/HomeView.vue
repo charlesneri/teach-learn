@@ -83,11 +83,17 @@ const fetchCurrentUser = async () => {
   } = await supabase.auth.getUser()
   if (user) {
     currentUserId.value = user.id
-    const { data } = await supabase
-      .from('profiles')
-      .select('first_name, last_name, avatar_url, is_public_tutor')
-      .eq('id', user.id)
-      .single()
+    const { data, error } = await supabase
+  .from('profiles')
+  .select('first_name, last_name, avatar_url, is_public_tutor')
+  .eq('id', user.id) // Make sure 'user.id' is a valid UUID type
+  .single()
+  
+if (error) {
+  console.error('Error fetching user profile:', error)
+  return
+}
+
     if (data) {
       currentUserProfile.value = {
         firstName: data.first_name || '',
@@ -110,9 +116,22 @@ const messageInput = ref('')
 
 // === Tutor Actions ===
 const fetchTutors = async () => {
-  const { data } = await supabase.from('profiles').select('*').eq('is_public_tutor', true)
-  tutors.value = data || []
-}
+  const { data, error } = await supabase
+    .from('profiles')
+    .select('*')
+    .eq('is_public_tutor', true);
+
+  if (error) {
+    console.error('Error fetching tutors:', error);
+    return;
+  }
+  tutors.value = data || [];
+};
+
+onMounted(async () => {
+  await fetchTutors();  // Ensuring it's called after component is mounted
+});
+
 
 const viewTutor = (tutor) => {
   selectedTutor.value = tutor
@@ -171,16 +190,17 @@ const toggleSearch = () => {
 }
 
 const filteredTutors = computed(() => {
-  if (!searchQuery.value.trim()) return tutors.value
+  if (!searchQuery.value.trim()) return tutors.value;
 
-  const keyword = searchQuery.value.trim().toLowerCase()
+  const keyword = searchQuery.value.trim().toLowerCase();
   return tutors.value.filter((tutor) => {
     const fullName =
-      `${tutor.first_name || ''} ${tutor.middle_initial || ''} ${tutor.last_name || ''}`.toLowerCase()
-    const expertise = (tutor.expertise || '').toLowerCase()
-    return fullName.includes(keyword) || expertise.includes(keyword)
-  })
-})
+      `${tutor.first_name || ''} ${tutor.middle_initial || ''} ${tutor.last_name || ''}`.toLowerCase();
+    const expertise = (tutor.expertise || '').toLowerCase();
+    return fullName.includes(keyword) || expertise.includes(keyword);
+  });
+});
+
 
 // === Mount Lifecycle ===
 onMounted(async () => {

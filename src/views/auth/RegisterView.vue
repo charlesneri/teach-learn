@@ -64,10 +64,10 @@ const onFormSubmit = () => {
     if (valid) onSubmit()
   })
 }
-
 const onSubmit = async () => {
   formAction.value = { ...formActionDefault, formProcess: true }
 
+  // Create the user in Supabase Auth
   const { data, error } = await supabase.auth.signUp({
     email: formData.value.email,
     password: formData.value.password,
@@ -90,24 +90,27 @@ const onSubmit = async () => {
   if (error) {
     formAction.value.formErrorMessage = error.message
   } else if (data?.user) {
-    const { error: profileError } = await supabase.from('profiles').insert({
-      id: data.user.id,
-      first_name: formData.value.firstname,
-      last_name: formData.value.lastname,
-      middle_initial: formData.value.middleinitial,
-      age: Number(formData.value.age),
-      email: formData.value.email,
-      phone: formData.value.phone,
-      expertise: formData.value.expertise,
-      about: formData.value.about,
-      school: formData.value.school,
-      degree: formData.value.course,
-      year: Number(formData.value.yearLevel),
-      avatar_url: '',
+    // Update the user metadata after sign-up
+    const { user } = data;
+
+    // Update the user metadata with profile data including 'degree'
+    const { error: updateError } = await supabase.auth.updateUser({
+      data: {
+        firstName: formData.value.firstname,
+        lastName: formData.value.lastname,
+        middleInitial: formData.value.middleinitial,
+        age: Number(formData.value.age),
+        phone: formData.value.phone,
+        expertise: formData.value.expertise,
+        about: formData.value.about,
+        school: formData.value.school,
+        course: formData.value.course,
+        yearLevel: Number(formData.value.yearLevel),
+      },
     })
 
-    if (profileError) {
-      formAction.value.formErrorMessage = 'Profile creation failed!'
+    if (updateError) {
+      formAction.value.formErrorMessage = 'Failed to update user metadata!'
     } else {
       formAction.value.formSuccessMessage = 'Successfully Registered!'
       refVForm.value?.reset()
@@ -125,6 +128,8 @@ const onSubmit = async () => {
 
   formAction.value.formProcess = false
 }
+
+
 </script>
 
 <template>
