@@ -380,125 +380,6 @@ const fetchRatings = async () => {
             <v-img src="image/Teach&Learn.png" alt="Logo" />
           </v-avatar>
         </div>
-<<<<<<< HEAD
-        <v-spacer />
-        <div class="d-none d-md-flex align-center" style="gap: 24px">
-          <RouterLink to="/home" class="text-white text-decoration-none font-weight-medium"
-            >Home</RouterLink
-          >
-          <RouterLink to="/about" class="text-white text-decoration-none font-weight-medium"
-            >About Us</RouterLink
-          >
-          <RouterLink to="/contact" class="text-white text-decoration-none font-weight-medium"
-            >Contact Us</RouterLink
-          >
-        </div>
-        <v-spacer />
-        <!-- Search & Mobile Menu -->
-        <v-responsive max-width="240">
-          <div class="d-flex">
-            <v-text-field
-              v-model="searchQuery"
-              placeholder="Search..."
-              variant="solo-filled"
-              density="compact"
-              rounded="lg"
-              flat
-              hide-details
-              single-line
-              class="search-input flex-grow-1"
-              append-inner-icon="mdi-magnify"
-            />
-
-            <!-- Mobile Search and Menu -->
-            <div class="d-flex align-center gap-2">
-              <!-- Mobile Menu Button -->
-              <v-menu transition="scale-transition" offset-y>
-                <template #activator="{ props }">
-                  <v-app-bar-nav-icon v-bind="props" class="d-md-none" />
-                </template>
-                <v-list>
-                  <v-list-item link>
-                    <RouterLink
-                      to="/"
-                      :class="[
-                        'active-click text-decoration-none',
-                        currentTheme === 'dark' ? 'text-white' : 'text-black',
-                      ]"
-                    >
-                      Home
-                    </RouterLink>
-                  </v-list-item>
-
-                  <v-list-item link>
-                    <RouterLink
-                      to="/profile"
-                      :class="[
-                        'active-click text-decoration-none',
-                        currentTheme === 'dark' ? 'text-white' : 'text-black',
-                      ]"
-                    >
-                      My Profile
-                    </RouterLink>
-                  </v-list-item>
-
-                  <v-list-item link>
-                    <RouterLink
-                      to="/appointments"
-                      :class="[
-                        'active-click text-decoration-none',
-                        currentTheme === 'dark' ? 'text-white' : 'text-black',
-                      ]"
-                    >
-                      My Appointment
-                    </RouterLink>
-                  </v-list-item>
-                
-
-                  <v-list-item link>
-                    <RouterLink
-                      to="/about"
-                      :class="[
-                        'active-click text-decoration-none',
-                        currentTheme === 'dark' ? 'text-white' : 'text-black',
-                      ]"
-                    >
-                      About Us
-                    </RouterLink>
-                  </v-list-item>
-
-                  <v-list-item link>
-                    <RouterLink
-                      to="/contact"
-                      :class="[
-                        'active-click text-decoration-none',
-                        currentTheme === 'dark' ? 'text-white' : 'text-black',
-                      ]"
-                    >
-                      Contact Us
-                    </RouterLink>
-                  </v-list-item>
-
-                  <v-divider></v-divider>
-
-                  <v-list-item link>
-                    <RouterLink
-                      to="/"
-                      :class="[
-                        'active-click text-decoration-none',
-                        currentTheme === 'dark' ? 'text-white' : 'text-black',
-                      ]"
-                    >
-                      Logout
-                    </RouterLink>
-                  </v-list-item>
-                </v-list>
-              </v-menu>
-            </div>
-          </div>
-        </v-responsive>
-=======
->>>>>>> main
       </v-container>
     </v-app-bar>
 
@@ -572,20 +453,6 @@ const fetchRatings = async () => {
                           <v-icon v-else size="60" color="grey-darken-1">mdi-account</v-icon>
                         </v-avatar>
 
-<<<<<<< HEAD
-                  <v-list-item
-                    link
-                    :to="'/appointments'"
-                    tag="RouterLink"
-                    :class="[
-                      'active-click text-decoration-none',
-                      currentTheme === 'dark' ? 'text-white' : 'text-black',
-                    ]"
-                  >
-                    <v-list-item-title>My Appointments</v-list-item-title>
-                  </v-list-item>
-               
-=======
                         <!-- Name & Expertise -->
                         <h3 class="text-subtitle-1 font-weight-bold mb-1">
                           {{ tutor?.first_name || 'First' }} {{ tutor?.last_name || 'Last' }}
@@ -593,7 +460,6 @@ const fetchRatings = async () => {
                         <p class="text-caption mb-3">
                           {{ tutor?.expertise || 'Subject Area' }}
                         </p>
->>>>>>> main
 
                         <!-- Action Links -->
                         <!-- View More -->
