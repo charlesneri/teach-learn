@@ -1,26 +1,26 @@
 <script setup>
 import { ref, onMounted, watch } from 'vue'
+import { useRouter } from 'vue-router'
+import { supabase } from '@/utils/supabase.js'
+import { requiredValidator, emailValidator } from '@/utils/validators.js'
+import AlertNotification from '@/components/common/AlertNotification.vue'
 
-// Get theme preference from localStorage or system
+const router = useRouter()
+const visible = ref(false)
+const refVForm = ref()
+
+// Theme Setup
 const getPreferredTheme = () => {
-  const savedTheme = localStorage.getItem('theme')
-  if (savedTheme) return savedTheme
-  return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
+  const saved = localStorage.getItem('theme')
+  return saved || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light')
 }
-
 const theme = ref(getPreferredTheme())
 
-// Toggle theme
 const toggleTheme = () => {
   theme.value = theme.value === 'light' ? 'dark' : 'light'
 }
+watch(theme, (val) => localStorage.setItem('theme', val))
 
-// Save theme change
-watch(theme, (val) => {
-  localStorage.setItem('theme', val)
-})
-
-// Watch for system changes if no saved preference
 onMounted(() => {
   const media = window.matchMedia('(prefers-color-scheme: dark)')
   media.addEventListener('change', (e) => {
@@ -29,6 +29,76 @@ onMounted(() => {
     }
   })
 })
+
+// Form Data
+const formData = ref({
+  email: '',
+  password: '',
+})
+
+// Form State
+const formAction = ref({
+  formProcess: false,
+  formErrorMessage: '',
+  formSuccessMessage: '',
+})
+
+// Login Logic
+const onLogin = async () => {
+  formAction.value.formProcess = true
+  formAction.value.formErrorMessage = ''
+  formAction.value.formSuccessMessage = ''
+
+  const email = formData.value.email.trim()
+  const password = formData.value.password.trim()
+
+  if (!email || !password) {
+    formAction.value.formErrorMessage = 'Please enter both email and password.'
+    formAction.value.formProcess = false
+    return
+  }
+
+  // Try to sign in
+  const { data, error: loginError } = await supabase.auth.signInWithPassword({
+    email,
+    password,
+  })
+
+  if (loginError) {
+    formAction.value.formErrorMessage = 'Incorrect password. Please try again.'
+    formAction.value.formProcess = false
+    return
+  }
+
+  // Check if user was returned
+  const user = data?.user
+  if (!user) {
+    formAction.value.formErrorMessage = 'Authentication failed. Try again.'
+    formAction.value.formProcess = false
+    return
+  }
+
+  // Fetch user metadata directly from the auth user
+  const userMetadata = user?.user_metadata
+  if (userMetadata) {
+    // You can perform additional logic based on the user's metadata, for example:
+    console.log('User metadata:', userMetadata)
+  }
+
+  // Successful login
+  formAction.value.formSuccessMessage = 'Successfully Logged In!'
+  formAction.value.formProcess = false
+  setTimeout(() => {
+    router.replace('/home')  // Redirect to the home page or dashboard
+  }, 1500)
+}
+
+// Form submit handler
+const onFormSubmit = () => {
+  refVForm.value?.validate().then(({ valid }) => {
+    if (valid) onLogin()
+  })
+}
 </script>
 
 <template>
@@ -38,7 +108,8 @@ onMounted(() => {
         <v-container
           fluid
           class="wrapper"
-          :style="{ background: theme === 'light' ? '#1565c0' : '#121212' }"
+          style="min-height: 100vh; padding: 32px"
+          :style="{ backgroundColor: theme === 'light' ? '#1565c0' : '#121212' }"
         >
           <!-- Theme Toggle Button -->
           <v-btn
@@ -62,7 +133,7 @@ onMounted(() => {
             <v-col cols="12" sm="10" md="6" lg="4" class="mx-auto">
               <transition name="slide-fade">
                 <v-card
-                  :class="theme === 'dark' ? 'bg-grey-darken-4 text-white' : ''"
+                  :style="{ backgroundColor: theme === 'light' ? '#fefcf9' : '#222222' }"
                   class="mx-auto rounded-xl pb-5 hover-card"
                   width="500"
                   style="font-size: 85%; font-weight: 200"
@@ -78,35 +149,44 @@ onMounted(() => {
                     <v-divider class="mb-5 mt-4" thickness="3" color="black" />
                     <span class="font-weight-black d-flex justify-center">Login</span>
                   </template>
-
+                  <AlertNotification
+                    :form-success-message="formAction.formSuccessMessage"
+                    :form-error-message="formAction.formErrorMessage"
+                  ></AlertNotification>
                   <v-card-text class="p-4">
-                    <v-form fast-fail @submit.prevent>
+                    <v-form ref="refVForm" @submit.prevent="onFormSubmit">
                       <v-text-field
                         label="Email"
-                        variant="outlined"
+                        variant="filled"
                         :color="theme === 'dark' ? 'white' : 'primary'"
+                        :rules="[requiredValidator, emailValidator]"
+                        v-model="formData.email"
                       />
                       <v-text-field
+                        :append-inner-icon="visible ? 'mdi-eye-off' : 'mdi-eye'"
+                        :type="visible ? 'text' : 'password'"
                         label="Password"
-                        type="password"
-                        variant="outlined"
+                        @click:append-inner="visible = !visible"
+                        variant="filled"
                         :color="theme === 'dark' ? 'white' : 'primary'"
+                        :rules="[requiredValidator]"
+                        v-model="formData.password"
                       />
-                      <v-btn
-                        color="light-blue-darken-2"
-                        class="mt-2 signup-btn"
-                        type="submit"
-                        prepend-icon="mdi-login"
-                        block
-                        to="/home"
-                      >
-                        Login
-                      </v-btn>
+                      <v-col cols="12" class="d-flex justify-center">
+                        <v-btn
+                          color="light-blue-darken-2"
+                          class="mt-2 signup-btn"
+                          type="submit"
+                          prepend-icon="mdi-login"
+                        >
+                          Login
+                        </v-btn>
+                      </v-col>
 
                       <v-divider class="my-5" />
                       <p class="text-center text-primary">
                         Don’t have an account yet?
-                        <RouterLink class="link" to="/register">Register now!</RouterLink>
+                        <RouterLink class="active-click" to="/register">Register now!</RouterLink>
                       </p>
                     </v-form>
                   </v-card-text>
@@ -146,8 +226,8 @@ onMounted(() => {
     box-shadow 0.3s ease;
 }
 .hover-card:hover {
-  transform: scale(1.02);
-  box-shadow: 0 12px 24px rgba(40, 206, 244, 0.2);
+  transform: scale(1.05);
+  box-shadow: 0 6px 18px rgba(33, 150, 243, 0.6);
 }
 
 /* Theme toggle button */
@@ -169,6 +249,7 @@ onMounted(() => {
   color: white;
   font-weight: bold;
   letter-spacing: 1px;
+  max-width: 160px;
   font-size: 16px;
   padding: 12px 24px;
   border-radius: 50px;
@@ -203,12 +284,29 @@ onMounted(() => {
 }
 
 /* Remove underline on link */
-.link {
+
+/* Base link style */
+.active-click {
   text-decoration: none;
+  transition: color 0.3s ease;
 }
-.link:active {
-  color: #000;
+
+/* Light mode: default + hover */
+body:not(.dark) .active-click {
+  color: #0d47a1;
 }
+body:not(.dark) .active-click:hover {
+  color: #002171;
+}
+
+/* Dark mode: default + hover */
+body.dark .active-click {
+  color: #90caf9;
+}
+body.dark .active-click:hover {
+  color: #ffffff;
+}
+
 @media (max-width: 600px) {
   .wrapper {
     padding: 0 1rem;
@@ -229,18 +327,7 @@ onMounted(() => {
   }
 
   .hover-card {
-    width: 100% !important;
-    max-width: 100%;
-    margin: 0 auto;
-  }
-
-  .v-card-text {
-    padding: 16px !important;
-  }
-
-  .v-img {
-    max-width: 120px;
+    width: 
   }
 }
-
 </style>

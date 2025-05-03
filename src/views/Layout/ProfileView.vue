@@ -1,29 +1,34 @@
 <script setup>
-import { ref, onMounted, watch, computed } from 'vue'
+import { ref, computed, onMounted, onBeforeUnmount, watch } from 'vue'
+import { useRouter } from 'vue-router'
+import { supabase, formActionDefault } from '@/utils/supabase'
 import { useTheme } from 'vuetify'
 
+// THEME
 const theme = useTheme()
 const currentTheme = ref(localStorage.getItem('theme') || 'light')
+watch(currentTheme, (val) => {
+  theme.global.name.value = val
+  localStorage.setItem('theme', val)
+})
+const toggleTheme = () => {
+  currentTheme.value = currentTheme.value === 'light' ? 'dark' : 'light'
+}
 
+// ROUTER
+const router = useRouter()
+
+// UI STATES
 const dialog = ref(false)
-const loading = ref(false)
+const confirmRemove = ref(false)
+const snackbarColor = ref('')
 const snackbar = ref(false)
 const snackbarMsg = ref('')
 const isEditing = ref(false)
+const loading = ref(false)
+const imageLoading = ref(false)
 
-const profileImage = ref('')
-const selectedFile = ref(null)
-const maxSizeMB = 2
-
-const searchQuery = ref('')
-
-function performSearch() {
-  if (searchQuery.value.trim()) {
-    snackbarMsg.value = `You searched for: "${searchQuery.value}"`
-    snackbar.value = true
-  }
-}
-
+// PROFILE STATES
 const profile = ref({
   firstName: '',
   lastName: '',
@@ -34,208 +39,572 @@ const profile = ref({
   phone: '',
   about: '',
   education: ['', '', ''],
+  isPublicTutor: false, 
 })
+const profileImage = ref('')
+const selectedFile = ref(null)
 
-function toggleTheme() {
-  currentTheme.value = currentTheme.value === 'light' ? 'dark' : 'light'
-  theme.global.name.value = currentTheme.value
-  localStorage.setItem('theme', currentTheme.value)
+// FIELD MAPPING
+const fieldMappings = {
+  'Given Name': 'firstName',
+  'Last Name': 'lastName',
+  'Middle Initial': 'middleInitial',
+  Age: 'age',
+  Expertise: 'expertise',
+  Email: 'email',
+  Phone: 'phone',
 }
 
-watch(currentTheme, (val) => {
-  theme.global.name.value = val
-  localStorage.setItem('theme', val)
+// COMPUTED
+const fullName = computed(() => {
+  const mid = profile.value.middleInitial ? `${profile.value.middleInitial}. ` : ''
+  return `${profile.value.firstName} ${mid}${profile.value.lastName}`
 })
 
-onMounted(() => {
-  theme.global.name.value = currentTheme.value
-  const storedImage = localStorage.getItem('profileImage')
-  if (storedImage) profileImage.value = storedImage
-})
+// FUNCTIONS
+const checkAuth = async () => {
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+  if (!user) router.push('/login')
+}
+const getUserProfile = async () => {
+  try {
+    const { data: { user }, error } = await supabase.auth.getUser();
+    if (error) throw error;
+    if (!user) return;
 
-watch(profileImage, (newVal) => {
-  if (newVal) localStorage.setItem('profileImage', newVal)
-})
+    // Fetch user metadata directly from auth.user
+    profile.value = {
+      firstName: user.user_metadata.firstName || '',
+      lastName: user.user_metadata.lastName || '',
+      middleInitial: user.user_metadata.middleInitial || '',
+      age: user.user_metadata.age || '',
+      expertise: user.user_metadata.expertise || '',
+      email: user.email,
+      phone: user.user_metadata.phone || '',
+      about: user.user_metadata.about || '',
+      education: [
+        user.user_metadata.school || '',
+        user.user_metadata.course || '',
+        user.user_metadata.yearLevel || ''
+      ],
+      isPublicTutor: user.user_metadata.isPublicTutor || false,
+    };
+    
+    // Log to check if the education data is correct
+    console.log(profile.value.education);
+    
+  } catch (error) {
+    console.error('Error fetching profile:', error);
+  }
+};
 
-function proceedWithApplication() {
-  loading.value = true
-  setTimeout(() => {
-    loading.value = false
-    dialog.value = false
-    snackbarMsg.value = 'Application submitted successfully!'
+//save profile function
+const validateProfile = () => {
+  const requiredFields = ['firstName', 'lastName', 'age', 'expertise', 'email', 'phone', 'about']
+  for (const field of requiredFields) {
+    if (!profile.value[field] || profile.value[field].toString().trim() === '') {
+      snackbarMsg.value = `Please fill in the ${field.replace(/([A-Z])/g, ' $1').toLowerCase()}.`
+      snackbarColor.value = 'red'
+      snackbar.value = true
+      return false
+    }
+  }
+
+  // Check education fields
+  if (profile.value.education.some(e => !e || e.toString().trim() === '')) {
+    snackbarMsg.value = 'Please complete your educational background.'
+    snackbarColor.value = 'red'
     snackbar.value = true
-  }, 2000)
+    return false
+  }
+
+  return true
+}
+const saveProfile = async () => {
+  if (!validateProfile()) return
+
+  isEditing.value = false
+  loading.value = true
+
+  try {
+    const { data: { user }, error } = await supabase.auth.getUser()
+    if (error || !user) throw new Error('User not authenticated')
+
+    const { error: updateError } = await supabase.auth.updateUser({
+      data: {
+        firstName: profile.value.firstName,
+        lastName: profile.value.lastName,
+        middleInitial: profile.value.middleInitial,
+        age: profile.value.age,
+        phone: profile.value.phone,
+        expertise: profile.value.expertise,
+        about: profile.value.about,
+        school: profile.value.education[0],
+        degree: profile.value.education[1],
+        year: profile.value.education[2],
+        avatar_url: profileImage.value,
+        isPublicTutor: profile.value.isPublicTutor,
+      },
+    })
+
+    if (updateError) throw updateError
+
+    snackbarMsg.value = 'Profile saved successfully!'
+    snackbarColor.value = 'green'
+    snackbar.value = true
+  } catch (error) {
+    console.error('Error saving profile:', error)
+    snackbarMsg.value = 'An error occurred while saving. Please try again.'
+    snackbarColor.value = 'red'
+    snackbar.value = true
+  } finally {
+    loading.value = false
+  }
 }
 
-function enableEdit() {
-  isEditing.value = true
-}
-function cancelEdit() {
-  isEditing.value = false
-}
-function saveProfile() {
-  isEditing.value = false
-  snackbarMsg.value = 'Profile saved!'
-  snackbar.value = true
-}
-
-function onImageSelected(event) {
+const onImageSelected = async (event) => {
   const file = event.target.files[0]
   if (!file) return
 
-  const allowedTypes = ['image/jpeg', 'image/png']
-  if (!allowedTypes.includes(file.type)) {
-    snackbarMsg.value = 'Only JPG and PNG files are allowed.'
-    snackbar.value = true
-    return
-  }
-
-  const sizeMB = file.size
-  if (sizeMB > maxSizeMB) {
-    snackbarMsg.value = `File size exceeds ${maxSizeMB}MB limit.`
-    snackbar.value = true
-    return
-  }
-
   selectedFile.value = file
+  imageLoading.value = true
 
-  const reader = new FileReader()
-  reader.onload = (e) => {
-    profileImage.value = e.target.result
+  try {
+    const { data: { user }, error } = await supabase.auth.getUser()
+    if (error || !user) throw new Error('User not authenticated')
+
+    const fileExt = file.name.split('.').pop()
+    const fileName = `${user.id}_${Date.now()}.${fileExt}`
+
+    const { error: uploadError } = await supabase.storage.from('avatars').upload(fileName, file, {
+      cacheControl: '3600',
+      upsert: true,
+    })
+    if (uploadError) throw uploadError
+
+    const { data: publicData, error: publicUrlError } = await supabase.storage
+      .from('avatars')
+      .getPublicUrl(fileName)
+    if (publicUrlError || !publicData?.publicUrl) throw publicUrlError
+
+    profileImage.value = publicData.publicUrl
+
+    // Update the user metadata with the new avatar URL
+    const { error: updateError } = await supabase.auth.updateUser({
+      data: { avatar_url: profileImage.value }
+    })
+    if (updateError) throw updateError
+
+    snackbarMsg.value = 'Profile picture updated!'
+    snackbar.value = true
+  } catch (error) {
+    console.error('Error uploading profile image:', error)
+  } finally {
+    imageLoading.value = false
   }
-  reader.readAsDataURL(file)
 }
 
-function removeProfileImage() {
-  profileImage.value = ''
-  localStorage.removeItem('profileImage')
+
+const confirmRemoveImage = () => {
+  confirmRemove.value = true
 }
 
-const fullName = computed(() => {
-  return `${profile.value.firstName} ${profile.value.middleInitial}. ${profile.value.lastName}`
+const removeProfileImage = async () => {
+  if (!profileImage.value) return
+
+  confirmRemove.value = false
+  imageLoading.value = true
+
+  try {
+    const {
+      data: { user },
+    } = await supabase.auth.getUser()
+    if (!user) throw new Error('User not authenticated')
+
+    const fileUrl = new URL(profileImage.value)
+    const filePath = decodeURIComponent(
+      fileUrl.pathname.replace('/storage/v1/object/public/avatars/', ''),
+    )
+
+    const { error: deleteError } = await supabase.storage.from('avatars').remove([filePath])
+    if (deleteError) throw deleteError
+
+    const { error: updateError } = await supabase
+      .from('profiles')
+      .update({ avatar_url: '' })
+      .eq('id', user.id)
+    if (updateError) throw updateError
+
+    profileImage.value = ''
+
+    snackbarMsg.value = 'Profile picture removed!'
+    snackbar.value = true
+  } catch (error) {
+    console.error('Error removing profile image:', error)
+  } finally {
+    imageLoading.value = false
+  }
+}
+
+// LOGOUT
+const onLogout = async () => {
+  formActionDefault.formProcess = true
+  try {
+    const { error } = await supabase.auth.signOut()
+    if (error) throw error
+    snackbarMsg.value = 'Logged out successfully!'
+    snackbar.value = true
+    setTimeout(() => router.push('/login'), 1000)
+  } catch (error) {
+    console.error('Error during logout:', error)
+  } finally {
+    formActionDefault.formProcess = false
+  }
+}
+
+// EDIT MODES
+const enableEdit = () => {
+  isEditing.value = true
+}
+const cancelEdit = () => {
+  isEditing.value = false
+}
+const getEducationPlaceholder = (index) => {
+  if (index === 0) return 'School or university';
+  if (index === 1) return 'Course or degree';
+  if (index === 2) return 'Year level';
+  return '';
+};
+
+// MOUNTED
+onMounted(() => {
+  theme.global.name.value = currentTheme.value
+  checkAuth()  // This checks if the user is logged in
+  getUserProfile()  // Fetch the user profile from auth.user metadata
 })
 
-function getEducationPlaceholder(index) {
-  if (index === 0) return 'Enter your school/university'
-  if (index === 1) return 'Enter your course or degree'
-  if (index === 2) return 'Enter your year level'
-  return 'Enter educational info'
+//functional for public profile
+// Apply as Tutor
+
+const applyAsTutor = async () => {
+  const { data: { user }, error: userError } = await supabase.auth.getUser()
+  if (userError || !user?.id) return console.error('User error:', userError)
+
+  const toggleStatus = !profile.value.isPublicTutor
+
+  const { error } = await supabase
+    .from('profiles')
+    .update({ is_public_tutor: toggleStatus })
+    .eq('id', user.id)
+
+  if (error) return console.error('Error updating tutor status:', error)
+
+  profile.value.isPublicTutor = toggleStatus
+  currentUserProfile.value.isPublicTutor = toggleStatus
+  snackbarMsg.value = toggleStatus
+    ? 'You are now visible as a public tutor.'
+    : 'You have canceled your public tutor status.'
+  snackbarColor.value = 'green'
+  snackbar.value = true
 }
+
+
+//drawer function
+const drawer = ref(false)
+//const mini = ref(false)
+const isMobile = ref(false)
+
+const toggleDrawer = () => {
+  drawer.value = !drawer.value
+}
+
+const checkMobile = () => {
+  isMobile.value = window.innerWidth <= 768
+}
+
+/* === User Profile === */
+const currentUserId = ref(null)
+const currentUserProfile = ref({
+  firstName: '',
+  lastName: '',
+  avatarUrl: '',
+  isPublicTutor: false,
+})
+
+const fetchCurrentUser = async () => {
+  const { data: { user } } = await supabase.auth.getUser()
+  if (user) {
+    currentUserId.value = user.id
+    const { data } = await supabase
+      .from('profiles')
+      .select('first_name,last_name,avatar_url,is_public_tutor')
+      .eq('id', user.id)
+      .single()
+    if (data) {
+      currentUserProfile.value = {
+        firstName: data.first_name || '',
+        lastName: data.last_name || '',
+        avatarUrl: data.avatar_url || '',
+        isPublicTutor: data.is_public_tutor || false,
+      }
+    }
+  }
+}
+/* === Logout === */
+const handleLogoutClick = async () => {
+  const { error } = await supabase.auth.signOut()
+
+  if (error) {
+    console.error('Logout failed:', error.message)
+    snackbarMsg.value = 'Logout failed. Try again.'
+    snackbarColor.value = 'red'
+    snackbar.value = true
+    return
+  }
+
+  // Reset the profile data
+  profile.value = {
+    firstName: '',
+    lastName: '',
+    middleInitial: '',
+    age: '',
+    expertise: '',
+    email: '',
+    phone: '',
+    about: '',
+    education: ['', '', ''],
+    isPublicTutor: false, 
+  }
+  profileImage.value = ''
+  
+  snackbarMsg.value = 'Logged out successfully!'
+  snackbarColor.value = 'green'
+  snackbar.value = true
+
+  setTimeout(() => {
+    router.push('/')
+  }, 1000)
+}
+
+onMounted(async () => {
+  theme.global.name.value = currentTheme.value
+  checkMobile()
+  window.addEventListener('resize', checkMobile)
+
+  const storedImage = localStorage.getItem('profileImage')
+  if (storedImage) profileImage.value = storedImage
+
+  await fetchCurrentUser()
+})
+
+onBeforeUnmount(() => {
+  window.removeEventListener('resize', checkMobile)
+})
 </script>
+
 <template>
   <v-app id="inspire">
+   <!-- Drawer Sidebar-->
+   <transi name="fade-slide-up">
+      <v-navigation-drawer
+    v-if="drawer"
+        :temporary="isMobile"
+        :permanent="!isMobile"
+        :width="isMobile ? '100%' : 280"
+        right
+        app
+        :scrim="isMobile"
+        :style="{
+          backgroundColor: currentTheme === 'dark' ? '#424242' : '',
+          color: currentTheme === 'dark' ? '#ffffff' : '#000000',
+        }"
+      >
+        <!-- Menu Icon that toggles drawer size -->
+        <v-btn icon class="ms-5 mt-5 d-lg-none" @click="toggleDrawer">
+          <v-icon>mdi-menu</v-icon>
+        </v-btn>
+        <!-- Profile -->
+        <v-sheet
+          class="pa-4 text-center"
+          rounded="lg"
+          :style="{
+            backgroundColor: currentTheme === 'dark' ? '#424242' : '',
+            color: currentTheme === 'dark' ? '#ffffff' : '#000000',
+          }"
+        >
+          <v-avatar size="100" class="mb-3">
+            <v-img v-if="currentUserProfile.avatarUrl" :src="currentUserProfile.avatarUrl" cover />
+            <v-icon v-else size="80">mdi-account</v-icon>
+          </v-avatar>
+          <h3 v-if="!mini" class="ma-3">{{ profile.firstName }} {{ profile.lastName }}</h3>
+        </v-sheet>
+
+        <v-divider class="my-2" />
+
+        <v-list nav dense>
+          <v-list-item :to="'/home'" tag="RouterLink" @click="isMobile && (drawer = false)">
+            <div class="d-flex align-center" style="gap: 8px; width: 100%">
+              <v-icon size="30" style="margin-left: 15px">mdi-home-outline</v-icon>
+              <span v-if="!mini" class="icon-mdi">Home</span>
+            </div>
+          </v-list-item>
+
+          <v-list-item :to="'/about'" tag="RouterLink" @click="isMobile && (drawer = false)">
+            <div class="d-flex align-center" style="gap: 8px; width: 100%">
+              <v-icon size="30" style="margin-left: 15px">mdi-information-outline</v-icon>
+              <span v-if="!mini" class="icon-mdi">About Us</span>
+            </div>
+          </v-list-item>
+
+          <v-list-item :to="'/contact'" tag="RouterLink" @click="isMobile && (drawer = false)">
+            <div class="d-flex align-center" style="gap: 8px; width: 100%">
+              <v-icon size="30" style="margin-left: 15px">mdi-phone-outline</v-icon>
+              <span v-if="!mini" class="icon-mdi">Contact Us</span>
+            </div>
+          </v-list-item>
+
+          <v-divider class="my-2" />
+
+          <v-list-item :to="'/profile'" tag="RouterLink" @click="isMobile && (drawer = false)">
+            <div class="d-flex align-center" style="gap: 8px; width: 100%">
+              <v-icon size="30" style="margin-left: 15px">mdi-account-outline</v-icon>
+              <span v-if="!mini" class="icon-mdi">My Profile</span>
+            </div>
+          </v-list-item>
+
+          <v-list-item :to="'/appointments'" tag="RouterLink" @click="isMobile && (drawer = false)">
+            <div class="d-flex align-center" style="gap: 8px; width: 100%">
+              <v-icon size="30" style="margin-left: 15px">mdi-calendar</v-icon>
+              <span v-if="!mini" class="icon-mdi">My Appointments</span>
+            </div>
+          </v-list-item>
+
+          <v-list-item :to="'/DeleteHistory'" tag="RouterLink" @click="isMobile && (drawer = false)">
+            <div class="d-flex align-center" style="gap: 8px; width: 100%">
+              <v-icon size="30" style="margin-left: 15px"> mdi-delete-outline</v-icon>
+              <span v-if="!mini" class="icon-mdi">Delete History</span>
+            </div>
+          </v-list-item>
+
+          <v-divider class="my-2" />
+          <v-list-item @click="handleLogoutClick">
+            <div class="d-flex align-center" style="gap: 8px; width: 100%">
+              <v-icon size="30" style="margin-left: 15px">mdi-logout</v-icon>
+              <span v-if="!mini" class="icon-mdi">Logout</span>
+            </div>
+          </v-list-item>
+          <!-- Theme toggle -->
+          <div class="text-center mt-4">
+            <v-btn icon @click="toggleTheme">
+              <v-icon>{{
+                currentTheme === 'light' ? 'mdi-weather-night' : 'mdi-white-balance-sunny'
+              }}</v-icon>
+            </v-btn>
+          </div>
+        </v-list>
+      </v-navigation-drawer>
+    </transi  tion>
     <!-- App Bar -->
-    <v-app-bar flat :color="currentTheme === 'light' ? '#1565c0' : 'grey-darken-4'">
-      <v-container class="d-flex align-center justify-space-between pa-2">
-        <!-- Logo -->
-        <div class="d-flex align-center gap-2">
-          <v-avatar color="#fff" size="44">
+    <v-app-bar flat :color="currentTheme === 'light' ? '#1565c0' : '#000000'">
+      <!-- Menu Icon that toggles drawer size -->
+      <v-btn icon class="ms-5" @click="toggleDrawer">
+        <v-icon>mdi-menu</v-icon>
+      </v-btn>
+      <v-container
+        class="d-flex align-center pa-0"
+        :class="{
+          'transition-all': !isMobile,
+          'no-transition': isMobile,
+        }"
+      >
+        <div class="logo-wrapper">
+       
+          <v-avatar color="#fff" size="50" class="logo me-6">
             <v-img src="image/Teach&Learn.png" alt="Logo" />
           </v-avatar>
         </div>
-
-        <!-- Desktop Navigation -->
-        <v-spacer />
-
-        <!-- Centered Navigation Links (Desktop only) -->
-        <div class="d-none d-md-flex align-center" style="gap: 24px">
-          <RouterLink to="/home" class="text-white text-decoration-none font-weight-medium"
-            >Home</RouterLink
-          >
-          <RouterLink to="/about" class="text-white text-decoration-none font-weight-medium"
-            >About Us</RouterLink
-          >
-          <RouterLink to="/contact" class="text-white text-decoration-none font-weight-medium"
-            >Contact Us</RouterLink
-          >
-        </div>
-
-        <!-- Spacer after center links -->
-        <v-spacer />
-
-        <!-- Mobile Menu -->
-        <v-menu transition="scale-transition" offset-y theme="light">
-          <template #activator="{ props }">
-            <v-app-bar-nav-icon v-bind="props" class="d-md-none" />
-          </template>
-          <v-list>
-            <v-list-item link
-              ><RouterLink to="/home" class="text-decoration-none">Home</RouterLink></v-list-item
-            >
-            <v-list-item link
-              ><RouterLink to="/profile" class="text-decoration-none"
-                >My Profile</RouterLink
-              ></v-list-item
-            >
-            <v-list-item link
-              ><RouterLink to="/appointments" class="text-decoration-none"
-                >My Appointments</RouterLink
-              ></v-list-item
-            >
-            <v-list-item link
-              ><RouterLink to="/about" class="text-decoration-none"
-                >About Us</RouterLink
-              ></v-list-item
-            >
-            <v-list-item link
-              ><RouterLink to="/contact" class="text-decoration-none"
-                >Contact Us</RouterLink
-              ></v-list-item
-            >
-            <v-divider></v-divider>
-            <v-list-item link
-              ><RouterLink to="/" class="text-decoration-none"
-                >Logout</RouterLink
-              ></v-list-item
-            >
-          </v-list>
-        </v-menu>
       </v-container>
-    </v-app-bar>
 
-    <!-- Main Content -->
-    <v-main :class="currentTheme === 'dark' ? 'bg-grey-darken-4 text-white' : 'bg-grey-lighten-3'">
+    </v-app-bar>
+    <!--pop up alert-->
+    <v-snackbar
+  v-model="snackbar"
+  timeout="3000"
+  :color="snackbarColor || 'success'"
+  location="top"
+>
+  {{ snackbarMsg }}
+  <template #actions>
+    <v-btn icon="mdi-close" variant="text" @click="snackbar = false" />
+  </template>
+</v-snackbar>
+
+
+    <!-- MAIN CONTENT -->
+    <v-main    :style="{
+        backgroundColor: currentTheme === 'dark' ? '#222222' : '#fefcf9',
+        color: currentTheme === 'dark' ? '#ffffff' : '#000000',
+      }">
       <v-container fluid class="py-6 px-4 px-sm-6">
         <v-row justify="center">
-          <v-col cols="12" sm="10" md="8">
+          <v-col cols="12" sm="10" md="11" lg="11">
             <v-sheet
               :class="currentTheme === 'dark' ? 'bg-grey-darken-3 text-white' : 'bg-white'"
-              class="pa-4 pa-sm-6 text-sm-center"
+              class="fade-slide-up pa-4 pa-sm-6 text-sm-center"
               elevation="2"
               rounded="lg"
             >
-              <!-- Theme Toggle -->
+              <!-- Theme Toggle Button -->
               <v-btn
                 icon
                 size="small"
                 @click="toggleTheme"
                 class="position-absolute"
-                style="top: 16px; right: 16px; z-index: 10"
+                style="top: 16px; right: 16px"
               >
-                <v-icon>
-                  {{ currentTheme === 'light' ? 'mdi-weather-night' : 'mdi-white-balance-sunny' }}
-                </v-icon>
+                <v-icon>{{
+                  currentTheme === 'light' ? 'mdi-weather-night' : 'mdi-white-balance-sunny'
+                }}</v-icon>
               </v-btn>
 
-              <!-- Profile Image -->
+              <!-- Profile Avatar -->
               <div class="d-flex flex-column align-center mb-4">
-                <v-avatar :size="$vuetify.display.smAndDown ? 100 : 120" color="grey-lighten-2">
-                  <v-img v-if="profileImage" :src="profileImage" cover />
+                <v-avatar :size="$vuetify.display.smAndDown ? 100 : 120" class="bg-grey-lighten-2">
+                  <v-img v-if="profileImage" :src="profileImage" cover>
+                    <template #error>
+                      <v-icon size="80" color="grey-darken-1">mdi-account</v-icon>
+                    </template>
+                  </v-img>
                   <v-icon v-else size="80" color="grey-darken-1">mdi-account</v-icon>
+                  
                 </v-avatar>
+                <h3 v-if="!mini" class="ma-3">{{ currentUserProfile.firstName }} {{ currentUserProfile.lastName }}</h3>
 
+
+                <!-- Upload & Remove Buttons -->
                 <div class="mt-3 d-flex flex-wrap justify-center gap-2">
-                  <v-btn size="small" color="primary" @click="$refs.imageInput.click()">
-                    <v-icon start>mdi-upload</v-icon>
+                  <v-btn
+                    size="small"
+                    color="primary"
+                    @click="$refs.imageInput.click()"
+                    :loading="imageLoading"
+                    :disabled="imageLoading"
+                  >
+                  
+                    <v-icon start>mdi-upload</v-icon> Upload
                   </v-btn>
                   <v-btn
                     v-if="profileImage"
                     size="small"
                     color="red"
                     variant="outlined"
-                    @click="removeProfileImage"
+                    @click="confirmRemoveImage"
+                    :loading="imageLoading"
+                    :disabled="imageLoading"
                   >
-                    <v-icon start>mdi-delete</v-icon>
+                    <v-icon start>mdi-delete</v-icon> Remove
                   </v-btn>
                 </div>
                 <input
@@ -247,124 +616,195 @@ function getEducationPlaceholder(index) {
                 />
               </div>
 
-              <!-- Full Name -->
-              <div class="d-flex flex-column align-center">
-                <h3 class="font-weight-medium mb-4">{{ fullName }}</h3>
-                <v-btn color="primary" class="mb-3" @click="dialog = true"> Apply as Tutor? </v-btn>
-              </div>
+              <!-- button for apply as tutor or cancel -->
+              <div class="d-flex justify-center mb-3">
+  <v-btn
+  :color="profile.isPublicTutor ? 'red' : 'primary'"
+  @click="dialog = true"
+  :loading="loading"
+>
+  {{ profile.isPublicTutor ? 'Cancel Apply' : 'Apply as Tutor?' }}
+</v-btn>
 
-              <!-- Confirm Dialog -->
-              <v-dialog
-                v-model="dialog"
-                max-width="500"
-                scrollable
-                transition="dialog-bottom-transition"
-                persistent
-              >
+</div>
+           
+              <!-- Confirm Dialog: Apply as Tutor -->
+              <v-dialog v-model="dialog" max-width="500" persistent transition="fade-transition">
                 <v-card>
-                  <v-card-title class="text-h6 text-start">
-                    <v-icon class="me-2">mdi-alert-circle-outline</v-icon>
-                    Confirm Application
+                  <v-card-title class="text-h6">
+                    <v-icon class="me-2">mdi-alert-circle-outline</v-icon> Confirm Application
                   </v-card-title>
-                  <v-card-text class="text-start">
+                  <v-card-text>
                     Your personal information will be public. Do you still wish to proceed?
                   </v-card-text>
                   <v-card-actions class="justify-end">
                     <v-btn
-                      color="red"
+                      color="grey"
                       variant="outlined"
                       @click="dialog = false"
                       :disabled="loading"
                       >No</v-btn
                     >
-                    <v-btn color="green" @click="proceedWithApplication" :loading="loading"
-                      >Yes</v-btn
+                    <v-btn color="green" @click="applyAsTutor" :loading="loading">
+                      Yes, Apply
+                    </v-btn>
+                  </v-card-actions>
+                </v-card>
+              </v-dialog>
+
+              <!-- Confirm Dialog: Remove Profile Image -->
+              <v-dialog v-model="confirmRemove" max-width="400" persistent>
+                <v-card>
+                  <v-card-title class="text-h6">
+                    <v-icon class="me-2">mdi-alert</v-icon> Confirm Deletion
+                  </v-card-title>
+                  <v-card-text> Are you sure you want to delete your profile picture? </v-card-text>
+                  <v-card-actions class="justify-end">
+                    <v-btn
+                      color="grey"
+                      variant="outlined"
+                      @click="confirmRemove = false"
+                      :disabled="imageLoading"
+                      >Cancel</v-btn
+                    >
+                    <v-btn color="red" @click="removeProfileImage" :loading="imageLoading"
+                      >Delete</v-btn
                     >
                   </v-card-actions>
                 </v-card>
               </v-dialog>
 
-              <!-- Snackbar -->
-              <v-snackbar v-model="snackbar" timeout="3000" color="success" location="top">
-                {{ snackbarMsg }}
-                <template #actions>
-                  <v-btn variant="text" @click="snackbar = false" icon="mdi-close" />
-                </template>
-              </v-snackbar>
+           
 
               <v-divider class="my-4" />
 
-              <!-- Profile Form -->
-              <div class="text-start">
-                <v-row
-                  v-for="(label, key) in {
-                    'Given Name:': 'firstName',
-                    'Last Name:': 'lastName',
-                    'Middle Initial:': 'middleInitial',
-                    'Age:': 'age',
-                    'Expertise:': 'expertise',
-                    'Email:': 'email',
-                    'Phone:': 'phone',
-                  }"
-                  :key="key"
-                  class="py-1"
-                  dense
-                >
-                  <v-col cols="12" sm="6" class="font-weight-medium">{{ label }}</v-col>
-                  <v-col cols="12" sm="6">
-                    <div v-if="!isEditing">{{ profile[key] }}</div>
-                    <v-text-field
-                      v-else
-                      v-model="profile[key]"
-                      :placeholder="`Enter your ${label.toLowerCase().replace(':', '')}`"
-                      density="compact"
-                      hide-details
-                      :type="key === 'age' ? 'number' : 'text'"
-                    />
-                  </v-col>
-                </v-row>
+              <v-card
+  variant="outlined"
+  class="pa-6"
+  rounded="xl"
+  :class="currentTheme === 'dark' ? 'bg-grey-darken-4 text-white' : 'bg-grey-lighten-5'"
+>
 
-                <!-- About Me -->
-                <v-row class="py-1" dense>
-                  <v-col cols="12" sm="6" class="font-weight-medium">About Me:</v-col>
-                  <v-col cols="12" sm="6">
-                    <div v-if="!isEditing">{{ profile.about }}</div>
-                    <v-textarea
-                      v-else
-                      v-model="profile.about"
-                      placeholder="Write something about yourself"
-                      rows="2"
-                      auto-grow
-                      density="compact"
-                      hide-details
-                    />
-                  </v-col>
-                </v-row>
+  <!-- PERSONAL INFORMATION SECTION -->
+  <v-sheet
+    class="pa-4 mb-6 text-start"
+    elevation="1"
+    rounded="lg"
+    :class="currentTheme === 'dark' ? 'bg-grey-darken-3' : 'bg-white'"
+  >
+    <v-card-title class="text-h6 mb-2 d-flex align-start text-start">
+      <v-icon class="me-2" color="primary">mdi-account</v-icon>
+      Personal Information
+    </v-card-title>
+    <v-divider class="mb-4" />
 
-                <!-- Education -->
-                <v-row class="py-1" dense>
-                  <v-col cols="12" sm="6" class="font-weight-medium">Educational Background:</v-col>
-                  <v-col cols="12" sm="6">
-                    <div v-if="!isEditing">
-                      <div v-for="item in profile.education" :key="item">{{ item }}</div>
-                    </div>
-                    <div v-else>
-                      <v-text-field
-                        v-for="(item, index) in profile.education"
-                        :key="index"
-                        v-model="profile.education[index]"
-                        :placeholder="getEducationPlaceholder(index)"
-                        density="compact"
-                        hide-details
-                      />
-                    </div>
-                  </v-col>
-                </v-row>
-              </div>
+    <v-row
+      v-for="(fieldKey, label) in fieldMappings"
+      :key="fieldKey"
+      class="pb-2 text-start"
+      dense
+    >
+      <v-col cols="12" sm="6" class="font-weight-medium text-start">{{ label }}:</v-col>
+      <v-col cols="12" sm="6" class="text-start">
+        <div v-if="!isEditing" class="py-1">{{ profile[fieldKey] }}</div>
+        <v-text-field
+          v-else
+          v-model="profile[fieldKey]"
+          :placeholder="`Enter your ${label}`"
+          density="compact"
+          hide-details
+          variant="outlined"
+          :type="fieldKey === 'age' ? 'number' : 'text'"
+          class="text-start"
+        />
+      </v-col>
+    </v-row>
+  </v-sheet>
+
+  <!-- ABOUT ME SECTION -->
+  <v-sheet
+    class="pa-4 mb-6 text-start"
+    elevation="1"
+    rounded="lg"
+    :class="currentTheme === 'dark' ? 'bg-grey-darken-3' : 'bg-white'"
+  >
+    <v-card-title class="text-h6 mb-2 d-flex align-start text-start">
+      <v-icon class="me-2" color="primary">mdi-text-box-outline</v-icon>
+      About Me
+    </v-card-title>
+    <v-divider class="mb-4" />
+
+    <v-row>
+      <v-col cols="12" class="text-start">
+        <div v-if="!isEditing" class="py-1">{{ profile.about }}</div>
+        <v-textarea
+          v-else
+          v-model="profile.about"
+          auto-grow
+          density="compact"
+          hide-details
+          variant="outlined"
+          placeholder="Write something about yourself"
+          class="text-start"
+        />
+      </v-col>
+    </v-row>
+  </v-sheet>
+
+  <!-- EDUCATIONAL BACKGROUND SECTION -->
+ 
+<v-sheet
+  class="pa-4 text-start"
+  elevation="1"
+  rounded="lg"
+  :class="currentTheme === 'dark' ? 'bg-grey-darken-3' : 'bg-white'"
+>
+  <v-card-title class="text-h6 mb-2 d-flex align-start text-start">
+    <v-icon class="me-2" color="primary">mdi-school-outline</v-icon>
+    Educational Background
+  </v-card-title>
+  <v-divider class="mb-4" />
+
+  <v-row>
+    <v-col cols="12" class="text-start">
+      <!-- View Mode -->
+      <div v-if="!isEditing">
+        <div
+          v-for="(item, index) in profile.education"
+          :key="index"
+          class="py-1"
+        >
+          <div class="text-subtitle-2 font-weight-medium">
+            {{ getEducationPlaceholder(index) }}:
+          </div>
+          <div>{{ item }}</div>
+        </div>
+      </div>
+
+      <!-- Edit Mode -->
+      <div v-else>
+        <v-text-field
+          v-for="(item, index) in profile.education"
+          :key="index"
+          v-model="profile.education[index]"
+          :label="getEducationPlaceholder(index)"
+          density="compact"
+          hide-details
+          variant="outlined"
+          class="mb-3 text-start"
+        />
+      </div>
+    </v-col>
+  </v-row>
+</v-sheet>
+
+
+</v-card>
+
 
               <v-divider class="my-4" />
 
-              <!-- Edit / Save Buttons -->
+              <!-- Edit / Save / Cancel Buttons -->
               <div class="d-flex flex-wrap justify-center gap-2">
                 <v-btn
                   v-if="!isEditing"
@@ -372,11 +812,16 @@ function getEducationPlaceholder(index) {
                   variant="outlined"
                   color="blue"
                   @click="enableEdit"
-                  >Edit</v-btn
                 >
+                  Edit
+                </v-btn>
                 <template v-else>
-                  <v-btn size="small" variant="text" color="red" @click="cancelEdit">Cancel</v-btn>
-                  <v-btn size="small" color="green" @click="saveProfile">Save</v-btn>
+                  <v-btn size="small" variant="text" color="red" @click="cancelEdit">
+                    Cancel
+                  </v-btn>
+                  <v-btn size="small" color="green" @click="saveProfile" :loading="loading">
+                    Save
+                  </v-btn>
                 </template>
               </div>
             </v-sheet>
@@ -386,3 +831,109 @@ function getEducationPlaceholder(index) {
     </v-main>
   </v-app>
 </template>
+
+<style scoped>
+.fade-slide-up {
+  animation: fadeSlideUp 1.6s ease-in both;
+}
+/* for the logo*/
+
+.logo-wrapper {
+  position: absolute;
+  top: 50%;
+  right: 16px;
+  transform: translateY(-50%);
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 12px;
+  z-index: 10;
+  max-width: none;
+  flex-wrap: nowrap;
+}
+.logo-input {
+  width: 240px;
+  max-width: none;
+  transition: width 0.3s ease;
+}
+.logo {
+  width: 50px;
+  height: 50px;
+}
+
+@keyframes fadeSlideUp {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Animations */
+.fade-slide-up-enter-active {
+  animation: fadeSlideUp 0.6s ease;
+}
+@keyframes fadeSlideUp {
+  0% {
+    opacity: 0;
+    transform: translateY(24px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.fade-slide-up-enter-active,
+.fade-slide-leave-active {
+  transition: all 0.4s ease;
+}
+.fade-slide-up-enter-from {
+  opacity: 0;
+  transform: translateY(16px);
+}
+.fade-slide-up-leave-to {
+  opacity: 0;
+  transform: scale(0.95);
+}
+.fade-slide-up-move {
+  transition: transform 0.3s ease;
+}
+
+/* Responsive */
+@media (max-width: 600px) {
+  .v-dialog__content {
+    padding: 8px !important;
+  }
+/*  .v-card-text,
+  .v-card-actions {
+    padding: 12px !important;
+    flex-direction: column;
+    gap: 10px;
+  }*/
+  .v-navigation-drawer {
+    width: 100% !important;
+  }
+ /* .v-main {
+    padding-top: 64px;
+  }*/
+  .logo-input {
+    width: 150px;
+    max-width: 100%;
+  }
+  .logo-wrapper {
+    right: 12px;
+    gap: 8px;
+  }
+  .logo {
+    width: 40px;
+    height: 40px;
+  }
+  h1 {
+    font-size: 1.8rem;
+    letter-spacing: 0.2rem;
+  }
+}
+</style>
