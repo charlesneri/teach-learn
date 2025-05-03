@@ -237,7 +237,7 @@ onMounted(async () => {
 onBeforeUnmount(() => {
   window.removeEventListener('resize', checkMobile)
 })
-// tating dialog
+// rating dialog
 const ratingDialog = ref(false)
 const userRating = ref(0)
 const ratingMentorId = ref(null)
@@ -255,10 +255,18 @@ const submitRating = async () => {
     !currentUserId.value ||
     !userRating.value
   ) {
-    snackbarMsg.value = 'Please complete the rating information.'
-    snackbarColor.value = 'red'
-    snackbar.value = true
-    return
+    snackbarMsg.value = 'Please complete the rating information.';
+    snackbarColor.value = 'red';
+    snackbar.value = true;
+    return;
+  }
+
+  // Check if the user has already rated this appointment
+  if (hasRatedAppointment(selectedAppointment.value.id)) {
+    snackbarMsg.value = 'You can only rate this session once.';
+    snackbarColor.value = 'red';
+    snackbar.value = true;
+    return;
   }
 
   const payload = {
@@ -266,39 +274,50 @@ const submitRating = async () => {
     mentor_id: selectedAppointment.value.mentor.id,
     student_id: currentUserId.value,
     rating: userRating.value,
-  }
+  };
 
-  console.log('Submitting rating payload:', payload)
+  console.log('Submitting rating payload:', payload);
 
-  const { error } = await supabase.from('ratings').insert(payload)
+  const { error } = await supabase.from('ratings').upsert(payload);
 
   if (error) {
-    console.error('Rating error:', error)
-    snackbarMsg.value = 'Sorry, You can only rate once per session.'
-    snackbarColor.value = 'red'
+    console.error('Rating error:', error);
+    snackbarMsg.value = 'Error submitting rating.';
+    snackbarColor.value = 'red';
   } else {
-    snackbarMsg.value = 'Rating submitted successfully!'
-    snackbarColor.value = 'green'
-    ratingDialog.value = false
+    snackbarMsg.value = 'Rating submitted successfully!';
+    snackbarColor.value = 'green';
+    ratingDialog.value = false;
+
+    // Update the userRatings state after submission
+    userRatings.value.push(payload); // Add the newly rated appointment to the state
+
+    // Refresh the appointment list or ratings list to reflect the changes
+    await fetchUserRatings(); // You can re-fetch the ratings after submitting
   }
 
-  snackbar.value = true
+  snackbar.value = true;
 }
 
-//for rating ru;e
+//for rating rule
 const canRateAppointment = (appointment) => {
-  return currentUserId.value === appointment.student?.id
-}
+  if (currentUserId.value === appointment.student?.id) {
+    // Check if the user has already rated the appointment
+    return !hasRatedAppointment(appointment.id);
+  }
+  return false; // Only the student who booked the appointment can rate
+};
+
 //for the rate button
 const handleRateClick = (appointment) => {
   if (canRateAppointment(appointment)) {
-    openRatingDialog(appointment)
+    openRatingDialog(appointment);
   } else {
-    snackbarMsg.value = 'Only the person who booked this appointment can rate.'
-    snackbarColor.value = 'red'
-    snackbar.value = true
+    snackbarMsg.value = 'You cannot rate this session. Only the person who booked it can rate.';
+    snackbarColor.value = 'red';
+    snackbar.value = true;
   }
-}
+};
 
 
 //for delete function
@@ -427,6 +446,14 @@ const updateAppointment = async () => {
   }
   snackbar.value = true
 }
+// For checking if the user has already rated the appointment
+const hasRatedAppointment = (appointmentId) => {
+  // Check if the user has already rated the appointment
+  const existingRating = userRatings.value.find(rating => rating.appointment_id === appointmentId);
+  return existingRating !== undefined;
+};
+
+
 
 </script>
 
