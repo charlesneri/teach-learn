@@ -13,6 +13,7 @@ import AlertNotification from '@/components/common/AlertNotification.vue'
 const router = useRouter()
 const theme = ref(localStorage.getItem('theme') || 'light')
 
+// Theme toggle function
 const toggleTheme = () => {
   theme.value = theme.value === 'light' ? 'dark' : 'light'
   localStorage.setItem('theme', theme.value)
@@ -43,7 +44,7 @@ const formData = ref({
   about: '',
   school: '',
   course: '',
-  yearLevel: '',
+  year: '',
   email: '',
   password: '',
   confirm_password: '',
@@ -67,6 +68,20 @@ const onFormSubmit = () => {
 const onSubmit = async () => {
   formAction.value = { ...formActionDefault, formProcess: true }
 
+  // Validate required fields (age, year)
+  if (!formData.value.age || !formData.value.year) {
+    formAction.value.formErrorMessage = "Age and Year are required fields!"
+    formAction.value.formProcess = false
+    return
+  }
+
+  // Validate that all fields are provided
+  if (!formData.value.firstname || !formData.value.lastname || !formData.value.email) {
+    formAction.value.formErrorMessage = "Please fill out all required fields!"
+    formAction.value.formProcess = false
+    return
+  }
+
   // Create the user in Supabase Auth
   const { data, error } = await supabase.auth.signUp({
     email: formData.value.email,
@@ -82,7 +97,7 @@ const onSubmit = async () => {
         about: formData.value.about,
         school: formData.value.school,
         course: formData.value.course,
-        yearLevel: Number(formData.value.yearLevel),
+        year: Number(formData.value.year),
       },
     },
   })
@@ -90,36 +105,36 @@ const onSubmit = async () => {
   if (error) {
     formAction.value.formErrorMessage = error.message
   } else if (data?.user) {
-    // Update the user metadata after sign-up
-    const { user } = data;
-
-    // Update the user metadata with profile data including 'degree'
-    const { error: updateError } = await supabase.auth.updateUser({
-      data: {
-        firstName: formData.value.firstname,
-        lastName: formData.value.lastname,
-        middleInitial: formData.value.middleinitial,
+    // Insert into profiles table
+    const { user } = data
+    const { error: insertError } = await supabase
+      .from('profiles')
+      .insert([{
+        id: user.id, // Use the Supabase Auth user ID
+        firstname: formData.value.firstname,
+        lastname: formData.value.lastname,
+        middleinitial: formData.value.middleinitial,
         age: Number(formData.value.age),
         phone: formData.value.phone,
         expertise: formData.value.expertise,
         about: formData.value.about,
         school: formData.value.school,
         course: formData.value.course,
-        yearLevel: Number(formData.value.yearLevel),
-      },
-    })
+        year: Number(formData.value.year),
+      }])
+      if (insertError) {
+  console.log(insertError)  // Log the error for debugging
+  formAction.value.formErrorMessage = 'Failed to insert profile data!'
+} else {
+  formAction.value.formSuccessMessage = 'Successfully Registered!'
+  refVForm.value?.reset()
+  showDialog.value = true
 
-    if (updateError) {
-      formAction.value.formErrorMessage = 'Failed to update user metadata!'
-    } else {
-      formAction.value.formSuccessMessage = 'Successfully Registered!'
-      refVForm.value?.reset()
-      showDialog.value = true
+  setTimeout(() => {
+    formAction.value.formSuccessMessage = ''
+  }, 4000)
+}
 
-      setTimeout(() => {
-        formAction.value.formSuccessMessage = ''
-      }, 4000)
-    }
   }
 
   setTimeout(() => {
@@ -171,71 +186,7 @@ const onSubmit = async () => {
             :form-success-message="formAction.formSuccessMessage"
             :form-error-message="formAction.formErrorMessage"
           />
-          <!--
-          <v-card-text>
-            <v-form ref="refVForm" fast-fail @submit.prevent="onFormSubmit">
-              <v-row dense>
-                <v-col cols="12" md="4" v-for="(field, i) in [
-                  { label: 'First Name', model: 'firstname' },
-                  { label: 'Last Name', model: 'lastname' },
-                  { label: 'Middle Initial', model: 'middleinitial', optional: true },
-                  { label: 'Age', model: 'age', type: 'number' },
-                  { label: 'Phone', model: 'phone' },
-                  { label: 'Expertise', model: 'expertise', optional: true },
-                  { label: 'School', model: 'school' },
-                  { label: 'Course', model: 'course' },
-                  { label: 'Year Level', model: 'yearLevel', type: 'number' },
-                  { label: 'Email', model: 'email' },
-                  { label: 'Password', model: 'password', password: true },
-                  { label: 'Confirm Password', model: 'confirm_password', password: true }
-                ]" :key="i">
-                  <v-text-field
-                    v-model="formData[field.model]"
-                    :label="field.label"
-                    :type="field.password ? (visible ? 'text' : 'password') : field.type || 'text'"
-                    :append-inner-icon="field.password ? (visible ? 'mdi-eye-off' : 'mdi-eye') : undefined"
-                    @click:append-inner="field.password ? (visible = !visible) : null"
-                    :rules="field.optional ? [] : [requiredValidator]"
-                    variant="filled"
-                    :color="theme === 'dark' ? 'white' : 'primary'"
-                  />
-                </v-col>
-
-                <v-col cols="12">
-                  <v-textarea
-                    v-model="formData.about"
-                    label="About Me"
-                    variant="filled"
-                    :color="theme === 'dark' ? 'white' : 'primary'"
-                    :rules="[requiredValidator]"
-                    auto-grow
-                    rows="3"
-                  />
-                </v-col>
-
-                <v-col cols="12" class="d-flex justify-center">
-                  <v-btn
-                    class="signup-btn"
-                    type="submit"
-                    prepend-icon="mdi-account-plus"
-                    :disabled="formAction.formProcess"
-                    :loading="formAction.formProcess"
-                  >
-                    Signup
-                  </v-btn>
-                </v-col>
-
-                <v-col cols="12">
-                  <v-divider class="my-5" />
-                  <p class="text-center text-primary">
-                    Already have an account?
-                    <RouterLink class="active-click" to="/">Login now!</RouterLink>
-                  </p>
-                </v-col>
-              </v-row>
-            </v-form>
-          </v-card-text>-->
-          <v-card-text>
+               <v-card-text>
             <v-form ref="refVForm" fast-fail @submit.prevent="onFormSubmit">
               <v-row dense>
                 <v-col cols="12" md="6">
@@ -309,7 +260,7 @@ const onSubmit = async () => {
 
                 <v-col cols="12" md="4">
                   <v-text-field
-                    v-model="formData.yearLevel"
+                    v-model="formData.year"
                     label="Year Level"
                     type="number"
                     :rules="[requiredValidator]"

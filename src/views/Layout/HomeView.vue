@@ -65,7 +65,7 @@ const handleLogoutClick = async () => {
     firstName: '',
     lastName: '',
     avatarUrl: '',
-    isPublicTutor: false,
+    is_public_tutor: false,
   }
   localStorage.removeItem('theme')
 
@@ -90,14 +90,6 @@ const fetchCurrentUser = async () => {
       .eq('id', user.id)   // Make sure 'user.id' is valid and matches the profiles table
       .single()
 
-<<<<<<< HEAD
-    if (error) {
-      console.error('Error fetching user profile:', error)
-      return
-    }
-
-=======
->>>>>>> main
     if (data) {
       currentUserProfile.value = {
         first_name: data.first_name || '',  // matched with column name in the table
