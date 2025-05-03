@@ -58,7 +58,7 @@ const onLogin = async () => {
     return
   }
 
-  // STEP 1: Check if email exists in your `profiles` table
+  //  Check if email exists in your `profiles` table
   const { data: profileMatch, error: profileError } = await supabase
     .from('profiles')
     .select('id')
@@ -77,7 +77,7 @@ const onLogin = async () => {
     return
   }
 
-  // STEP 2: Email exists, now try to sign in
+  //  Email exists, now try to sign in
   const { data, error: loginError } = await supabase.auth.signInWithPassword({
     email,
     password,
@@ -89,7 +89,7 @@ const onLogin = async () => {
     return
   }
 
-  // STEP 3: Check if user was returned
+  // : Check if user was returned
   const user = data?.user
   if (!user) {
     formAction.value.formErrorMessage = 'Authentication failed. Try again.'
@@ -97,7 +97,7 @@ const onLogin = async () => {
     return
   }
 
-  // STEP 4: Successful login
+  //  Successful login
   formAction.value.formSuccessMessage = 'Successfully Logged In!'
   formAction.value.formProcess = false
   setTimeout(() => {
