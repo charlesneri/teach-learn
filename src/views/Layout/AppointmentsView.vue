@@ -465,8 +465,7 @@ const hasRatedAppointment = (appointmentId) => {
 
 <template>
   <v-app id="inspire">
-  
-<!-- Drawer Sidebar (right, collapsible) -->
+    <!-- Drawer Sidebar (right, collapsible) -->
     <transition name="fade-slide-up">
       <v-navigation-drawer
         v-if="drawer"
@@ -477,9 +476,9 @@ const hasRatedAppointment = (appointmentId) => {
         app
         :scrim="isMobile"
         :style="{
-            backgroundColor: currentTheme === 'dark' ? '#424242' : '',
-            color: currentTheme === 'dark' ? '#ffffff' : '#000000',
-          }"
+          backgroundColor: currentTheme === 'dark' ? '#424242' : '',
+          color: currentTheme === 'dark' ? '#ffffff' : '#000000',
+        }"
       >
         <!-- Menu Icon that toggles drawer size -->
         <v-btn icon class="ms-5 mt-5 d-lg-none" @click="toggleDrawer">
@@ -492,16 +491,19 @@ const hasRatedAppointment = (appointmentId) => {
           :style="{
             backgroundColor: currentTheme === 'dark' ? '#424242' : '',
             color: currentTheme === 'dark' ? '#ffffff' : '#000000',
-          }"  
+          }"
         >
-
-        <!--avatar display-->
+          <!--avatar display-->
           <v-avatar size="100" class="mb-3">
-            <v-img v-if="currentUserProfile.avatar_url" :src="currentUserProfile.avatar_url" cover />
+            <v-img
+              v-if="currentUserProfile.avatar_url"
+              :src="currentUserProfile.avatar_url"
+              cover
+            />
             <v-icon v-else size="80">mdi-account</v-icon>
           </v-avatar>
           <h3>{{ currentUserProfile.firstname }} {{ currentUserProfile.lastname }}</h3>
-                </v-sheet>
+        </v-sheet>
 
         <v-divider class="my-2" />
 
@@ -543,7 +545,11 @@ const hasRatedAppointment = (appointmentId) => {
             </div>
           </v-list-item>
 
-          <v-list-item :to="'/DeleteHistory'"  tag="RouterLink" @click="isMobile && (drawer = false)">
+          <v-list-item
+            :to="'/DeleteHistory'"
+            tag="RouterLink"
+            @click="isMobile && (drawer = false)"
+          >
             <div class="d-flex align-center" style="gap: 8px; width: 100%">
               <v-icon size="30" style="margin-left: 15px"> mdi-delete-outline</v-icon>
               <span v-if="!mini" class="icon-mdi">Delete History</span>
@@ -582,13 +588,11 @@ const hasRatedAppointment = (appointmentId) => {
         }"
       >
         <div class="search-wrapper">
-         
           <v-avatar color="#fff" size="50" class="logo me-6">
             <v-img src="image/Teach&Learn.png" alt="Logo" />
           </v-avatar>
         </div>
       </v-container>
-
     </v-app-bar>
     <!--pop up alert-->
     <v-snackbar
@@ -600,35 +604,34 @@ const hasRatedAppointment = (appointmentId) => {
     >
       {{ snackbarMsg }}
     </v-snackbar>
-    
 
     <!-- MAIN CONTENT -->
-    <v-main       :style="{
+    <v-main
+      :style="{
         backgroundColor: currentTheme === 'dark' ? '#222222' : '#fefcf9',
         color: currentTheme === 'dark' ? '#ffffff' : '#000000',
-      }">
+      }"
+    >
       <v-container fluid class="py-2 px-2">
         <v-row justify="center">
           <v-col cols="12" sm="11" md="8">
             <v-sheet
-       
               class="pa-3 pa-sm-4 text-center"
               elevation="1"
               rounded="lg"
               style="max-width: 1200px; min-height: 90vh"
               :style="{
-            backgroundColor: currentTheme === 'dark' ? '#424242' : '',
-            color: currentTheme === 'dark' ? '#ffffff' : '#000000',
-          }"
+                backgroundColor: currentTheme === 'dark' ? '#424242' : '',
+                color: currentTheme === 'dark' ? '#ffffff' : '#000000',
+              }"
             >
               <!-- Title -->
-              <h1 class=" mb-3">Appointments</h1>
+              <h1 class="mb-3">Appointments</h1>
 
               <!-- Search & Sort -->
               <v-row class="mb-3" dense>
                 <v-col cols="12" sm="6">
                   <v-text-field
-              
                     v-model="searchQuery"
                     placeholder="Search"
                     variant="solo-filled"
@@ -689,78 +692,94 @@ const hasRatedAppointment = (appointmentId) => {
 
                     <v-list-item-subtitle class="appointment-subtitle">
                       <div v-if="getRatingForAppointment(appointment.id)" class="text-center mt-2">
-                      <v-rating
-                        v-model="userRatingsMap[appointment.id]"
-                        readonly
-                        color="amber"
-                        background-color="grey lighten-1"
-                        dense
-                        half-increments
-                        size="20"
-                      />
-                      <small class="text-grey">You rated this session</small>
-                    </div>
-
+                        <v-rating
+                          v-model="userRatingsMap[appointment.id]"
+                          readonly
+                          color="amber"
+                          background-color="grey lighten-1"
+                          dense
+                          half-increments
+                          size="20"
+                        />
+                        <small class="text-grey">You rated this session</small>
+                      </div>
                     </v-list-item-subtitle>
 
                     <!-- View Details -->
-                                      <div class="d-flex justify-center align-center" style="gap: 16px; flex-wrap: wrap;">
-                    <v-btn size="small" color="primary" variant="text" @click="openAppointmentDetails(appointment)">
-                      View Details
-                    </v-btn>
-                    <v-btn size="small" color="error" variant="text" @click="confirmDeleteAppointment(appointment)">
-                      Delete
-                    </v-btn>
-                    <v-btn
-  size="small"
-  color="amber"
-  variant="text"
-  @click="() => {
-    if (canRateAppointment(appointment)) {
-      handleRateClick(appointment)
-    } else {
-      snackbarMsg = 'You cannot rate this session. Only the person who booked it can rate.'
-      snackbarColor = 'red'
-      snackbar = true
-    }
-  }"
->
-  Rate
-</v-btn>
+                    <div
+                      class="d-flex justify-center align-center"
+                      style="gap: 16px; flex-wrap: wrap"
+                    >
+                      <v-btn
+                        size="small"
+                        color="primary"
+                        variant="text"
+                        @click="openAppointmentDetails(appointment)"
+                      >
+                        View Details
+                      </v-btn>
+                      <v-btn
+                        size="small"
+                        color="error"
+                        variant="text"
+                        @click="confirmDeleteAppointment(appointment)"
+                      >
+                        Delete
+                      </v-btn>
+                      <v-btn
+                        size="small"
+                        color="amber"
+                        variant="text"
+                        @click="
+                          () => {
+                            if (canRateAppointment(appointment)) {
+                              handleRateClick(appointment)
+                            } else {
+                              snackbarMsg =
+                                'You cannot rate this session. Only the person who booked it can rate.'
+                              snackbarColor = 'red'
+                              snackbar = true
+                            }
+                          }
+                        "
+                      >
+                        Rate
+                      </v-btn>
 
-
-                    <v-btn size="small" color="success" variant="text" @click="openEditDialog(appointment)">
-                    Edit Appointment
-                  </v-btn>
-                  </div>
-                
-                 
+                      <v-btn
+                        size="small"
+                        color="success"
+                        variant="text"
+                        @click="openEditDialog(appointment)"
+                      >
+                        Edit Appointment
+                      </v-btn>
+                    </div>
                   </v-list-item>
                 </v-list>
-                <v-dialog v-model="detailsDialog" max-width="600px" transition="scale-transition">
+                <v-dialog v-model="detailsDialog" max-width="500px" transition="scale-transition">
                   <v-card
                     :class="
                       currentTheme === 'dark'
                         ? 'bg-grey-darken-3 text-white'
                         : 'bg-white text-black'
                     "
+                    class="ma-5 d-flex"
                   >
                     <v-card-title class="text-h6 font-weight-bold text-center">
-                      Appointment & Student Details
+                      Appointment & {{ selectedStudentProfile ? 'Student' : 'Mentor' }} Details
                     </v-card-title>
 
-                    <v-card-text class="text-start">
-                    
-
-
-                      <div v-if="selectedStudentProfile">
-                        <h3 class="font-weight-bold mb-2 text-center mt-5 mb-10">Student Profile</h3>
-
-                        <!-- Avatar -->
-                        <div class="text-center mb-4">
+                    <v-card-text>
+                      <div
+                        v-if="selectedStudentProfile || selectedMentorProfile"
+                        class="d-flex justify-start"
+                      >
+                        <!-- Avatar Section -->
+                        <div class="text-center mr-4">
                           <v-avatar size="100">
                             <v-img
-                              v-if="selectedStudentProfile.avatar_url"
+                              v-if="selectedStudentProfile?.avatar_url"
                               :src="selectedStudentProfile.avatar_url"
                               cover
                             >
@@ -772,61 +791,70 @@ const hasRatedAppointment = (appointmentId) => {
                           </v-avatar>
                         </div>
 
-                        <!-- Profile Info -->
-                        <p class="text-center">
-                          <strong >Name:</strong><br> {{ selectedStudentProfile.firstname }}
-                          {{ selectedStudentProfile.lastname }}
-                        </p class="text-center">
-                        <p class="text-center"><strong >Email:</strong><br> {{ selectedStudentProfile.email }}</p>
-                        <p class="text-center">
-                          <strong>Phone:</strong><br>
-                          {{ selectedStudentProfile.phone || 'No phone number' }}
-                        </p>
-                        <p class="text-center">
-                          <strong>Expertise:</strong><br>
-                          {{ selectedStudentProfile.expertise || 'Not specified' }}
-                        </p>
-                        <p class="text-center">
-                          <strong>School:</strong><br>
-                          {{ selectedStudentProfile.school || 'No school listed' }}
-                        </p>
-                        <p class="text-center">
-                          <strong class="text-center">Degree:</strong><br>
-                          {{ selectedStudentProfile.degree || 'No degree listed' }}
-                        </p>
-                        <p class="text-center">
-                          <strong class="text-center">Year:</strong><br>
-                          {{ selectedStudentProfile.year || 'No year listed' }}
-                        </p>
-                        <p class="text-center">
-                          <strong class="text-center">About:</strong><br>
-                          {{ selectedStudentProfile.about || 'No about info' }}
-                        </p>
-                      </div>
-
-                      <div v-else class="text-center">
-                        <v-progress-circular indeterminate color="primary"></v-progress-circular>
-                        <p>Loading student profile...</p>
-                      </div>
-                      <v-divider class="my-10 wakana"></v-divider>
-
-                      <div v-if="selectedAppointment">
-                        <h3 class="font-weight-bold text-center mt-5 mb-10">Appointment Information</h3>
-                        <p class="text-center"><strong>Date:</strong> <br>{{ selectedAppointment.appointment_date }}</p>
-                        <p class="text-center"><strong>Time:</strong> <br>{{ selectedAppointment.appointment_time }}</p>
-                        <p class="text-center">
-                          <strong>Message:</strong><br>
-                          {{ selectedAppointment.message || 'No message provided' }}
-                        </p>
+                        <!-- Profile Info Section -->
+                        <div class="d-flex flex-column">
+                          <p>
+                            <strong>Name:</strong>
+                            {{
+                              selectedStudentProfile
+                                ? selectedStudentProfile.firstname +
+                                  ' ' +
+                                  selectedStudentProfile.lastname
+                                : selectedMentorProfile.firstname +
+                                  ' ' +
+                                  selectedMentorProfile.lastname
+                            }}
+                          </p>
+                          <p>
+                            <strong>Email:</strong>
+                            {{
+                              selectedStudentProfile
+                                ? selectedStudentProfile.email
+                                : selectedMentorProfile.email
+                            }}
+                          </p>
+                          <p>
+                            <strong>Phone:</strong>
+                            {{ selectedStudentProfile?.phone || 'No phone number' }}
+                          </p>
+                          <p>
+                            <strong>Expertise:</strong>
+                            {{
+                              selectedStudentProfile?.expertise ||
+                              selectedMentorProfile?.expertise ||
+                              'Not specified'
+                            }}
+                          </p>
+                          <p>
+                            <strong>School:</strong>
+                            {{ selectedStudentProfile?.school || 'No school listed' }}
+                          </p>
+                          <p>
+                            <strong>Degree:</strong>
+                            {{ selectedStudentProfile?.degree || 'No degree listed' }}
+                          </p>
+                          <p>
+                            <strong>Year:</strong>
+                            {{ selectedStudentProfile?.year || 'No year listed' }}
+                          </p>
+                          <p>
+                            <strong>About:</strong>
+                            {{
+                              selectedStudentProfile?.about ||
+                              selectedMentorProfile?.about ||
+                              'No about info'
+                            }}
+                          </p>
+                        </div>
                       </div>
                     </v-card-text>
 
-                    
                     <v-card-actions class="justify-center">
                       <v-btn color="primary" @click="detailsDialog = false">Close</v-btn>
                     </v-card-actions>
                   </v-card>
                 </v-dialog>
+
                 <v-divider></v-divider>
               </div>
 
@@ -845,79 +873,69 @@ const hasRatedAppointment = (appointmentId) => {
     </v-main>
   </v-app>
   <v-dialog v-model="ratingDialog" max-width="400px">
-  <v-card :class="currentTheme === 'dark' ? 'bg-grey-darken-3 text-white' : 'bg-white text-black'">
-    <v-card-title class="text-h6 font-weight-bold text-center">Rate this Mentor</v-card-title>
-    <v-card-text class="d-flex justify-center">
-      <v-rating
-        v-model="userRating"
-        length="5"
-        color="amber"
-        background-color="grey lighten-1"
-        size="36"
-        half-increments
-        hover
-      />
-    </v-card-text>
-    <v-card-actions class="justify-center">
-      <v-btn variant="text" @click="ratingDialog = false">Cancel</v-btn>
-      <v-btn color="primary" @click="submitRating">Submit</v-btn>
-    </v-card-actions>
-  </v-card>
-</v-dialog>
-<v-dialog v-model="deleteDialog" max-width="400px">
-  <v-card :class="currentTheme === 'dark' ? 'bg-grey-darken-3 text-white' : 'bg-white text-black'">
-    <v-card-title class="text-h6 font-weight-bold text-center">Confirm Deletion</v-card-title>
-    <v-card-text class="text-center">
-      Are you sure you want to delete this appointment?
-    </v-card-text>
-    <v-card-actions class="justify-center">
-      <v-btn text @click="deleteDialog = false">Cancel</v-btn>
-      <v-btn color="error" @click="deleteAppointment">Yes, Delete</v-btn>
-    </v-card-actions>
-  </v-card>
-</v-dialog>
-<!--for appointment edit-->
-<v-dialog v-model="editDialog" max-width="500px">
-  <v-card :class="currentTheme === 'dark' ? 'bg-grey-darken-3 text-white' : 'bg-white text-black'">
-    <v-card-title class="text-h6 font-weight-bold text-center">Edit Appointment</v-card-title>
-    <v-card-text>
-      <v-text-field
-        v-model="editedAppointment.appointment_date"
-        label="Date"
-        type="date"
-        dense
-      />
-      <v-text-field
-        v-model="editedAppointment.appointment_time"
-        label="Time"
-        type="time"
-        dense
-      />
-      <v-textarea
-        v-model="editedAppointment.message"
-        label="Message"
-        rows="3"
-        dense
-      />
-    </v-card-text>
-    <v-card-actions class="justify-center">
-      <v-btn text @click="editDialog = false">Cancel</v-btn>
-      <v-btn color="primary" @click="updateAppointment">Save Changes</v-btn>
-    </v-card-actions>
-  </v-card>
-</v-dialog>
-
+    <v-card
+      :class="currentTheme === 'dark' ? 'bg-grey-darken-3 text-white' : 'bg-white text-black'"
+    >
+      <v-card-title class="text-h6 font-weight-bold text-center">Rate this Mentor</v-card-title>
+      <v-card-text class="d-flex justify-center">
+        <v-rating
+          v-model="userRating"
+          length="5"
+          color="amber"
+          background-color="grey lighten-1"
+          size="36"
+          half-increments
+          hover
+        />
+      </v-card-text>
+      <v-card-actions class="justify-center">
+        <v-btn variant="text" @click="ratingDialog = false">Cancel</v-btn>
+        <v-btn color="primary" @click="submitRating">Submit</v-btn>
+      </v-card-actions>
+    </v-card>
+  </v-dialog>
+  <v-dialog v-model="deleteDialog" max-width="400px">
+    <v-card
+      :class="currentTheme === 'dark' ? 'bg-grey-darken-3 text-white' : 'bg-white text-black'"
+    >
+      <v-card-title class="text-h6 font-weight-bold text-center">Confirm Deletion</v-card-title>
+      <v-card-text class="text-center">
+        Are you sure you want to delete this appointment?
+      </v-card-text>
+      <v-card-actions class="justify-center">
+        <v-btn text @click="deleteDialog = false">Cancel</v-btn>
+        <v-btn color="error" @click="deleteAppointment">Yes, Delete</v-btn>
+      </v-card-actions>
+    </v-card>
+  </v-dialog>
+  <!--for appointment edit-->
+  <v-dialog v-model="editDialog" max-width="500px">
+    <v-card
+      :class="currentTheme === 'dark' ? 'bg-grey-darken-3 text-white' : 'bg-white text-black'"
+    >
+      <v-card-title class="text-h6 font-weight-bold text-center">Edit Appointment</v-card-title>
+      <v-card-text>
+        <v-text-field v-model="editedAppointment.appointment_date" label="Date" type="date" dense />
+        <v-text-field v-model="editedAppointment.appointment_time" label="Time" type="time" dense />
+        <v-textarea v-model="editedAppointment.message" label="Message" rows="3" dense />
+      </v-card-text>
+      <v-card-actions class="justify-center">
+        <v-btn text @click="editDialog = false">Cancel</v-btn>
+        <v-btn color="primary" @click="updateAppointment">Save Changes</v-btn>
+      </v-card-actions>
+    </v-card>
+  </v-dialog>
 </template>
 
 <style scoped>
 h1 {
-  font-size: 2.5rem; 
+  font-size: 2.5rem;
   font-weight: 700;
-  color: #1565c0; 
-  text-align: center; 
-  margin-bottom: 20px; 
-  text-transform: uppercase; 
-  letter-spacing: 2px; 
+  color: #1565c0;
+  text-align: center;
+  margin-bottom: 20px;
+  text-transform: uppercase;
+  letter-spacing: 2px;
 }
 /* Links */
 .active-click {
@@ -1063,7 +1081,6 @@ h1 {
 }
 
 /*sa drawer*/
-
 
 /* General Styling */
 .active-click {
