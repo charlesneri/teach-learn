@@ -42,12 +42,11 @@ const snackbarColor = ref('')
 // === Auth & User Profile ===
 const currentUserId = ref(null)
 const currentUserProfile = ref({
-  first_name: '',      // updated to match the column name in the table
-  last_name: '',       // updated to match the column name in the table
-  avatar_url: '',      // updated to match the column name in the table
-  is_public_tutor: false,  // updated to match the column name in the table
+  firstName: '',
+  lastName: '',
+  avatarUrl: '',
+  isPublicTutor: false,
 })
-
 
 const handleLogoutClick = async () => {
   const { error } = await supabase.auth.signOut()
@@ -65,7 +64,7 @@ const handleLogoutClick = async () => {
     firstName: '',
     lastName: '',
     avatarUrl: '',
-    is_public_tutor: false,
+    isPublicTutor: false,
   }
   localStorage.removeItem('theme')
 
@@ -84,18 +83,18 @@ const fetchCurrentUser = async () => {
 
   if (user) {
     currentUserId.value = user.id
-    const { data, error } = await supabase
+    const { data } = await supabase
       .from('profiles')
-      .select('first_name, last_name, avatar_url, is_public_tutor')
-      .eq('id', user.id)   // Make sure 'user.id' is valid and matches the profiles table
+      .select('firstname, lastname, avatar_url, is_public_tutor')
+      .eq('id', user.id)
       .single()
 
     if (data) {
       currentUserProfile.value = {
-        first_name: data.first_name || '',  // matched with column name in the table
-        last_name: data.last_name || '',    // matched with column name in the table
-        avatar_url: data.avatar_url || '',  // matched with column name in the table
-        is_public_tutor: data.is_public_tutor || false,  // matched with column name in the table
+        firstName: data.firstname || '',
+        lastName: data.lastname || '',
+        avatarUrl: data.avatar_url || '', // Avatar URL for profile
+        isPublicTutor: data.is_public_tutor || false,
       }
     }
   }
@@ -114,14 +113,29 @@ const timePickerOpen = ref(false)
 
 // === Tutor Actions ===
 const fetchTutors = async () => {
-  const { data, error } = await supabase.from('profiles').select('*').eq('is_public_tutor', true);
-  tutors.value = data || [];
+  const { data, error } = await supabase
+    .from('profiles')
+    .select(
+      'id, firstname, lastname, middleinitial, age, expertise, about, school, course, year, phone, avatar_url, is_public_tutor'
+    )
+    .eq('is_public_tutor', true); // Only fetch public tutors
+
+  if (error) {
+    console.error('Error fetching tutors:', error);
+    return;
+  }
+
+  console.log(data); // Log fetched tutors
+  tutors.value = data || []; // Save the result in the tutors array
 };
 
 
+
+
 const viewTutor = (tutor) => {
-  selectedTutor.value = tutor
-  profileDialog.value = true
+  console.log('Selected tutor:', tutor)
+  selectedTutor.value = tutor // Store the selected tutor in selectedTutor
+  profileDialog.value = true // Open the profile dialog
 }
 
 //appointment
@@ -141,7 +155,6 @@ const saveAppointment = async () => {
 
     // continue with logic...
     // e.g., await supabase insert logic
-
   } catch (error) {
     console.error('Error saving appointment:', error)
     snackbarMsg.value = 'Failed to save appointment.'
@@ -189,15 +202,17 @@ const toggleSearch = () => {
 }
 
 const filteredTutors = computed(() => {
-  if (!searchQuery.value.trim()) return tutors.value;
+  if (!searchQuery.value.trim()) return tutors.value; // Return all tutors if no search query
 
   const keyword = searchQuery.value.trim().toLowerCase();
   return tutors.value.filter((tutor) => {
-    const fullName = `${tutor.first_name || ''} ${tutor.middle_initial || ''} ${tutor.last_name || ''}`.toLowerCase();
+    const fullName =
+      `${tutor.firstname || ''} ${tutor.middleinitial || ''} ${tutor.lastname || ''}`.toLowerCase();
     const expertise = (tutor.expertise || '').toLowerCase();
     return fullName.includes(keyword) || expertise.includes(keyword);
   });
 });
+
 
 // === Mount Lifecycle ===
 onMounted(async () => {
@@ -421,88 +436,62 @@ const fetchRatings = async () => {
                 <h1 class="mb-6" style="color: #1565c0">Mentors</h1>
                 <v-divider :thickness="2" class="mb-6"></v-divider>
 
-                <!-- Mentor Grid -->
                 <v-row
-                  v-if="filteredTutors.length"
-                  class="gx-6 gy-6"
-                  :justify="filteredTutors.length < 3 ? 'center' : 'start'"
-                >
-                  <v-col
-                    v-for="tutor in filteredTutors"
-                    :key="tutor.id"
-                    cols="12"
-                    sm="6"
-                    md="4"
-                    lg="3"
-                  >
-                    <v-fade-transition>
-                      <v-card
-                        variant="outlined"
-                        class="pa-5 d-flex flex-column align-center text-center"
-                        rounded="xl"
-                        :style="{
-                          backgroundColor: currentTheme === 'dark' ? '#424242' : '#ffffff',
-                          color: currentTheme === 'dark' ? '#fff' : '#000',
-                        }"
-                      >
-                        <!-- Avatar -->
-                        <v-avatar size="80" class="mb-3">
-                          <v-img v-if="tutor.avatar_url" :src="tutor.avatar_url" cover>
-                            <template #error>
-                              <v-icon size="60" color="grey-darken-1">mdi-account</v-icon>
-                            </template>
-                          </v-img>
-                          <v-icon v-else size="60" color="grey-darken-1">mdi-account</v-icon>
-                        </v-avatar>
+  v-if="tutors.length"
+  class="gx-6 gy-6"
+  :justify="tutors.length < 3 ? 'center' : 'start'"
+>
+  <v-col
+    v-for="tutor in tutors"
+    :key="tutor.id"
+    cols="12"
+    sm="6"
+    md="4"
+    lg="3"
+  >
+    <v-fade-transition>
+      <v-card
+        variant="outlined"
+        class="pa-5 d-flex flex-column align-center text-center"
+        rounded="xl"
+        :style="{
+          backgroundColor: currentTheme === 'dark' ? '#424242' : '#ffffff',
+          color: currentTheme === 'dark' ? '#fff' : '#000',
+        }"
+      >
+        <!-- Avatar -->
+        <v-avatar size="80" class="mb-3">
+          <v-img v-if="tutor.avatar_url" :src="tutor.avatar_url" cover>
+            <template #error>
+              <v-icon size="60" color="grey-darken-1">mdi-account</v-icon>
+            </template>
+          </v-img>
+          <v-icon v-else size="60" color="grey-darken-1">mdi-account</v-icon>
+        </v-avatar>
 
-                        <!-- Name & Expertise -->
-                        <h3 class="text-subtitle-1 font-weight-bold mb-1">
-                          {{ tutor?.first_name || 'First' }} {{ tutor?.last_name || 'Last' }}
-                        </h3>
-                        <p class="text-caption mb-3">
-                          {{ tutor?.expertise || 'Subject Area' }}
-                        </p>
+        <!-- Name & Expertise -->
+        <h3 class="text-subtitle-1 font-weight-bold mb-1">
+          {{ tutor?.firstname || 'First' }} {{ tutor?.lastname || 'Last' }}
+        </h3>
+        <p class="text-caption mb-3">
+          {{ tutor?.expertise || 'Subject Area' }}
+        </p>
 
-                        <!-- Action Links -->
-                        <!-- View More -->
-                        <v-btn
-                          variant="text"
-                          color="primary"
-                          @click="viewTutor(tutor)"
-                          style="text-transform: none"
-                        >
-                          View More
-                        </v-btn>
+        <!-- Action Links -->
+        <v-btn variant="text" color="primary" @click="viewTutor(tutor)">
+          View More
+        </v-btn>
+      </v-card>
+    </v-fade-transition>
+  </v-col>
+</v-row>
 
-                        <!-- Set Appointment / My Profile -->
-                        <div style="min-height: 40px" class="d-flex align-center justify-center">
-                          <v-btn
-                            v-if="tutor?.id !== currentUserId"
-                            variant="text"
-                            color="primary"
-                            @click="openAppointment(tutor)"
-                            style="text-transform: none"
-                          >
-                            Set an Appointment
-                          </v-btn>
-                          <span v-else class="text-caption text-grey" style="line-height: 36px">
-                            (My profile)
-                          </span>
-                        </div>
+<!-- Empty State if no tutors available -->
+<div v-else class="text-center mt-10">
+  <v-icon size="64" color="grey">mdi-account-search</v-icon>
+  <p class="mt-2 text-subtitle-2">No mentors available yet.</p>
+</div>
 
-                        <!-- Rating -->
-                        <div class="mt-3">
-                          <v-icon color="amber" size="18">mdi-star</v-icon>
-                          <span v-if="ratingsMap[tutor.id]">
-                            <strong>{{ ratingsMap[tutor.id] }}</strong>
-                          </span>
-                          <span v-else class="text-caption text-grey">Not rated yet</span>
-                        </div>
-                        <v-spacer></v-spacer>
-                      </v-card>
-                    </v-fade-transition>
-                  </v-col>
-                </v-row>
 
                 <!-- Empty State -->
                 <div v-else class="text-center mt-10">
@@ -532,7 +521,7 @@ const fetchRatings = async () => {
               </v-avatar>
 
               <div class="text-h6 font-weight-bold mb-1">
-                {{ selectedTutor.first_name }} {{ selectedTutor.last_name }}
+                {{ selectedTutor.firstname }} {{ selectedTutor.lastname }}
               </div>
               <div class="text-caption mb-3 grey--text">
                 {{ selectedTutor.expertise || 'Subject Area' }}
@@ -541,16 +530,19 @@ const fetchRatings = async () => {
 
             <v-divider class="my-2" />
 
-            <!-- Details -->
+            <!-- Tutor Details -->
             <v-card-text>
               <v-row dense>
                 <v-col cols="12" sm="6">
-                  <strong>Email:</strong><br />
-                  <span>{{ selectedTutor.email || 'N/A' }}</span>
+                  <strong>Full Name:</strong><br />
+                  <span
+                    >{{ selectedTutor.firstname }} {{ selectedTutor.middleinitial }}
+                    {{ selectedTutor.lastname }}</span
+                  >
                 </v-col>
                 <v-col cols="12" sm="6">
-                  <strong>School:</strong><br />
-                  <span>{{ selectedTutor.school || 'N/A' }}</span>
+                  <strong>Age:</strong><br />
+                  <span>{{ selectedTutor.age || 'N/A' }}</span>
                 </v-col>
                 <v-col cols="12" sm="6">
                   <strong>Expertise:</strong><br />
@@ -559,6 +551,22 @@ const fetchRatings = async () => {
                 <v-col cols="12" sm="6">
                   <strong>About:</strong><br />
                   <span>{{ selectedTutor.about || 'N/A' }}</span>
+                </v-col>
+                <v-col cols="12" sm="6">
+                  <strong>School:</strong><br />
+                  <span>{{ selectedTutor.school || 'N/A' }}</span>
+                </v-col>
+                <v-col cols="12" sm="6">
+                  <strong>Course:</strong><br />
+                  <span>{{ selectedTutor.course || 'N/A' }}</span>
+                </v-col>
+                <v-col cols="12" sm="6">
+                  <strong>Year:</strong><br />
+                  <span>{{ selectedTutor.year || 'N/A' }}</span>
+                </v-col>
+                <v-col cols="12" sm="6">
+                  <strong>Public Tutor:</strong><br />
+                  <span>{{ selectedTutor.is_public_tutor ? 'Yes' : 'No' }}</span>
                 </v-col>
               </v-row>
             </v-card-text>
@@ -577,7 +585,7 @@ const fetchRatings = async () => {
             <v-card-text>
               <p v-if="selectedTutor">
                 Booking with:
-                <strong>{{ selectedTutor.first_name }} {{ selectedTutor.last_name }}</strong>
+                <strong>{{ selectedTutor.firstname }} {{ selectedTutor.lastname }}</strong>
               </p>
               <v-text-field v-model="selectedDate" label="Date" type="date" dense />
               <v-text-field v-model="selectedTime" label="Time" type="time" dense />

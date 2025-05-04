@@ -101,9 +101,9 @@ const getUserProfile = async () => {
       year: data.year || '',         
       phone: data.phone || '',       
       email: email,                  
-      isPublicTutor: data.is_public_tutor || false,
+      isPublicTutor: data.is_public_tutor || false,  // Get public tutor status
       education: [data.school || '', data.course || '', data.year || ''],
-      avatarUrl: data.avatar_url || '', // Store the avatar URL in profile data
+      avatarUrl: data.avatar_url || '', 
     };
 
     // Store the fetched profile data in localStorage
@@ -111,7 +111,6 @@ const getUserProfile = async () => {
 
     profile.value = profileData;
 
-    // Set the profileImage state from avatar_url
     profileImage.value = data.avatar_url || ''; 
 
     console.log('Populated profile data:', profile.value.firstname, profile.value.lastname);
@@ -119,8 +118,6 @@ const getUserProfile = async () => {
     console.error('Error fetching user profile:', error);
   }
 };
-
-
 
 
 //save profile function
@@ -193,8 +190,6 @@ const saveProfile = async () => {
     loading.value = false;
   }
 };
-
-
 
 const onImageSelected = async (event) => {
   const file = event.target.files[0];
@@ -332,7 +327,6 @@ onMounted(() => {
 
 //functional for public profile
 // Apply as Tutor
-
 const applyAsTutor = async () => {
   const { data: { user }, error: userError } = await supabase.auth.getUser();
   if (userError || !user?.id) return console.error('User error:', userError);
@@ -361,6 +355,7 @@ const applyAsTutor = async () => {
   // Close the dialog after the action is completed
   dialog.value = false;
 };
+
 
 
 
@@ -492,9 +487,13 @@ onBeforeUnmount(() => {
           }"
         >
           <v-avatar size="100" class="mb-3">
-            <v-img v-if="currentUserProfile.avatarUrl" :src="currentUserProfile.avatarUrl" cover />
-            <v-icon v-else size="80">mdi-account</v-icon>
-          </v-avatar>
+                  <v-img v-if="profileImage" :src="profileImage" cover>
+                    <template #error>
+                      <v-icon size="80" color="grey-darken-1">mdi-account</v-icon>
+                    </template>
+                  </v-img>
+                  <v-icon v-else size="80" color="grey-darken-1">mdi-account</v-icon>
+                </v-avatar>
           <h3 v-if="!mini" class="ma-3">{{ profile.firstName }} {{ profile.lastName }}</h3>
         </v-sheet>
 
@@ -585,7 +584,7 @@ onBeforeUnmount(() => {
       </v-container>
 
     </v-app-bar>
-    <!--pop up alert-->
+    <!--pop up alert
     <v-snackbar
   v-model="snackbar"
   timeout="3000"
@@ -596,7 +595,15 @@ onBeforeUnmount(() => {
   <template #actions>
     <v-btn icon="mdi-close" variant="text" @click="snackbar = false" />
   </template>
+</v-snackbar>-->
+<v-snackbar v-model="snackbar" timeout="3000" :color="snackbarColor || 'success'" location="top">
+  {{ snackbarMsg }}
+  <template #actions>
+    <v-btn icon="mdi-close" variant="text" @click="snackbar = false" />
+  </template>
 </v-snackbar>
+
+
 
 
     <!-- MAIN CONTENT -->
@@ -675,7 +682,7 @@ onBeforeUnmount(() => {
 
               <!-- button for apply as tutor or cancel -->
               <div class="d-flex justify-center mb-3">
-                <v-btn
+               <v-btn
   :color="profile.isPublicTutor ? 'red' : 'primary'"
   @click="dialog = true"
   :loading="loading"
