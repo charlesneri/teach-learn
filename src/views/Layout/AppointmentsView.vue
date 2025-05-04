@@ -731,7 +731,7 @@ const formatAppointmentDateTime = (dateStr, timeStr) => {
                           color="green"
                           size="small"
                           label
-                          class="mb-2"
+                          class="mb-2  "
                         >
                           NEW
                         </v-chip>
@@ -748,14 +748,14 @@ const formatAppointmentDateTime = (dateStr, timeStr) => {
                         <div class="text-center">
                           <span class="text-caption text-grey">Appointment between</span><br />
 
-                          <span class="font-weight-bold text-primary text-lg">
-                            <span class="role-label">Client:</span>
+                          <span class="role-label">
+                            <span >Client:</span>
                             {{ appointment.student?.firstname }} {{ appointment.student?.lastname }}
                           </span>
                           <br />
 
-                          <span class="font-weight-bold text-secondary text-lg">
-                            <span class="role-label">Mentor:</span>
+                          <span class="role-label ">
+                            <span>Mentor:</span>
                             {{ appointment.mentor?.firstname }} {{ appointment.mentor?.lastname }}
                           </span>
 
@@ -1266,8 +1266,7 @@ h1 {
 .role-label {
   font-size: 15px;
   display: inline-block;
-  font-weight: 700;
-  color: #e53935;
+ ;
   text-transform: uppercase;
   letter-spacing: 0.5px;
 }
