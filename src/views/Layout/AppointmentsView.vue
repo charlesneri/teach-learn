@@ -11,6 +11,7 @@ watch(currentTheme, (val) => {
   theme.global.name.value = val
   localStorage.setItem('theme', val)
 })
+
 const toggleTheme = () => {
   currentTheme.value = currentTheme.value === 'light' ? 'dark' : 'light'
   theme.global.name.value = currentTheme.value
@@ -36,6 +37,13 @@ const checkMobile = () => {
   isMobile.value = window.innerWidth <= 768
 }
 
+const userRatingsMap = computed(() => {
+  const map = {}
+  for (const rating of userRatings.value) {
+    map[rating.appointment_id] = rating.rating
+  }
+  return map
+})
 // SNACKBAR & NOTIFICATIONS
 const snackbar = ref(false)
 const snackbarMsg = ref('')
@@ -46,8 +54,8 @@ const toggleMenu = () => (notificationMenu.value = !notificationMenu.value)
 const profileImage = ref('')
 const currentUserId = ref(null)
 const currentUserProfile = ref({
-firstname: '',
- lastname: '',
+  firstname: '',
+  lastname: '',
   avatar_url: '',
   is_public_tutor: false,
 })
@@ -56,7 +64,10 @@ watch(profileImage, (newVal) => {
 })
 
 const fetchCurrentUser = async () => {
-  const { data: { user }, error } = await supabase.auth.getUser()
+  const {
+    data: { user },
+    error,
+  } = await supabase.auth.getUser()
   if (error) {
     console.error('Error fetching user:', error)
     return
@@ -72,8 +83,8 @@ const fetchCurrentUser = async () => {
       console.error('Error fetching profile:', profileError)
     } else if (data) {
       currentUserProfile.value = {
-      firstname: data.firstname || '',
-       lastname: data.lastname || '',
+        firstname: data.firstname || '',
+        lastname: data.lastname || '',
         avatar_url: data.avatar_url || '',
         is_public_tutor: data.is_public_tutor || false,
       }
@@ -93,8 +104,8 @@ const handleLogoutClick = async () => {
   }
   currentUserId.value = null
   currentUserProfile.value = {
-  firstname: '',
-   lastname: '',
+    firstname: '',
+    lastname: '',
     avatar_url: '',
     is_public_tutor: false,
   }
@@ -112,12 +123,18 @@ const searchQuery = ref('')
 const selectedSort = ref('')
 const appointments = ref([])
 
+//live searching
+watch(searchQuery, () => {
+  snackbar.value = false // Hide any previous search message
+})
 const fetchStudentAppointments = async () => {
   const { data, error } = await supabase
     .from('appointments')
-    .select(`id, appointment_date, appointment_time, message, created_at,
+    .select(
+      `id, appointment_date, appointment_time, message, created_at,
          mentor:mentor_id(id, firstname, lastname),
-         student:student_id(id, firstname, lastname)`)
+         student:student_id(id, firstname, lastname)`,
+    )
     .eq('student_id', currentUserId.value)
     .order('appointment_date', { ascending: true })
   if (error) {
@@ -126,21 +143,33 @@ const fetchStudentAppointments = async () => {
   }
   return data || []
 }
+//
+const selectedMentorProfile = ref(null)
+
+const viewedProfile = computed(() => {
+  return selectedStudentProfile.value || selectedMentorProfile.value
+})
 
 //for the new entry label
 const isNewAppointment = (createdAt) => {
   if (!createdAt) return false
   const now = new Date()
   const created = new Date(createdAt)
-  return (now - created) < 1000 * 60 * 60 * 24 // within 24 hours
+  return now - created < 1000 * 60 * 60 * 24 // 24 hours
 }
+const viewedAppointments = ref(
+  new Set(JSON.parse(localStorage.getItem('viewedAppointments') || '[]')),
+)
+
 //until here
 const fetchMentorAppointments = async () => {
   const { data, error } = await supabase
     .from('appointments')
-    .select(`id, appointment_date, appointment_time, message, 
+    .select(
+      `id, appointment_date, appointment_time, message, 
              mentor:mentor_id(id, firstname, lastname),
-             student:student_id(id, firstname, lastname)`)
+             student:student_id(id, firstname, lastname)`,
+    )
     .eq('mentor_id', currentUserId.value)
     .order('appointment_date', { ascending: true })
   if (error) {
@@ -166,13 +195,15 @@ const fetchAppointments = async () => {
 
 const filteredAppointments = computed(() => {
   let temp = [...appointments.value]
-  
+
   // Filter by search query
   if (searchQuery.value.trim()) {
     const query = searchQuery.value.toLowerCase()
     temp = temp.filter((appointment) => {
-      const studentName = `${appointment.student?.firstname || ''} ${appointment.student?.lastname || ''}`.toLowerCase()
-      const mentorName = `${appointment.mentor?.firstname || ''} ${appointment.mentor?.lastname || ''}`.toLowerCase()
+      const studentName =
+        `${appointment.student?.firstname || ''} ${appointment.student?.lastname || ''}`.toLowerCase()
+      const mentorName =
+        `${appointment.mentor?.firstname || ''} ${appointment.mentor?.lastname || ''}`.toLowerCase()
       return studentName.includes(query) || mentorName.includes(query)
     })
   }
@@ -187,10 +218,9 @@ const filteredAppointments = computed(() => {
   } else if (selectedSort.value === 'Date') {
     temp.sort((a, b) => new Date(a.appointment_date) - new Date(b.appointment_date))
   }
-  
+
   return temp
 })
-
 
 const performSearch = () => {
   if (searchQuery.value.trim()) {
@@ -209,24 +239,41 @@ const mentorAverageRating = ref(null)
 const openAppointmentDetails = async (appointment) => {
   selectedAppointment.value = appointment
   selectedStudentProfile.value = null
+  selectedMentorProfile.value = null
 
   // Get mentor's average rating
   const avg = await getAverageRatingForMentor(appointment.mentor?.id)
   mentorAverageRating.value = avg
 
+  // Determine which profile to show based on who is logged in
+  const isCurrentUserStudent = currentUserId.value === appointment.student?.id
+  const profileIdToFetch = isCurrentUserStudent ? appointment.mentor?.id : appointment.student?.id
+
   const { data, error } = await supabase
     .from('profiles')
-    .select('firstname, lastname, email, phone, about, school, degree, year, expertise, avatar_url')
-    .eq('id', appointment.student?.id)
+    .select('firstname, lastname, email, phone, about, school, course, year, expertise, avatar_url')
+    .eq('id', profileIdToFetch)
     .single()
 
   if (error) {
-    console.error('Error fetching student profile:', error)
+    console.error('Error fetching profile:', error)
   } else {
-    selectedStudentProfile.value = data
+    if (isCurrentUserStudent) {
+      selectedMentorProfile.value = data
+    } else {
+      selectedStudentProfile.value = data
+    }
   }
 
   detailsDialog.value = true
+  if (appointment.id && !viewedAppointments.value.has(appointment.id)) {
+    viewedAppointments.value.add(appointment.id)
+    localStorage.setItem('viewedAppointments', JSON.stringify([...viewedAppointments.value]))
+  }
+}
+//helperfunctions for toe viewed label
+const isViewedByUser = (appointmentId) => {
+  return viewedAppointments.value.has(appointmentId)
 }
 
 onMounted(async () => {
@@ -261,18 +308,18 @@ const submitRating = async () => {
     !currentUserId.value ||
     !userRating.value
   ) {
-    snackbarMsg.value = 'Please complete the rating information.';
-    snackbarColor.value = 'red';
-    snackbar.value = true;
-    return;
+    snackbarMsg.value = 'Please complete the rating information.'
+    snackbarColor.value = 'red'
+    snackbar.value = true
+    return
   }
 
   // Check if the user has already rated this appointment
   if (hasRatedAppointment(selectedAppointment.value.id)) {
-    snackbarMsg.value = 'You can only rate this session once.';
-    snackbarColor.value = 'red';
-    snackbar.value = true;
-    return;
+    snackbarMsg.value = 'You can only rate this session once.'
+    snackbarColor.value = 'red'
+    snackbar.value = true
+    return
   }
 
   const payload = {
@@ -280,51 +327,50 @@ const submitRating = async () => {
     mentor_id: selectedAppointment.value.mentor.id,
     student_id: currentUserId.value,
     rating: userRating.value,
-  };
-
-  console.log('Submitting rating payload:', payload);
-
-  const { error } = await supabase.from('ratings').upsert(payload);
-
-  if (error) {
-    console.error('Rating error:', error);
-    snackbarMsg.value = 'Error submitting rating.';
-    snackbarColor.value = 'red';
-  } else {
-    snackbarMsg.value = 'Rating submitted successfully!';
-    snackbarColor.value = 'green';
-    ratingDialog.value = false;
-
-    // Update the userRatings state after submission
-    userRatings.value.push(payload); // Add the newly rated appointment to the state
-
-    // Refresh the appointment list or ratings list to reflect the changes
-    await fetchUserRatings(); // You can re-fetch the ratings after submitting
   }
 
-  snackbar.value = true;
+  console.log('Submitting rating payload:', payload)
+
+  const { error } = await supabase.from('ratings').upsert(payload)
+
+  if (error) {
+    console.error('Rating error:', error)
+    snackbarMsg.value = 'Error submitting rating.'
+    snackbarColor.value = 'red'
+  } else {
+    snackbarMsg.value = 'Rating submitted successfully!'
+    snackbarColor.value = 'green'
+    ratingDialog.value = false
+
+    // Update the userRatings state after submission
+    userRatings.value.push(payload) // Add the newly rated appointment to the state
+
+    // Refresh the appointment list or ratings list to reflect the changes
+    await fetchUserRatings() // You can re-fetch the ratings after submitting
+  }
+
+  snackbar.value = true
 }
 
 //for rating rule
 const canRateAppointment = (appointment) => {
   if (currentUserId.value === appointment.student?.id) {
     // Check if the user has already rated the appointment
-    return !hasRatedAppointment(appointment.id);
+    return !hasRatedAppointment(appointment.id)
   }
-  return false; // Only the student who booked the appointment can rate
-};
+  return false // Only the student who booked the appointment can rate
+}
 
 //for the rate button
 const handleRateClick = (appointment) => {
   if (canRateAppointment(appointment)) {
-    openRatingDialog(appointment);
+    openRatingDialog(appointment)
   } else {
-    snackbarMsg.value = 'You cannot rate this session. Only the person who booked it can rate.';
-    snackbarColor.value = 'red';
-    snackbar.value = true;
+    snackbarMsg.value = 'You cannot rate this session. Only the person who booked it can rate.'
+    snackbarColor.value = 'red'
+    snackbar.value = true
   }
-};
-
+}
 
 //for delete function
 const deleteDialog = ref(false)
@@ -336,7 +382,7 @@ const confirmDeleteAppointment = (appointment) => {
 }
 
 const deleteAppointment = async () => {
-  if (!appointmentToDelete.value?.id) return;
+  if (!appointmentToDelete.value?.id) return
 
   // INSERT INTO deleted_appointments
   const deletedPayload = {
@@ -348,39 +394,37 @@ const deleteAppointment = async () => {
     student_id: appointmentToDelete.value.student?.id,
     message: appointmentToDelete.value.message,
     deleted_at: new Date().toISOString(),
-  };
+  }
 
-  const { error: insertError } = await supabase
-    .from('deleted_appointments')
-    .insert(deletedPayload);
+  const { error: insertError } = await supabase.from('deleted_appointments').insert(deletedPayload)
 
   if (insertError) {
-    console.error('Failed to insert deleted appointment:', insertError);
-    snackbarMsg.value = 'Failed to log deletion.';
-    snackbarColor.value = 'red';
-    snackbar.value = true;
-    return;
+    console.error('Failed to insert deleted appointment:', insertError)
+    snackbarMsg.value = 'Failed to log deletion.'
+    snackbarColor.value = 'red'
+    snackbar.value = true
+    return
   }
 
   // DELETE from appointments
   const { error: deleteError } = await supabase
     .from('appointments')
     .delete()
-    .eq('id', appointmentToDelete.value.id);
+    .eq('id', appointmentToDelete.value.id)
 
   if (deleteError) {
-    console.error('Error deleting appointment:', deleteError);
-    snackbarMsg.value = 'Failed to delete appointment.';
-    snackbarColor.value = 'red';
+    console.error('Error deleting appointment:', deleteError)
+    snackbarMsg.value = 'Failed to delete appointment.'
+    snackbarColor.value = 'red'
   } else {
-    snackbarMsg.value = 'Appointment deleted and logged.';
-    snackbarColor.value = 'green';
-    await fetchAppointments(); // refresh list
+    snackbarMsg.value = 'Appointment deleted and logged.'
+    snackbarColor.value = 'green'
+    await fetchAppointments() // refresh list
   }
 
-  deleteDialog.value = false;
-  snackbar.value = true;
-};
+  deleteDialog.value = false
+  snackbar.value = true
+}
 
 //fetch appointments
 const userRatings = ref([])
@@ -399,15 +443,12 @@ const fetchUserRatings = async () => {
   userRatings.value = data || []
 }
 const getRatingForAppointment = (appointmentId) => {
-  const found = userRatings.value.find(r => r.appointment_id === appointmentId)
+  const found = userRatings.value.find((r) => r.appointment_id === appointmentId)
   return found ? found.rating : null
 }
 // adding the ratings and get avg
 const getAverageRatingForMentor = async (mentorId) => {
-  const { data, error } = await supabase
-    .from('ratings')
-    .select('rating')
-    .eq('mentor_id', mentorId)
+  const { data, error } = await supabase.from('ratings').select('rating').eq('mentor_id', mentorId)
 
   if (error || !data) {
     console.error('Error fetching average rating:', error)
@@ -415,8 +456,8 @@ const getAverageRatingForMentor = async (mentorId) => {
   }
 
   if (data.length === 0) return null
-const total = data.reduce((sum, entry) => sum + entry.rating, 0)
-return (total / data.length).toFixed(1)
+  const total = data.reduce((sum, entry) => sum + entry.rating, 0)
+  return (total / data.length).toFixed(1)
 }
 
 //for edit appointments
@@ -455,12 +496,20 @@ const updateAppointment = async () => {
 // For checking if the user has already rated the appointment
 const hasRatedAppointment = (appointmentId) => {
   // Check if the user has already rated the appointment
-  const existingRating = userRatings.value.find(rating => rating.appointment_id === appointmentId);
-  return existingRating !== undefined;
-};
+  const existingRating = userRatings.value.find((rating) => rating.appointment_id === appointmentId)
+  return existingRating !== undefined
+}
 
-
-
+//display time and date
+const formatAppointmentDateTime = (dateStr, timeStr) => {
+  if (!dateStr || !timeStr) return ''
+  const date = new Date(`${dateStr}T${timeStr}`)
+  const options = { 
+    weekday: 'short', year: 'numeric', month: 'short', 
+    day: 'numeric', hour: '2-digit', minute: '2-digit' 
+  }
+  return date.toLocaleString(undefined, options)
+}
 </script>
 
 <template>
@@ -633,30 +682,33 @@ const hasRatedAppointment = (appointmentId) => {
                 <v-col cols="12" sm="6">
                   <v-text-field
                     v-model="searchQuery"
-                    placeholder="Search"
+                    placeholder="Search by name"
                     variant="solo-filled"
                     density="comfortable"
                     rounded="lg"
-                    flat
                     hide-details
-                    single-line
+                    class="elevation-2 search-box"
                     append-inner-icon="mdi-magnify"
                     @keydown.enter="performSearch"
                     @click:append-inner="performSearch"
-                    class="elevation-0"
                   />
                 </v-col>
                 <v-col cols="12" sm="6">
                   <v-select
                     v-model="selectedSort"
-                    :items="['A-Z', 'Date']"
-                    label="Sort"
+                    :items="[
+                      { title: 'Name (A-Z)', value: 'A-Z' },
+                      { title: 'Date', value: 'Date' },
+                    ]"
+                    item-title="title"
+                    item-value="value"
+                    label="Sort By"
                     variant="solo-filled"
                     density="comfortable"
                     rounded="lg"
                     flat
                     hide-details
-                    class="elevation-0"
+                    class="elevation-2 sort-box"
                   />
                 </v-col>
               </v-row>
@@ -674,20 +726,53 @@ const hasRatedAppointment = (appointmentId) => {
                         : 'bg-white text-black'
                     "
                   >
+                    <!-- "New" badge  for the new and viewed-->
                     <v-list-item-title class="appointment-title">
-                      Appointment between
-                      <br />
-                      <strong
-                        >{{ appointment.student?.firstname }}
-                        {{ appointment.student?.lastname }}</strong
-                      >
-                      <br />
-                      and
-                      <br />
-                      <strong
-                        >{{ appointment.mentor?.firstname }}
-                        {{ appointment.mentor?.lastname }}</strong
-                      >
+                      <div class="d-flex flex-column align-center">
+                        <v-chip
+                          v-if="
+                            !isViewedByUser(appointment.id) &&
+                            isNewAppointment(appointment.created_at)
+                          "
+                          color="green"
+                          size="small"
+                          label
+                          class="mb-2"
+                        >
+                          NEW
+                        </v-chip>
+                        <v-chip
+                          v-else-if="isViewedByUser(appointment.id)"
+                          color="grey"
+                          size="small"
+                          label
+                          class="mb-2"
+                        >
+                          VIEWED
+                        </v-chip>
+
+                        <div class="text-center">
+                          <span class="text-caption text-grey">Appointment between</span><br />
+                          <span class="font-weight-bold text-primary text-lg">
+                            {{ appointment.student?.firstname }} {{ appointment.student?.lastname }}
+                          </span>
+                          <br />
+                          <span class="text-caption text-grey">and</span><br />
+                          <span class="font-weight-bold text-secondary text-lg">
+                            {{ appointment.mentor?.firstname }} {{ appointment.mentor?.lastname }}
+                          </span>
+                          <br />
+                          <!--display time and date-->
+                          <span class="text-caption text-grey mt-2">
+                            {{
+                              formatAppointmentDateTime(
+                                appointment.appointment_date,
+                                appointment.appointment_time,
+                              )
+                            }}
+                          </span>
+                        </div>
+                      </div>
                     </v-list-item-title>
 
                     <v-list-item-subtitle class="appointment-subtitle">
@@ -701,6 +786,7 @@ const hasRatedAppointment = (appointmentId) => {
                           half-increments
                           size="20"
                         />
+
                         <small class="text-grey">You rated this session</small>
                       </div>
                     </v-list-item-subtitle>
@@ -779,8 +865,8 @@ const hasRatedAppointment = (appointmentId) => {
                         <div class="text-center mr-4">
                           <v-avatar size="100">
                             <v-img
-                              v-if="selectedStudentProfile?.avatar_url"
-                              :src="selectedStudentProfile.avatar_url"
+                              v-if="viewedProfile?.avatar_url"
+                              :src="viewedProfile.avatar_url"
                               cover
                             >
                               <template #error>
@@ -794,56 +880,39 @@ const hasRatedAppointment = (appointmentId) => {
                         <!-- Profile Info Section -->
                         <div class="d-flex flex-column">
                           <p>
-                            <strong>Name:</strong>
-                            {{
-                              selectedStudentProfile
-                                ? selectedStudentProfile.firstname +
-                                  ' ' +
-                                  selectedStudentProfile.lastname
-                                : selectedMentorProfile.firstname +
-                                  ' ' +
-                                  selectedMentorProfile.lastname
-                            }}
+                            <strong>Name:</strong> {{ viewedProfile?.firstname }}
+                            {{ viewedProfile?.lastname }}
                           </p>
+                          <p><strong>Email:</strong> {{ viewedProfile?.email }}</p>
                           <p>
-                            <strong>Email:</strong>
-                            {{
-                              selectedStudentProfile
-                                ? selectedStudentProfile.email
-                                : selectedMentorProfile.email
-                            }}
+                            <strong>Phone:</strong> {{ viewedProfile?.phone || 'No phone number' }}
                           </p>
-                          <p>
-                            <strong>Phone:</strong>
-                            {{ selectedStudentProfile?.phone || 'No phone number' }}
-                          </p>
+                          <p></p>
                           <p>
                             <strong>Expertise:</strong>
-                            {{
-                              selectedStudentProfile?.expertise ||
-                              selectedMentorProfile?.expertise ||
-                              'Not specified'
-                            }}
+                            {{ viewedProfile?.expertise || 'Not specified' }}
                           </p>
                           <p>
-                            <strong>School:</strong>
-                            {{ selectedStudentProfile?.school || 'No school listed' }}
+                            <strong>School/University:</strong>
+                            {{ viewedProfile?.school || 'No school listed' }}
                           </p>
                           <p>
-                            <strong>Degree:</strong>
-                            {{ selectedStudentProfile?.degree || 'No degree listed' }}
+                            <strong>Course/Degree:</strong>
+                            {{ viewedProfile?.course || 'No course listed' }}
                           </p>
                           <p>
-                            <strong>Year:</strong>
-                            {{ selectedStudentProfile?.year || 'No year listed' }}
+                            <strong>Year:</strong> {{ viewedProfile?.year || 'No year listed' }}
                           </p>
                           <p>
-                            <strong>About:</strong>
-                            {{
-                              selectedStudentProfile?.about ||
-                              selectedMentorProfile?.about ||
-                              'No about info'
-                            }}
+                            <strong>About:</strong> {{ viewedProfile?.about || 'No about info' }}
+                          </p>
+                          <v-divider class="my-4"></v-divider>
+                          <h4 class="text-subtitle-1 font-weight-bold mb-2">Appointment Details</h4>
+                          <p><strong>Date:</strong> {{ selectedAppointment?.appointment_date }}</p>
+                          <p><strong>Time:</strong> {{ selectedAppointment?.appointment_time }}</p>
+                          <p>
+                            <strong>Message:</strong>
+                            {{ selectedAppointment?.message || 'No message provided' }}
                           </p>
                         </div>
                       </div>
@@ -1002,6 +1071,17 @@ h1 {
   text-align: center;
   word-break: break-word;
 }
+/**add style for sort */
+
+.sort-box:hover {
+  border-color: #64b5f6;
+  box-shadow: 0 2px 12px rgba(100, 181, 246, 0.3);
+}
+
+.sort-box .v-select__selection {
+  font-size: 16px;
+  padding-left: 10px;
+}
 
 /* Dialog & Details Styling */
 .v-dialog .v-card {
@@ -1121,6 +1201,18 @@ h1 {
   display: none !important;
 }
 
+/*add style for live search */
+
+.search-box input {
+  font-size: 16px;
+  padding: 10px 12px;
+}
+
+.search-box:hover {
+  border-color: #64b5f6;
+  box-shadow: 0 2px 12px rgba(100, 181, 246, 0.3);
+}
+
 /* Search Bar Styling */
 .search-wrapper {
   position: absolute;
@@ -1178,6 +1270,10 @@ h1 {
 }
 .fade-slide-move {
   transition: transform 0.3s ease;
+}
+/*for chip*/
+v-chip--label.green {
+  box-shadow: 0 0 8px #4caf50;
 }
 
 /* Mobile Responsiveness */
