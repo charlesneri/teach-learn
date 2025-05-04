@@ -77,7 +77,10 @@ const handleLogoutClick = async () => {
   }, 1000)
 }
 const fetchCurrentUser = async () => {
-  const { data: { user }, error } = await supabase.auth.getUser()
+  const {
+    data: { user },
+    error,
+  } = await supabase.auth.getUser()
   if (error) {
     console.error('Error fetching user:', error.message)
     return
@@ -239,7 +242,10 @@ const fetchRatings = async () => {
 
   const result = {}
   Object.keys(totals).forEach((id) => {
-    result[id] = (totals[id] / counts[id]).toFixed(1)
+    result[id] = {
+      average: (totals[id] / counts[id]).toFixed(1),
+      count: counts[id],
+    }
   })
 
   ratingsMap.value = result
@@ -473,7 +479,7 @@ const fetchRatings = async () => {
                         <h3 class="text-subtitle-1 font-weight-bold mb-2">
                           {{ tutor?.firstname || 'First' }} {{ tutor?.lastname || 'Last' }}
                         </h3>
-                    
+
                         <!-- Action Links -->
                         <!-- View More -->
                         <v-btn
@@ -505,7 +511,12 @@ const fetchRatings = async () => {
                         <div class="mt-3">
                           <v-icon color="amber" size="18">mdi-star</v-icon>
                           <span v-if="ratingsMap[tutor.id]">
-                            <strong>{{ ratingsMap[tutor.id] }}</strong>
+                            <strong>{{ ratingsMap[tutor.id].average }}</strong>
+                            <span class="text-caption text-grey ms-1">
+                              ({{ ratingsMap[tutor.id].count }} review{{
+                                ratingsMap[tutor.id].count > 1 ? 's' : ''
+                              }})
+                            </span>
                           </span>
                           <span v-else class="text-caption text-grey">Not rated yet</span>
                         </div>
@@ -526,79 +537,76 @@ const fetchRatings = async () => {
         </v-container>
         <!--for the view more -->
         <v-dialog v-model="profileDialog" max-width="600px">
-  <v-card>
-    <!-- Title -->
-    <v-card-title class="text-h6 font-weight-bold justify-center py-4">
-      Mentors' Profile
-    </v-card-title>
+          <v-card>
+            <!-- Title -->
+            <v-card-title class="text-h6 font-weight-bold justify-center py-4">
+              Mentors' Profile
+            </v-card-title>
 
-    <!-- Avatar and Name -->
-    <v-card-text class="text-center pb-0">
-      <v-avatar size="100" class="mb-4">
-        <v-img :src="selectedTutor.avatar_url" cover>
-          <template #error>
-            <v-icon size="80" color="grey-darken-1">mdi-account</v-icon>
-          </template>
-        </v-img>
-      </v-avatar>
+            <!-- Avatar and Name -->
+            <v-card-text class="text-center pb-0">
+              <v-avatar size="100" class="mb-4">
+                <v-img :src="selectedTutor.avatar_url" cover>
+                  <template #error>
+                    <v-icon size="80" color="grey-darken-1">mdi-account</v-icon>
+                  </template>
+                </v-img>
+              </v-avatar>
 
-      <div class="text-h6 font-weight-bold mb-1">
-        {{ selectedTutor.firstname }} {{ selectedTutor.lastname }}
-      </div>
-  
-    </v-card-text>
+              <div class="text-h6 font-weight-bold mb-1">
+                {{ selectedTutor.firstname }} {{ selectedTutor.lastname }}
+              </div>
+            </v-card-text>
 
-    <v-divider class="my-2" />
+            <v-divider class="my-2" />
 
-    <!-- Details -->
-    <v-card-text>
-      <v-row dense>
-        <!-- Display First Name and Last Name -->
-        <v-col cols="12" sm="6">
-          <strong>Age:</strong><br />
-          <span>{{ selectedTutor.age }}</span>
-        </v-col>
+            <!-- Details -->
+            <v-card-text>
+              <v-row dense>
+                <!-- Display First Name and Last Name -->
+                <v-col cols="12" sm="6">
+                  <strong>Age:</strong><br />
+                  <span>{{ selectedTutor.age }}</span>
+                </v-col>
 
-        <!-- Display School -->
-        <v-col cols="12" sm="6">
-          <strong>School/University:</strong><br />
-          <span>{{ selectedTutor.school || 'N/A' }}</span>
-        </v-col>
+                <!-- Display School -->
+                <v-col cols="12" sm="6">
+                  <strong>School/University:</strong><br />
+                  <span>{{ selectedTutor.school || 'N/A' }}</span>
+                </v-col>
 
-        <!-- Display Course -->
-        <v-col cols="12" sm="6">
-          <strong>Course/Degree:</strong><br />
-          <span>{{ selectedTutor.course || 'N/A' }}</span>
-        </v-col>
+                <!-- Display Course -->
+                <v-col cols="12" sm="6">
+                  <strong>Course/Degree:</strong><br />
+                  <span>{{ selectedTutor.course || 'N/A' }}</span>
+                </v-col>
 
-        <!-- Display Year -->
-        <v-col cols="12" sm="6">
-          <strong>Year:</strong><br />
-          <span>{{ selectedTutor.year || 'N/A' }}</span>
-        </v-col>
+                <!-- Display Year -->
+                <v-col cols="12" sm="6">
+                  <strong>Year:</strong><br />
+                  <span>{{ selectedTutor.year || 'N/A' }}</span>
+                </v-col>
 
-        <!-- Display Expertise -->
-        <v-col cols="12" sm="6">
-          <strong>Expertise:</strong><br />
-          <span>{{ selectedTutor.expertise || 'N/A' }}</span>
-        </v-col>
+                <!-- Display Expertise -->
+                <v-col cols="12" sm="6">
+                  <strong>Expertise:</strong><br />
+                  <span>{{ selectedTutor.expertise || 'N/A' }}</span>
+                </v-col>
 
-        <!-- Display About -->
-        <v-col cols="12" sm="6">
-          <strong>About me:</strong><br />
-          <span>{{ selectedTutor.about || 'N/A' }}</span>
-        </v-col>
-      </v-row>
-    </v-card-text>
+                <!-- Display About -->
+                <v-col cols="12" sm="6">
+                  <strong>About me:</strong><br />
+                  <span>{{ selectedTutor.about || 'N/A' }}</span>
+                </v-col>
+              </v-row>
+            </v-card-text>
 
-    <!-- Actions -->
-    <v-card-actions class="justify-center pb-4">
-      <v-btn color="primary" @click="profileDialog = false">Close</v-btn>
-    </v-card-actions>
-  </v-card>
-</v-dialog>
-
-
+            <!-- Actions -->
+            <v-card-actions class="justify-center pb-4">
+              <v-btn color="primary" @click="profileDialog = false">Close</v-btn>
+            </v-card-actions>
+          </v-card>
+        </v-dialog>
 
         <!--set appointment-->
         <v-dialog v-model="appointmentDialog" max-width="500px">

@@ -242,8 +242,9 @@ const openAppointmentDetails = async (appointment) => {
   selectedMentorProfile.value = null
 
   // Get mentor's average rating
-  const avg = await getAverageRatingForMentor(appointment.mentor?.id)
-  mentorAverageRating.value = avg
+  const result = await getAverageRatingForMentor(appointment.mentor?.id)
+mentorAverageRating.value = result 
+
 
   // Determine which profile to show based on who is logged in
   const isCurrentUserStudent = currentUserId.value === appointment.student?.id
@@ -435,15 +436,19 @@ const getRatingForAppointment = (appointmentId) => {
 const getAverageRatingForMentor = async (mentorId) => {
   const { data, error } = await supabase.from('ratings').select('rating').eq('mentor_id', mentorId)
 
-  if (error || !data) {
-    console.error('Error fetching average rating:', error)
-    return null
+  if (error || !data || data.length === 0) {
+    console.error('Error fetching ratings:', error)
+    return { average: null, count: 0 }
   }
 
-  if (data.length === 0) return null
   const total = data.reduce((sum, entry) => sum + entry.rating, 0)
-  return (total / data.length).toFixed(1)
+  const average = (total / data.length).toFixed(1)
+  return {
+    average,
+    count: data.length
+  }
 }
+
 
 //for edit appointments
 const editDialog = ref(false)
@@ -809,7 +814,7 @@ const formatAppointmentDateTime = (dateStr, timeStr) => {
                         size="small"
                         color="amber"
                         variant="text"
-                        @click="handleRateClick(appointment)"
+                        @click="openRatingDialog(appointment)"
                       >
                         Rate
                       </v-btn>
