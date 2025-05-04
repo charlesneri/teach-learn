@@ -509,9 +509,9 @@ onBeforeUnmount(() => {
   </component>
 </v-avatar>
 
-
-
-<h3>{{ currentUserProfile.firstname }} {{ currentUserProfile.lastname }}</h3>
+<h3 class="responsive-title">
+  {{ currentUserProfile.firstname }} {{ currentUserProfile.lastname }}
+</h3>
 
         </v-sheet>
 
@@ -997,23 +997,20 @@ onBeforeUnmount(() => {
   transition: transform 0.3s ease;
 }
 
+.responsive-title {
+  font-size: 1.5rem;
+}
+
 /* Responsive */
 @media (max-width: 600px) {
   .v-dialog__content {
     padding: 8px !important;
   }
-/*  .v-card-text,
-  .v-card-actions {
-    padding: 12px !important;
-    flex-direction: column;
-    gap: 10px;
-  }*/
+
   .v-navigation-drawer {
     width: 100% !important;
   }
- /* .v-main {
-    padding-top: 64px;
-  }*/
+ 
   .logo-input {
     width: 150px;
     max-width: 100%;
@@ -1026,9 +1023,16 @@ onBeforeUnmount(() => {
     width: 40px;
     height: 40px;
   }
-  h1 {
-    font-size: 1.8rem;
-    letter-spacing: 0.2rem;
+  .responsive-title {
+    font-size: 1rem;
+  }
+
+}
+
+
+@media (max-width: 960px) {
+  .responsive-title {
+    font-size: 1.2rem;
   }
 }
 </style>

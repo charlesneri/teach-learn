@@ -198,14 +198,16 @@ const toggleSearch = () => {
   if (showSearch.value) searchQuery.value = ''
   showSearch.value = !showSearch.value
 }
-
+const closeSearch = () => {
+  showSearch.value = false
+  searchQuery.value = ''
+}
 const filteredTutors = computed(() => {
   if (!searchQuery.value.trim()) return tutors.value
 
   const keyword = searchQuery.value.trim().toLowerCase()
   return tutors.value.filter((tutor) => {
-    const fullName =
-      `${tutor.first_name || ''} ${tutor.middle_initial || ''} ${tutor.last_name || ''}`.toLowerCase()
+    const fullName = `${tutor.firstname || ''} ${tutor.lastname || ''}`.toLowerCase()
     const expertise = (tutor.expertise || '').toLowerCase()
     return fullName.includes(keyword) || expertise.includes(keyword)
   })
@@ -385,27 +387,47 @@ const fetchRatings = async () => {
       >
         <div class="search-wrapper">
           <!-- Search Input -->
-          <v-text-field
-            v-if="showSearch"
-            v-model="searchQuery"
-            placeholder="Search..."
-            density="compact"
-            hide-details
-            flat
-            clearable
-            class="search-input large-icon"
-            append-inner-icon="mdi-magnify"
-            @blur="closeSearch"
-            autofocus
-          />
-          <!-- Toggle Button -->
-          <v-btn icon @click="toggleSearch">
-            <v-icon>{{ showSearch ? 'mdi-close' : 'mdi-magnify' }}</v-icon>
-          </v-btn>
-          <v-avatar   :style="{
-                backgroundColor: currentTheme === 'dark' ? '#1565c0' : '#ffffff',
-                color: currentTheme === 'dark' ? '#ffffff' : '#000000',
-              }" size="50" class="logo me-6">
+          <!-- Always show input on desktop, toggle on mobile -->
+          <template v-if="!isIcon">
+            <v-text-field
+              v-model="searchQuery"
+              placeholder="Search by name or expertise..."
+              density="compact"
+              hide-details
+              flat
+              clearable
+              class="search-input large-icon"
+              append-inner-icon="mdi-magnify"
+            />
+          </template>
+
+          <template v-else>
+            <v-text-field
+              v-if="showSearch"
+              v-model="searchQuery"
+              placeholder="Search by name or expertise..."
+              density="compact"
+              hide-details
+              flat
+              clearable
+              class="search-input large-icon"
+              append-inner-icon="mdi-close"
+              @click:append-inner="toggleSearch"
+              autofocus
+            />
+            <v-btn v-else icon @click="toggleSearch">
+              <v-icon>mdi-magnify</v-icon>
+            </v-btn>
+          </template>
+
+          <v-avatar
+            :style="{
+              backgroundColor: currentTheme === 'dark' ? '#1565c0' : '#ffffff',
+              color: currentTheme === 'dark' ? '#ffffff' : '#000000',
+            }"
+            size="50"
+            class="logo me-6"
+          >
             <v-img src="image/Teach&Learn.png" alt="Logo" />
           </v-avatar>
         </div>
@@ -781,9 +803,12 @@ h1 {
 }
 
 .search-input {
-  width: 240px;
+  width: 300px;
   max-width: none;
   transition: width 0.3s ease;
+}
+.search-input ::v-deep(input::placeholder) {
+  font-size: 14px;
 }
 
 .logo {
@@ -878,11 +903,15 @@ h1 {
   .v-main {
     padding-top: 64px;
   }
-
   .search-input {
-    width: 150px;
-    max-width: 100%;
+    width: 190px !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+    flex: none !important;
   }
+  .search-input ::v-deep(input::placeholder) {
+  font-size: 11px;
+}
 
   .search-wrapper {
     right: 12px;
