@@ -116,21 +116,18 @@ const fetchTutors = async () => {
   const { data, error } = await supabase
     .from('profiles')
     .select(
-      'id, firstname, lastname, middleinitial, age, expertise, about, school, course, year, phone, avatar_url, is_public_tutor'
+      'id, firstname, lastname, middleinitial, age, expertise, about, school, course, year, phone, avatar_url, is_public_tutor',
     )
-    .eq('is_public_tutor', true); // Only fetch public tutors
+    .eq('is_public_tutor', true) // Only fetch public tutors
 
   if (error) {
-    console.error('Error fetching tutors:', error);
-    return;
+    console.error('Error fetching tutors:', error)
+    return
   }
 
-  console.log(data); // Log fetched tutors
-  tutors.value = data || []; // Save the result in the tutors array
-};
-
-
-
+  console.log(data) // Log fetched tutors
+  tutors.value = data || [] // Save the result in the tutors array
+}
 
 const viewTutor = (tutor) => {
   console.log('Selected tutor:', tutor)
@@ -140,8 +137,15 @@ const viewTutor = (tutor) => {
 
 //appointment
 const openAppointment = (tutor) => {
-  selectedTutor.value = tutor
-  appointmentDialog.value = true
+  if (tutor.id === currentUserId.value) {
+    snackbarMsg.value = 'You cannot book an appointment with yourself.'
+    snackbarColor.value = 'red'
+    snackbar.value = true
+    return
+  }
+
+  selectedTutor.value = tutor // Store the selected tutor in selectedTutor
+  appointmentDialog.value = true // Open the appointment dialog
 }
 
 const saveAppointment = async () => {
@@ -153,35 +157,39 @@ const saveAppointment = async () => {
       return
     }
 
-    // continue with logic...
-    // e.g., await supabase insert logic
-  } catch (error) {
-    console.error('Error saving appointment:', error)
-    snackbarMsg.value = 'Failed to save appointment.'
-    snackbarColor.value = 'red'
-    snackbar.value = true
-    return
-  }
+    // Prevent booking with self
+    if (selectedTutor.value.id === currentUserId.value) {
+      snackbarMsg.value = 'You cannot book an appointment with yourself.'
+      snackbarColor.value = 'red'
+      snackbar.value = true
+      return
+    }
 
-  const { error } = await supabase.from('appointments').insert({
-    student_id: currentUserId.value,
-    mentor_id: selectedTutor.value.id,
-    student_name: `${currentUserProfile.value.firstName} ${currentUserProfile.value.lastName}`,
-    appointment_date: selectedDate.value,
-    appointment_time: selectedTime.value,
-    message: messageInput.value,
-  })
+    const { error } = await supabase.from('appointments').insert({
+      mentor_id: selectedTutor.value.id, // Store the mentor's id
+      student_id: currentUserId.value, // Store the current user's id
+      student_name: `${currentUserProfile.value.firstName} ${currentUserProfile.value.lastName}`,
+      appointment_date: selectedDate.value,
+      appointment_time: selectedTime.value,
+      message: messageInput.value,
+    })
 
-  snackbar.value = true
-  if (error) {
-    console.error('Error saving appointment:', error)
-    snackbarMsg.value = 'Failed to book appointment. Try again.'
-    snackbarColor.value = 'red'
-  } else {
+    if (error) {
+      console.error('Error saving appointment:', error)
+      snackbarMsg.value = 'Failed to book appointment. Try again.'
+      snackbarColor.value = 'red'
+      snackbar.value = true
+      return
+    }
+
     snackbarMsg.value = 'Appointment booked successfully!'
     snackbarColor.value = 'green'
+    snackbar.value = true // Trigger the snackbar
+
+    // Close the appointment dialog
     appointmentDialog.value = false
 
+    // Reset the form fields after booking
     setTimeout(() => {
       selectedDate.value = ''
       selectedTime.value = ''
@@ -189,6 +197,11 @@ const saveAppointment = async () => {
       datePickerOpen.value = false
       timePickerOpen.value = false
     }, 300)
+  } catch (error) {
+    console.error('Error saving appointment:', error)
+    snackbarMsg.value = 'Failed to save appointment.'
+    snackbarColor.value = 'red'
+    snackbar.value = true
   }
 }
 
@@ -202,17 +215,16 @@ const toggleSearch = () => {
 }
 
 const filteredTutors = computed(() => {
-  if (!searchQuery.value.trim()) return tutors.value; // Return all tutors if no search query
+  if (!searchQuery.value.trim()) return tutors.value // Return all tutors if no search query
 
-  const keyword = searchQuery.value.trim().toLowerCase();
+  const keyword = searchQuery.value.trim().toLowerCase()
   return tutors.value.filter((tutor) => {
     const fullName =
-      `${tutor.firstname || ''} ${tutor.middleinitial || ''} ${tutor.lastname || ''}`.toLowerCase();
-    const expertise = (tutor.expertise || '').toLowerCase();
-    return fullName.includes(keyword) || expertise.includes(keyword);
-  });
-});
-
+      `${tutor.firstname || ''} ${tutor.middleinitial || ''} ${tutor.lastname || ''}`.toLowerCase()
+    const expertise = (tutor.expertise || '').toLowerCase()
+    return fullName.includes(keyword) || expertise.includes(keyword)
+  })
+})
 
 // === Mount Lifecycle ===
 onMounted(async () => {
@@ -437,61 +449,69 @@ const fetchRatings = async () => {
                 <v-divider :thickness="2" class="mb-6"></v-divider>
 
                 <v-row
-  v-if="tutors.length"
-  class="gx-6 gy-6"
-  :justify="tutors.length < 3 ? 'center' : 'start'"
->
-  <v-col
-    v-for="tutor in tutors"
-    :key="tutor.id"
-    cols="12"
-    sm="6"
-    md="4"
-    lg="3"
-  >
-    <v-fade-transition>
-      <v-card
-        variant="outlined"
-        class="pa-5 d-flex flex-column align-center text-center"
-        rounded="xl"
-        :style="{
-          backgroundColor: currentTheme === 'dark' ? '#424242' : '#ffffff',
-          color: currentTheme === 'dark' ? '#fff' : '#000',
-        }"
-      >
-        <!-- Avatar -->
-        <v-avatar size="80" class="mb-3">
-          <v-img v-if="tutor.avatar_url" :src="tutor.avatar_url" cover>
-            <template #error>
-              <v-icon size="60" color="grey-darken-1">mdi-account</v-icon>
-            </template>
-          </v-img>
-          <v-icon v-else size="60" color="grey-darken-1">mdi-account</v-icon>
-        </v-avatar>
+                  v-if="tutors.length"
+                  class="gx-6 gy-6"
+                  :justify="tutors.length < 3 ? 'center' : 'start'"
+                >
+                  <v-col v-for="tutor in tutors" :key="tutor.id" cols="12" sm="6" md="4" lg="3">
+                    <v-fade-transition>
+                      <v-card
+                        variant="outlined"
+                        class="pa-5 d-flex flex-column align-center text-center"
+                        rounded="xl"
+                        :style="{
+                          backgroundColor: currentTheme === 'dark' ? '#424242' : '#ffffff',
+                          color: currentTheme === 'dark' ? '#fff' : '#000',
+                        }"
+                      >
+                        <!-- Avatar -->
+                        <v-avatar size="80" class="mb-3">
+                          <v-img v-if="tutor.avatar_url" :src="tutor.avatar_url" cover>
+                            <template #error>
+                              <v-icon size="60" color="grey-darken-1">mdi-account</v-icon>
+                            </template>
+                          </v-img>
+                          <v-icon v-else size="60" color="grey-darken-1">mdi-account</v-icon>
+                        </v-avatar>
 
-        <!-- Name & Expertise -->
-        <h3 class="text-subtitle-1 font-weight-bold mb-1">
-          {{ tutor?.firstname || 'First' }} {{ tutor?.lastname || 'Last' }}
-        </h3>
-        <p class="text-caption mb-3">
-          {{ tutor?.expertise || 'Subject Area' }}
-        </p>
+                        <!-- Name & Expertise -->
+                        <h3 class="text-subtitle-1 font-weight-bold mb-1">
+                          {{ tutor?.firstname || 'First' }} {{ tutor?.lastname || 'Last' }}
+                        </h3>
+                        <p class="text-caption mb-3">
+                          {{ tutor?.expertise || 'Subject Area' }}
+                        </p>
 
-        <!-- Action Links -->
-        <v-btn variant="text" color="primary" @click="viewTutor(tutor)">
-          View More
-        </v-btn>
-      </v-card>
-    </v-fade-transition>
-  </v-col>
-</v-row>
+                        <!-- Action Links -->
+                        <v-btn variant="text" color="primary" @click="viewTutor(tutor)">
+                          View More
+                        </v-btn>
+                        <v-btn
+                          variant="text"
+                          color="primary"
+                          @click="openAppointment(tutor)"
+                          :disabled="tutor.id === currentUserId"
+                        >
+                          Set Appointment
+                        </v-btn>
+                          <!-- Rating -->
+                          <div class="mt-3">
+                          <v-icon color="amber" size="18">mdi-star</v-icon>
+                          <span v-if="ratingsMap[tutor.id]">
+                            <strong>{{ ratingsMap[tutor.id] }}</strong>
+                          </span>
+                          <span v-else class="text-caption text-grey">Not rated yet</span>
+                        </div>
+                      </v-card>
+                    </v-fade-transition>
+                  </v-col>
+                </v-row>
 
-<!-- Empty State if no tutors available -->
-<div v-else class="text-center mt-10">
-  <v-icon size="64" color="grey">mdi-account-search</v-icon>
-  <p class="mt-2 text-subtitle-2">No mentors available yet.</p>
-</div>
-
+                <!-- Empty State if no tutors available -->
+                <div v-else class="text-center mt-10">
+                  <v-icon size="64" color="grey">mdi-account-search</v-icon>
+                  <p class="mt-2 text-subtitle-2">No mentors available yet.</p>
+                </div>
 
                 <!-- Empty State -->
                 <div v-else class="text-center mt-10">
