@@ -3,7 +3,7 @@ import { ref, computed, onMounted, onBeforeUnmount, watch } from 'vue'
 import { useTheme } from 'vuetify'
 import { useRouter, RouterLink } from 'vue-router'
 import { supabase } from '@/utils/supabase'
-
+import { useDisplay } from 'vuetify'
 const router = useRouter()
 const theme = useTheme()
 
@@ -21,6 +21,10 @@ watch(currentTheme, (val) => {
   localStorage.setItem('theme', val)
 })
 
+//
+const display = useDisplay()
+const isIcon = computed(() => display.smAndDown.value)
+
 // === Drawer & Layout ===
 const drawer = ref(false)
 const mini = ref(false)
@@ -33,7 +37,6 @@ const toggleDrawer = () => {
 const checkMobile = () => {
   isMobile.value = window.innerWidth <= 768
 }
-
 
 // === Snackbar ===
 const snackbar = ref(false)
@@ -270,7 +273,7 @@ const fetchRatings = async () => {
         }"
       >
         <!-- Menu Icon that toggles drawer size -->
-        <v-btn icon class="ms-5 mt-5 d-lg-none" @click="toggleDrawer">
+        <v-btn v-if="isIcon" icon class="ms-5 mt-5" @click="toggleDrawer">
           <v-icon>mdi-menu</v-icon>
         </v-btn>
         <!-- Profile -->
@@ -432,7 +435,7 @@ const fetchRatings = async () => {
                 elevation="3"
                 rounded="lg"
                 class="pa-6 ma-auto"
-                style="height: 100vh"
+                style="min-height: 100vh; height: auto"
                 :style="{
                   backgroundColor: currentTheme === 'dark' ? '#424242' : '#fefcf9',
                   color: currentTheme === 'dark' ? '#ffffff' : '#000000',

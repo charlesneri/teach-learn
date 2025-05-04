@@ -502,9 +502,7 @@ onBeforeUnmount(() => {
       <v-avatar size="100" class="mb-3" v-if="profileImage">
   <v-img
     :src="profileImage"
-    cover
-    @click="viewFullImage(profileImage)"
-    style="cursor: pointer"
+    cover  style="cursor: pointer"
   >
     <template #error>
       <v-icon size="80" color="grey-darken-1">mdi-account</v-icon>
