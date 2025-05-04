@@ -426,9 +426,9 @@ const fetchRatings = async () => {
       >
         <v-container fluid class="" style="max-width: 100%; margin: auto">
           <v-row justify="center">
-            <v-col cols="12" md="11" lg="11">
+            <v-col cols="12" md="9" lg="9" class="mt-5">
               <v-sheet
-                elevation="2"
+                elevation="3"
                 rounded="lg"
                 class="pa-6 ma-auto"
                 style="height: 100vh"

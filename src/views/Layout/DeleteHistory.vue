@@ -104,12 +104,12 @@ const detailsDialog = ref(false)
 
 const fetchDeletedAppointments = async () => {
   const { data, error } = await supabase
-    .from('deleted_appointments') // ✅ correct
+    .from('deleted_appointments')
     .select(
       `
       *,
-      mentor:mentor_id(first_name, last_name),
-      student:student_id(first_name, last_name)
+      mentor:mentor_id(firstname, lastname),
+      student:student_id(firstname, lastname)
     `,
     )
     .eq('deleted_by', currentUserId.value)
@@ -129,7 +129,7 @@ const openAppointmentDetails = async (appointment) => {
 
   const { data, error } = await supabase
     .from('profiles')
-    .select('first_name, last_name, email, phone, about, school, degree, year, expertise, avatar_url')
+    .select('firstname, lastname, email, phone, about, school, course, year, expertise, avatar_url')
     .eq('id', appointment.student_id) // FIXED: use student_id directly
     .single()
 
@@ -198,7 +198,7 @@ onBeforeUnmount(() => {
     <!-- Drawer Sidebar -->
     <transition name="fade-slide-up">
       <v-navigation-drawer
-       v-if="drawer"
+        v-if="drawer"
         :temporary="isMobile"
         :permanent="!isMobile"
         :width="isMobile ? '100%' : 280"
@@ -221,7 +221,7 @@ onBeforeUnmount(() => {
             color: currentTheme === 'dark' ? '#ffffff' : '#000000',
           }"
         >
-        <v-avatar size="100" class="mb-3">
+          <v-avatar size="100" class="mb-3">
             <v-img :src="currentUserProfile.avatar_url" cover>
               <template #error>
                 <v-icon size="80" color="grey-darken-1">mdi-account</v-icon>
@@ -229,7 +229,6 @@ onBeforeUnmount(() => {
             </v-img>
           </v-avatar>
           <h3 v-if="!mini">{{ currentUserProfile.firstname }} {{ currentUserProfile.lastname }}</h3>
-
         </v-sheet>
 
         <v-divider class="my-2" />
@@ -356,13 +355,13 @@ onBeforeUnmount(() => {
                     <v-list-item-title class="appointment-title">
                       Appointment between<br />
                       <strong
-                        >{{ appointment.student?.first_name }}
-                        {{ appointment.student?.last_name }}</strong
+                        >{{ appointment.student?.firstname }}
+                        {{ appointment.student?.lastname }}</strong
                       ><br />
                       and<br />
                       <strong
-                        >{{ appointment.mentor?.first_name }}
-                        {{ appointment.mentor?.last_name }}</strong
+                        >{{ appointment.mentor?.firstname }}
+                        {{ appointment.mentor?.lastname }}</strong
                       >
                     </v-list-item-title>
 
@@ -391,93 +390,105 @@ onBeforeUnmount(() => {
                 </v-list>
 
                 <!-- Details Dialog -->
-                <v-dialog v-model="detailsDialog" max-width="600px" transition="scale-transition">
+                <v-dialog v-model="detailsDialog" max-width="650px" transition="scale-transition">
                   <v-card
                     :class="
                       currentTheme === 'dark'
                         ? 'bg-grey-darken-3 text-white'
                         : 'bg-white text-black'
                     "
+                    rounded="xl"
                   >
-                    <v-card-title class="text-h6 font-weight-bold text-center">
-                      Appointment & Student Details
+                    <!-- Header -->
+                    <v-card-title class="text-h6 font-weight-bold justify-center pb-0">
+                      Deleted Appointment Details
                     </v-card-title>
-                    <v-card-text>
-                      <div v-if="selectedStudentProfile" class="text-center">
-                        <!-- Student Profile -->
-                        <v-avatar size="100" class="mb-4">
-                          <v-img
-                            v-if="selectedStudentProfile.avatar_url"
-                            :src="selectedStudentProfile.avatar_url"
-                            cover
-                          />
-                          <v-icon v-else size="80" color="grey-darken-1">mdi-account</v-icon>
-                        </v-avatar>
-                        <p>
-                          <strong>Name:</strong><br />{{ selectedStudentProfile.first_name }}
-                          {{ selectedStudentProfile.last_name }}
-                        </p>
-                        <p><strong>Email:</strong><br />{{ selectedStudentProfile.email }}</p>
-                        <p>
-                          <strong>Phone:</strong><br />{{
-                            selectedStudentProfile.phone || 'No phone number'
-                          }}
-                        </p>
-                        <p>
-                          <strong>Expertise:</strong><br />{{
-                            selectedStudentProfile.expertise || 'Not specified'
-                          }}
-                        </p>
-                        <p>
-                          <strong>School:</strong><br />{{
-                            selectedStudentProfile.school || 'No school listed'
-                          }}
-                        </p>
-                        <p>
-                          <strong>Degree:</strong><br />{{
-                            selectedStudentProfile.degree || 'No degree listed'
-                          }}
-                        </p>
-                        <p>
-                          <strong>Year:</strong><br />{{
-                            selectedStudentProfile.year || 'No year listed'
-                          }}
-                        </p>
-                        <p>
-                          <strong>About:</strong><br />{{
-                            selectedStudentProfile.about || 'No about info'
-                          }}
-                        </p>
+
+                    <!-- Student Section -->
+                    <v-card-text class="pa-6">
+                      <div v-if="selectedStudentProfile">
+                        <v-row justify="center" class="mb-4">
+                          <v-avatar size="100">
+                            <v-img
+                              v-if="selectedStudentProfile.avatar_url"
+                              :src="selectedStudentProfile.avatar_url"
+                              cover
+                            />
+                            <v-icon v-else size="80" color="grey-darken-1">mdi-account</v-icon>
+                          </v-avatar>
+                        </v-row>
+
+                        <v-divider class="mb-4"></v-divider>
+
+                        <v-row dense>
+                          <v-col cols="12" sm="6">
+                            <strong>Name:</strong><br />
+                            {{ selectedStudentProfile.firstname }}
+                            {{ selectedStudentProfile.lastname }}
+                          </v-col>
+                          <v-col cols="12" sm="6">
+                            <strong>Email:</strong><br />
+                            {{ selectedStudentProfile.email }}
+                          </v-col>
+                          <v-col cols="12" sm="6">
+                            <strong>Phone:</strong><br />
+                            {{ selectedStudentProfile.phone || 'No phone number' }}
+                          </v-col>
+                          <v-col cols="12" sm="6">
+                            <strong>Expertise:</strong><br />
+                            {{ selectedStudentProfile.expertise || 'Not specified' }}
+                          </v-col>
+                          <v-col cols="12" sm="6">
+                            <strong>School:</strong><br />
+                            {{ selectedStudentProfile.school || 'No school listed' }}
+                          </v-col>
+                          <v-col cols="12" sm="6">
+                            <strong>Degree:</strong><br />
+                            {{ selectedStudentProfile.degree || 'No degree listed' }}
+                          </v-col>
+                          <v-col cols="12" sm="6">
+                            <strong>Year:</strong><br />
+                            {{ selectedStudentProfile.year || 'No year listed' }}
+                          </v-col>
+                          <v-col cols="12">
+                            <strong>About:</strong><br />
+                            {{ selectedStudentProfile.about || 'No about info' }}
+                          </v-col>
+                        </v-row>
                       </div>
 
-                      <!-- Divider -->
-                      <v-divider class="my-6"></v-divider>
+                      <!-- Appointment Info -->
+                      <div v-if="selectedAppointment" class="mt-6">
+                        <v-divider class="mb-4"></v-divider>
+                        <h3 class="font-weight-bold mb-4 text-center">Deleted Appointment Info</h3>
 
-                      <!-- Deleted Appointment Info -->
-                      <div v-if="selectedAppointment" class="text-center">
-                        <h3 class="font-weight-bold mb-4">Deleted Appointment Info</h3>
-                        <p>
-                          <strong>Date:</strong><br />{{ selectedAppointment.appointment_date }}
-                        </p>
-                        <p>
-                          <strong>Time:</strong><br />{{ selectedAppointment.appointment_time }}
-                        </p>
-                        <p>
-                          <strong>Message:</strong><br />{{
-                            selectedAppointment.message || 'No message provided'
-                          }}
-                        </p>
-                        <p>
-                          <strong>Mentor:</strong><br />{{
-                            selectedAppointment.mentor?.first_name
-                          }}
-                          {{ selectedAppointment.mentor?.last_name }}
-                        </p>
+                        <v-row dense>
+                          <v-col cols="12" sm="6">
+                            <strong>Date:</strong><br />
+                            {{ selectedAppointment.appointment_date }}
+                          </v-col>
+                          <v-col cols="12" sm="6">
+                            <strong>Time:</strong><br />
+                            {{ selectedAppointment.appointment_time }}
+                          </v-col>
+                          <v-col cols="12">
+                            <strong>Message:</strong><br />
+                            {{ selectedAppointment.message || 'No message provided' }}
+                          </v-col>
+                          <v-col cols="12">
+                            <strong>Mentor:</strong><br />
+                            {{ selectedAppointment.mentor?.firstname }}
+                            {{ selectedAppointment.mentor?.lastname }}
+                          </v-col>
+                        </v-row>
                       </div>
                     </v-card-text>
 
-                    <v-card-actions class="justify-center">
-                      <v-btn color="primary" @click="detailsDialog = false">Close</v-btn>
+                    <!-- Footer -->
+                    <v-card-actions class="justify-center pb-4">
+                      <v-btn color="primary" variant="flat" @click="detailsDialog = false"
+                        >Close</v-btn
+                      >
                     </v-card-actions>
                   </v-card>
                 </v-dialog>
@@ -586,5 +597,4 @@ h1 {
     letter-spacing: 0.2rem;
   }
 }
-
 </style>
