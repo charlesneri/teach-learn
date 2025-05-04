@@ -48,25 +48,25 @@ watch(profileImage, (newVal) => {
 const fetchCurrentUser = async () => {
   const {
     data: { user },
-    error,
   } = await supabase.auth.getUser()
-  if (error) return console.error('Error fetching user:', error)
   if (user) {
     currentUserId.value = user.id
-    const { data, error: profileError } = await supabase
+    const { data, error } = await supabase
       .from('profiles')
-      .select('first_name, last_name, avatar_url, is_public_tutor')
+      .select('firstname, lastname, avatar_url')
       .eq('id', user.id)
       .single()
-    if (profileError) {
-      console.error('Error fetching profile:', profileError)
-    } else if (data) {
-      currentUserProfile.value = {
-        firstName: data.first_name || '',
-        lastName: data.last_name || '',
-        avatarUrl: data.avatar_url || '',
-        isPublicTutor: data.is_public_tutor || false,
-      }
+
+    if (error) {
+      console.error('Error fetching profile:', error)
+      return
+    }
+
+    // Directly set the avatar URL and user info
+    currentUserProfile.value = {
+      firstname: data.firstname || '',
+      lastname: data.lastname || '',
+      avatar_url: data.avatar_url || 'default-avatar-url', // Set a default if empty
     }
   }
 }
@@ -221,11 +221,15 @@ onBeforeUnmount(() => {
             color: currentTheme === 'dark' ? '#ffffff' : '#000000',
           }"
         >
-          <v-avatar size="100" class="mb-3">
-            <v-img v-if="currentUserProfile.avatarUrl" :src="currentUserProfile.avatarUrl" cover />
-            <v-icon v-else size="80">mdi-account</v-icon>
+        <v-avatar size="100" class="mb-3">
+            <v-img :src="currentUserProfile.avatar_url" cover>
+              <template #error>
+                <v-icon size="80" color="grey-darken-1">mdi-account</v-icon>
+              </template>
+            </v-img>
           </v-avatar>
-          <h3 v-if="!mini">{{ currentUserProfile.firstName }} {{ currentUserProfile.lastName }}</h3>
+          <h3 v-if="!mini">{{ currentUserProfile.firstname }} {{ currentUserProfile.lastname }}</h3>
+
         </v-sheet>
 
         <v-divider class="my-2" />

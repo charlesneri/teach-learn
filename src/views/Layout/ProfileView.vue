@@ -30,8 +30,8 @@ const imageLoading = ref(false)
 
 // PROFILE STATES
 const profile = ref({
-  firstName: '',
-  lastName: '',
+  firstname: '',
+  lastname: '',
   middleInitial: '',
   age: '',
   expertise: '',
@@ -39,15 +39,15 @@ const profile = ref({
   phone: '',
   about: '',
   education: ['', '', ''],
-  isPublicTutor: false, 
+  is_public_tutor: false, 
 })
 const profileImage = ref('')
 const selectedFile = ref(null)
 
 // FIELD MAPPING
 const fieldMappings = {
-  'Given Name': 'firstName',
-  'Last Name': 'lastName',
+  'Given Name': 'firstname',
+  'Last Name': 'lastname',
   'Middle Initial': 'middleInitial',
   Age: 'age',
   Expertise: 'expertise',
@@ -58,7 +58,7 @@ const fieldMappings = {
 // COMPUTED
 const fullName = computed(() => {
   const mid = profile.value.middleInitial ? `${profile.value.middleInitial}. ` : ''
-  return `${profile.value.firstName} ${mid}${profile.value.lastName}`
+  return `${profile.value.firstname} ${mid}${profile.value.lastname}`
 })
 
 // FUNCTIONS
@@ -90,8 +90,8 @@ const getUserProfile = async () => {
     const email = user.email; 
 
     const profileData = {
-      firstName: data.firstname || '', 
-      lastName: data.lastname || '',   
+      firstname: data.firstname || '', 
+      lastname: data.lastname || '',   
       middleInitial: data.middleinitial || '',
       age: data.age || '',
       expertise: data.expertise || '',
@@ -101,9 +101,9 @@ const getUserProfile = async () => {
       year: data.year || '',         
       phone: data.phone || '',       
       email: email,                  
-      isPublicTutor: data.is_public_tutor || false,  // Get public tutor status
+      is_public_tutor: data.is_public_tutor || false,  // Get public tutor status
       education: [data.school || '', data.course || '', data.year || ''],
-      avatarUrl: data.avatar_url || '', 
+     avatar_url: data.avatar_url || '', 
     };
 
     // Store the fetched profile data in localStorage
@@ -122,7 +122,7 @@ const getUserProfile = async () => {
 
 //save profile function
 const validateProfile = () => {
-  const requiredFields = ['firstName', 'lastName', 'age', 'expertise', 'email', 'phone', 'about'];
+  const requiredFields = ['firstname', 'lastname', 'age', 'expertise', 'email', 'phone', 'about'];
   for (const field of requiredFields) {
     if (!profile.value[field] || profile.value[field].toString().trim() === '') {
       snackbarMsg.value = `Please fill in the ${field.replace(/([A-Z])/g, ' $1').toLowerCase()}.`;
@@ -158,8 +158,8 @@ const saveProfile = async () => {
     const { error: updateError } = await supabase
       .from('profiles')
       .update({
-        firstname: profile.value.firstName,
-        lastname: profile.value.lastName,
+        firstname: profile.value.firstname,
+        lastname: profile.value.lastname,
         middleinitial: profile.value.middleInitial,
         age: profile.value.age,
         phone: profile.value.phone,
@@ -168,7 +168,7 @@ const saveProfile = async () => {
         school: profile.value.education[0], // School name
         year: profile.value.education[2], // Year level
         avatar_url: profileImage.value, // Update the avatar URL if modified
-        is_public_tutor: profile.value.isPublicTutor,
+        is_public_tutor: profile.value.is_public_tutor,
       })
       .eq('id', user.id); // Only update the current user's profile
 
@@ -317,10 +317,10 @@ onMounted(() => {
   checkAuth(); // This checks if the user is logged in
   getUserProfile(); // Fetch the user profile from auth.user metadata
 
-  // Retrieve the isPublicTutor state from localStorage
-  const storedPublicTutorStatus = localStorage.getItem('isPublicTutor');
+  // Retrieve the is_public_tutor state from localStorage
+  const storedPublicTutorStatus = localStorage.getItem('is_public_tutor');
   if (storedPublicTutorStatus !== null) {
-    profile.value.isPublicTutor = JSON.parse(storedPublicTutorStatus);
+    profile.value.is_public_tutor = JSON.parse(storedPublicTutorStatus);
   }
 });
 
@@ -331,7 +331,7 @@ const applyAsTutor = async () => {
   const { data: { user }, error: userError } = await supabase.auth.getUser();
   if (userError || !user?.id) return console.error('User error:', userError);
 
-  const toggleStatus = !profile.value.isPublicTutor; // Toggle the status
+  const toggleStatus = !profile.value.is_public_tutor; // Toggle the status
 
   // Update the tutor status in the database
   const { error } = await supabase
@@ -341,10 +341,10 @@ const applyAsTutor = async () => {
 
   if (error) return console.error('Error updating tutor status:', error);
 
-  profile.value.isPublicTutor = toggleStatus; // Update the local state
+  profile.value.is_public_tutor = toggleStatus; // Update the local state
   
   // Persist the state in localStorage
-  localStorage.setItem('isPublicTutor', toggleStatus);
+  localStorage.setItem('is_public_tutor', toggleStatus);
 
   snackbarMsg.value = toggleStatus
     ? 'You are now visible as a public tutor.'
@@ -376,31 +376,33 @@ const checkMobile = () => {
 /* === User Profile === */
 const currentUserId = ref(null)
 const currentUserProfile = ref({
-  firstName: '',
-  lastName: '',
-  avatarUrl: '',
-  isPublicTutor: false,
+  firstname: '',
+  lastname: '',
+ avatar_url: '',
+  is_public_tutor: false,
 })
 
+//display profile public nav
 const fetchCurrentUser = async () => {
   const { data: { user } } = await supabase.auth.getUser()
   if (user) {
     currentUserId.value = user.id
     const { data } = await supabase
       .from('profiles')
-      .select('firstname,lastname,is_public_tutor')
+      .select('firstname, lastname, is_public_tutor')
       .eq('id', user.id)
       .single()
     if (data) {
       currentUserProfile.value = {
-        firstName: data.first_name || '',
-        lastName: data.last_name || '',
-        avatarUrl: data.avatar_url || '',
-        isPublicTutor: data.is_public_tutor || false,
+        firstname: data.firstname || '',
+        lastname: data.lastname || '',  // Ensure 'lastname' is correctly fetched
+        avatar_url: data.avatar_url || '',
+        is_public_tutor: data.is_public_tutor || false,
       }
     }
   }
 }
+
 /* === Logout === */
 const handleLogoutClick = async () => {
   const { error } = await supabase.auth.signOut()
@@ -417,8 +419,8 @@ const handleLogoutClick = async () => {
 
   // Reset the profile data
   profile.value = {
-    firstName: '',
-    lastName: '',
+    firstname: '',
+    lastname: '',
     middleInitial: '',
     age: '',
     expertise: '',
@@ -426,7 +428,7 @@ const handleLogoutClick = async () => {
     phone: '',
     about: '',
     education: ['', '', ''],
-    isPublicTutor: false, 
+    is_public_tutor: false, 
   }
   profileImage.value = ''
   
@@ -450,7 +452,9 @@ onMounted(() => {
 
   theme.global.name.value = currentTheme.value;
   checkAuth(); // This checks if the user is logged in
+  fetchCurrentUser(); // Fetch the current user profile
 });
+
 onBeforeUnmount(() => {
   window.removeEventListener('resize', checkMobile)
 })
@@ -486,15 +490,16 @@ onBeforeUnmount(() => {
             color: currentTheme === 'dark' ? '#ffffff' : '#000000',
           }"
         >
-          <v-avatar size="100" class="mb-3">
-                  <v-img v-if="profileImage" :src="profileImage" cover>
-                    <template #error>
-                      <v-icon size="80" color="grey-darken-1">mdi-account</v-icon>
-                    </template>
-                  </v-img>
-                  <v-icon v-else size="80" color="grey-darken-1">mdi-account</v-icon>
-                </v-avatar>
-          <h3 v-if="!mini" class="ma-3">{{ profile.firstName }} {{ profile.lastName }}</h3>
+        <v-avatar size="100" class="mb-3">
+  <v-img v-if="profileImage" :src="profileImage" cover>
+    <template #error>
+      <v-icon size="80" color="grey-darken-1">mdi-account</v-icon>
+    </template>
+  </v-img>
+  <v-icon v-else size="80" color="grey-darken-1">mdi-account</v-icon>
+</v-avatar>
+<h3>{{ currentUserProfile.firstname }} {{ currentUserProfile.lastname }}</h3>
+
         </v-sheet>
 
         <v-divider class="my-2" />
@@ -644,7 +649,7 @@ onBeforeUnmount(() => {
                   <v-icon v-else size="80" color="grey-darken-1">mdi-account</v-icon>
                   
                 </v-avatar>
-                <h3 v-if="!mini" class="ma-3">{{ currentUserProfile.firstName }} {{ currentUserProfile.lastName }}</h3>
+                <h3>{{ currentUserProfile.firstname }} {{ currentUserProfile.lastname }}</h3>
 
 
                 <!-- Upload & Remove Buttons -->
@@ -683,11 +688,11 @@ onBeforeUnmount(() => {
               <!-- button for apply as tutor or cancel -->
               <div class="d-flex justify-center mb-3">
                <v-btn
-  :color="profile.isPublicTutor ? 'red' : 'primary'"
+  :color="profile.is_public_tutor ? 'red' : 'primary'"
   @click="dialog = true"
   :loading="loading"
 >
-  {{ profile.isPublicTutor ? 'Cancel Apply' : 'Apply as Tutor?' }}
+  {{ profile.is_public_tutor ? 'Cancel Apply' : 'Apply as Tutor?' }}
 </v-btn>
 
 </div>

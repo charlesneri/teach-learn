@@ -46,10 +46,10 @@ const toggleMenu = () => (notificationMenu.value = !notificationMenu.value)
 const profileImage = ref('')
 const currentUserId = ref(null)
 const currentUserProfile = ref({
-  firstName: '',
-  lastName: '',
-  avatarUrl: '',
-  isPublicTutor: false,
+firstname: '',
+ lastname: '',
+  avatar_url: '',
+  is_public_tutor: false,
 })
 watch(profileImage, (newVal) => {
   if (newVal) localStorage.setItem('profileImage', newVal)
@@ -65,17 +65,17 @@ const fetchCurrentUser = async () => {
     currentUserId.value = user.id
     const { data, error: profileError } = await supabase
       .from('profiles')
-      .select('first_name, last_name, avatar_url, is_public_tutor')
+      .select('firstname,lastname, avatar_url, is_public_tutor')
       .eq('id', user.id)
       .single()
     if (profileError) {
       console.error('Error fetching profile:', profileError)
     } else if (data) {
       currentUserProfile.value = {
-        firstName: data.first_name || '',
-        lastName: data.last_name || '',
-        avatarUrl: data.avatar_url || '',
-        isPublicTutor: data.is_public_tutor || false,
+      firstname: data.firstname || '',
+       lastname: data.lastname || '',
+        avatar_url: data.avatar_url || '',
+        is_public_tutor: data.is_public_tutor || false,
       }
     }
   }
@@ -93,10 +93,10 @@ const handleLogoutClick = async () => {
   }
   currentUserId.value = null
   currentUserProfile.value = {
-    firstName: '',
-    lastName: '',
-    avatarUrl: '',
-    isPublicTutor: false,
+  firstname: '',
+   lastname: '',
+    avatar_url: '',
+    is_public_tutor: false,
   }
   localStorage.removeItem('theme')
   snackbarMsg.value = 'Logged out successfully!'
@@ -116,8 +116,8 @@ const fetchStudentAppointments = async () => {
   const { data, error } = await supabase
     .from('appointments')
     .select(`id, appointment_date, appointment_time, message, created_at,
-         mentor:mentor_id(id, first_name, last_name),
-         student:student_id(id, first_name, last_name)`)
+         mentor:mentor_id(id, firstname, lastname),
+         student:student_id(id, firstname, lastname)`)
     .eq('student_id', currentUserId.value)
     .order('appointment_date', { ascending: true })
   if (error) {
@@ -139,8 +139,8 @@ const fetchMentorAppointments = async () => {
   const { data, error } = await supabase
     .from('appointments')
     .select(`id, appointment_date, appointment_time, message, 
-             mentor:mentor_id(id, first_name, last_name),
-             student:student_id(id, first_name, last_name)`)
+             mentor:mentor_id(id, firstname, lastname),
+             student:student_id(id, firstname, lastname)`)
     .eq('mentor_id', currentUserId.value)
     .order('appointment_date', { ascending: true })
   if (error) {
@@ -166,25 +166,31 @@ const fetchAppointments = async () => {
 
 const filteredAppointments = computed(() => {
   let temp = [...appointments.value]
+  
+  // Filter by search query
   if (searchQuery.value.trim()) {
     const query = searchQuery.value.toLowerCase()
     temp = temp.filter((appointment) => {
-      const studentName = `${appointment.student?.first_name || ''} ${appointment.student?.last_name || ''}`.toLowerCase()
-      const mentorName = `${appointment.mentor?.first_name || ''} ${appointment.mentor?.last_name || ''}`.toLowerCase()
+      const studentName = `${appointment.student?.firstname || ''} ${appointment.student?.lastname || ''}`.toLowerCase()
+      const mentorName = `${appointment.mentor?.firstname || ''} ${appointment.mentor?.lastname || ''}`.toLowerCase()
       return studentName.includes(query) || mentorName.includes(query)
     })
   }
+
+  // Sort by A-Z or Date
   if (selectedSort.value === 'A-Z') {
     temp.sort((a, b) => {
-      const nameA = `${a.student?.first_name || ''} ${a.student?.last_name || ''}`.toLowerCase()
-      const nameB = `${b.student?.first_name || ''} ${b.student?.last_name || ''}`.toLowerCase()
+      const nameA = `${a.student?.firstname || ''} ${a.student?.lastname || ''}`.toLowerCase()
+      const nameB = `${b.student?.firstname || ''} ${b.student?.lastname || ''}`.toLowerCase()
       return nameA.localeCompare(nameB)
     })
   } else if (selectedSort.value === 'Date') {
     temp.sort((a, b) => new Date(a.appointment_date) - new Date(b.appointment_date))
   }
+  
   return temp
 })
+
 
 const performSearch = () => {
   if (searchQuery.value.trim()) {
@@ -210,7 +216,7 @@ const openAppointmentDetails = async (appointment) => {
 
   const { data, error } = await supabase
     .from('profiles')
-    .select('first_name, last_name, email, phone, about, school, degree, year, expertise, avatar_url')
+    .select('firstname, lastname, email, phone, about, school, degree, year, expertise, avatar_url')
     .eq('id', appointment.student?.id)
     .single()
 
@@ -488,12 +494,14 @@ const hasRatedAppointment = (appointmentId) => {
             color: currentTheme === 'dark' ? '#ffffff' : '#000000',
           }"  
         >
+
+        <!--avatar display-->
           <v-avatar size="100" class="mb-3">
-            <v-img v-if="currentUserProfile.avatarUrl" :src="currentUserProfile.avatarUrl" cover />
+            <v-img v-if="currentUserProfile.avatar_url" :src="currentUserProfile.avatar_url" cover />
             <v-icon v-else size="80">mdi-account</v-icon>
           </v-avatar>
-          <h3 v-if="!mini">{{ currentUserProfile.firstName }} {{ currentUserProfile.lastName }}</h3>
-        </v-sheet>
+          <h3>{{ currentUserProfile.firstname }} {{ currentUserProfile.lastname }}</h3>
+                </v-sheet>
 
         <v-divider class="my-2" />
 
@@ -667,15 +675,15 @@ const hasRatedAppointment = (appointmentId) => {
                       Appointment between
                       <br />
                       <strong
-                        >{{ appointment.student?.first_name }}
-                        {{ appointment.student?.last_name }}</strong
+                        >{{ appointment.student?.firstname }}
+                        {{ appointment.student?.lastname }}</strong
                       >
                       <br />
                       and
                       <br />
                       <strong
-                        >{{ appointment.mentor?.first_name }}
-                        {{ appointment.mentor?.last_name }}</strong
+                        >{{ appointment.mentor?.firstname }}
+                        {{ appointment.mentor?.lastname }}</strong
                       >
                     </v-list-item-title>
 
@@ -766,8 +774,8 @@ const hasRatedAppointment = (appointmentId) => {
 
                         <!-- Profile Info -->
                         <p class="text-center">
-                          <strong >Name:</strong><br> {{ selectedStudentProfile.first_name }}
-                          {{ selectedStudentProfile.last_name }}
+                          <strong >Name:</strong><br> {{ selectedStudentProfile.firstname }}
+                          {{ selectedStudentProfile.lastname }}
                         </p class="text-center">
                         <p class="text-center"><strong >Email:</strong><br> {{ selectedStudentProfile.email }}</p>
                         <p class="text-center">

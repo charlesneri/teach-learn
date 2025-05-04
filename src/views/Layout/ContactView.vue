@@ -44,30 +44,35 @@ const snackbarColor = ref('')
 /* === User Profile === */
 const currentUserId = ref(null)
 const currentUserProfile = ref({
-  firstName: '',
-  lastName: '',
-  avatarUrl: '',
-  isPublicTutor: false,
+  firstname: '',
+  lastname: '',
+  avatar_url: '',
+  is_public_tutor: false,
 })
 
+//display profile public nav
 const fetchCurrentUser = async () => {
   const {
     data: { user },
   } = await supabase.auth.getUser()
   if (user) {
     currentUserId.value = user.id
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from('profiles')
-      .select('first_name, last_name, avatar_url, is_public_tutor')
+      .select('firstname, lastname, avatar_url')
       .eq('id', user.id)
       .single()
-    if (data) {
-      currentUserProfile.value = {
-        firstName: data.first_name || '',
-        lastName: data.last_name || '',
-        avatarUrl: data.avatar_url || '',
-        isPublicTutor: data.is_public_tutor || false,
-      }
+
+    if (error) {
+      console.error('Error fetching profile:', error)
+      return
+    }
+
+    // Directly set the avatar URL and user info
+    currentUserProfile.value = {
+      firstname: data.firstname || '',
+      lastname: data.lastname || '',
+      avatar_url: data.avatar_url || 'default-avatar-url', // Set a default if empty
     }
   }
 }
@@ -86,10 +91,10 @@ const handleLogoutClick = async () => {
 
   currentUserId.value = null
   currentUserProfile.value = {
-    firstName: '',
-    lastName: '',
-    avatarUrl: '',
-    isPublicTutor: false,
+    firstname: '',
+    lastname: '',
+    avatar_url: '',
+    is_public_tutor: false,
   }
 
   localStorage.removeItem('theme')
@@ -202,8 +207,6 @@ const sendMessage = async () => {
     messageInput.value = ''
   }
 }
-
-
 </script>
 
 <template>
@@ -237,10 +240,14 @@ const sendMessage = async () => {
           }"
         >
           <v-avatar size="100" class="mb-3">
-            <v-img v-if="currentUserProfile.avatarUrl" :src="currentUserProfile.avatarUrl" cover />
-            <v-icon v-else size="80">mdi-account</v-icon>
+            <v-img :src="currentUserProfile.avatar_url" cover>
+              <template #error>
+                <v-icon size="80" color="grey-darken-1">mdi-account</v-icon>
+              </template>
+            </v-img>
           </v-avatar>
-          <h3 v-if="!mini">{{ currentUserProfile.firstName }} {{ currentUserProfile.lastName }}</h3>
+
+          <h3 v-if="!mini">{{ currentUserProfile.firstname }} {{ currentUserProfile.lastname }}</h3>
         </v-sheet>
 
         <v-divider class="my-2" />
@@ -467,7 +474,7 @@ h1 {
   text-transform: uppercase;
   letter-spacing: 2px;
 }
-h2{
+h2 {
   font-size: 1rem;
   font-weight: 700;
   color: #1565c0;

@@ -77,24 +77,32 @@ const handleLogoutClick = async () => {
   }, 1000)
 }
 const fetchCurrentUser = async () => {
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
+  const { data: { user }, error } = await supabase.auth.getUser()
+  if (error) {
+    console.error('Error fetching user:', error.message)
+    return
+  }
 
   if (user) {
+    // Assign the user ID and email
     currentUserId.value = user.id
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from('profiles')
-      .select('firstname, lastname, avatar_url, is_public_tutor')
+      .select('firstname,lastname,avatar_url,is_public_tutor')
       .eq('id', user.id)
       .single()
+
+    if (error) {
+      console.error('Error fetching profile:', error)
+    }
 
     if (data) {
       currentUserProfile.value = {
         firstName: data.firstname || '',
         lastName: data.lastname || '',
-        avatarUrl: data.avatar_url || '', // Avatar URL for profile
+        avatarUrl: data.avatar_url || '',
         isPublicTutor: data.is_public_tutor || false,
+        email: user.email || 'No email available', // Adding email from user metadata
       }
     }
   }
@@ -113,39 +121,18 @@ const timePickerOpen = ref(false)
 
 // === Tutor Actions ===
 const fetchTutors = async () => {
-  const { data, error } = await supabase
-    .from('profiles')
-    .select(
-      'id, firstname, lastname, middleinitial, age, expertise, about, school, course, year, phone, avatar_url, is_public_tutor',
-    )
-    .eq('is_public_tutor', true) // Only fetch public tutors
-
-  if (error) {
-    console.error('Error fetching tutors:', error)
-    return
-  }
-
-  console.log(data) // Log fetched tutors
-  tutors.value = data || [] // Save the result in the tutors array
+  const { data } = await supabase.from('profiles').select('*').eq('is_public_tutor', true)
+  tutors.value = data || []
 }
 
 const viewTutor = (tutor) => {
-  console.log('Selected tutor:', tutor)
-  selectedTutor.value = tutor // Store the selected tutor in selectedTutor
-  profileDialog.value = true // Open the profile dialog
+  selectedTutor.value = tutor
+  profileDialog.value = true
 }
-
 //appointment
 const openAppointment = (tutor) => {
-  if (tutor.id === currentUserId.value) {
-    snackbarMsg.value = 'You cannot book an appointment with yourself.'
-    snackbarColor.value = 'red'
-    snackbar.value = true
-    return
-  }
-
-  selectedTutor.value = tutor // Store the selected tutor in selectedTutor
-  appointmentDialog.value = true // Open the appointment dialog
+  selectedTutor.value = tutor
+  appointmentDialog.value = true
 }
 
 const saveAppointment = async () => {
@@ -157,39 +144,35 @@ const saveAppointment = async () => {
       return
     }
 
-    // Prevent booking with self
-    if (selectedTutor.value.id === currentUserId.value) {
-      snackbarMsg.value = 'You cannot book an appointment with yourself.'
-      snackbarColor.value = 'red'
-      snackbar.value = true
-      return
-    }
+    // continue with logic...
+    // e.g., await supabase insert logic
+  } catch (error) {
+    console.error('Error saving appointment:', error)
+    snackbarMsg.value = 'Failed to save appointment.'
+    snackbarColor.value = 'red'
+    snackbar.value = true
+    return
+  }
 
-    const { error } = await supabase.from('appointments').insert({
-      mentor_id: selectedTutor.value.id, // Store the mentor's id
-      student_id: currentUserId.value, // Store the current user's id
-      student_name: `${currentUserProfile.value.firstName} ${currentUserProfile.value.lastName}`,
-      appointment_date: selectedDate.value,
-      appointment_time: selectedTime.value,
-      message: messageInput.value,
-    })
+  const { error } = await supabase.from('appointments').insert({
+    student_id: currentUserId.value,
+    mentor_id: selectedTutor.value.id,
+    student_name: `${currentUserProfile.value.firstName} ${currentUserProfile.value.lastName}`,
+    appointment_date: selectedDate.value,
+    appointment_time: selectedTime.value,
+    message: messageInput.value,
+  })
 
-    if (error) {
-      console.error('Error saving appointment:', error)
-      snackbarMsg.value = 'Failed to book appointment. Try again.'
-      snackbarColor.value = 'red'
-      snackbar.value = true
-      return
-    }
-
+  snackbar.value = true
+  if (error) {
+    console.error('Error saving appointment:', error)
+    snackbarMsg.value = 'Failed to book appointment. Try again.'
+    snackbarColor.value = 'red'
+  } else {
     snackbarMsg.value = 'Appointment booked successfully!'
     snackbarColor.value = 'green'
-    snackbar.value = true // Trigger the snackbar
-
-    // Close the appointment dialog
     appointmentDialog.value = false
 
-    // Reset the form fields after booking
     setTimeout(() => {
       selectedDate.value = ''
       selectedTime.value = ''
@@ -197,11 +180,6 @@ const saveAppointment = async () => {
       datePickerOpen.value = false
       timePickerOpen.value = false
     }, 300)
-  } catch (error) {
-    console.error('Error saving appointment:', error)
-    snackbarMsg.value = 'Failed to save appointment.'
-    snackbarColor.value = 'red'
-    snackbar.value = true
   }
 }
 
@@ -215,12 +193,12 @@ const toggleSearch = () => {
 }
 
 const filteredTutors = computed(() => {
-  if (!searchQuery.value.trim()) return tutors.value // Return all tutors if no search query
+  if (!searchQuery.value.trim()) return tutors.value
 
   const keyword = searchQuery.value.trim().toLowerCase()
   return tutors.value.filter((tutor) => {
     const fullName =
-      `${tutor.firstname || ''} ${tutor.middleinitial || ''} ${tutor.lastname || ''}`.toLowerCase()
+      `${tutor.first_name || ''} ${tutor.middle_initial || ''} ${tutor.last_name || ''}`.toLowerCase()
     const expertise = (tutor.expertise || '').toLowerCase()
     return fullName.includes(keyword) || expertise.includes(keyword)
   })
@@ -298,10 +276,19 @@ const fetchRatings = async () => {
           }"
         >
           <v-avatar size="100" class="mb-3">
-            <v-img v-if="currentUserProfile.avatarUrl" :src="currentUserProfile.avatarUrl" cover />
-            <v-icon v-else size="80">mdi-account</v-icon>
+            <!-- Display the user avatar -->
+            <v-img v-if="currentUserProfile.avatarUrl" :src="currentUserProfile.avatarUrl" cover>
+              <template #error>
+                <v-icon size="80" color="grey-darken-1">mdi-account</v-icon>
+              </template>
+            </v-img>
+            <v-icon v-else size="80" color="grey-darken-1">mdi-account</v-icon>
           </v-avatar>
-          <h3 v-if="!mini">{{ currentUserProfile.firstName }} {{ currentUserProfile.lastName }}</h3>
+
+          <!-- Display the user full name -->
+          <h3 class="text-h6">
+            {{ currentUserProfile.firstName }} {{ currentUserProfile.lastName }}
+          </h3>
         </v-sheet>
 
         <v-divider class="my-2" />
@@ -448,12 +435,20 @@ const fetchRatings = async () => {
                 <h1 class="mb-6" style="color: #1565c0">Mentors</h1>
                 <v-divider :thickness="2" class="mb-6"></v-divider>
 
+                <!-- Mentor Grid -->
                 <v-row
-                  v-if="tutors.length"
+                  v-if="filteredTutors.length"
                   class="gx-6 gy-6"
-                  :justify="tutors.length < 3 ? 'center' : 'start'"
+                  :justify="filteredTutors.length < 3 ? 'center' : 'start'"
                 >
-                  <v-col v-for="tutor in tutors" :key="tutor.id" cols="12" sm="6" md="4" lg="3">
+                  <v-col
+                    v-for="tutor in filteredTutors"
+                    :key="tutor.id"
+                    cols="12"
+                    sm="6"
+                    md="4"
+                    lg="3"
+                  >
                     <v-fade-transition>
                       <v-card
                         variant="outlined"
@@ -475,43 +470,50 @@ const fetchRatings = async () => {
                         </v-avatar>
 
                         <!-- Name & Expertise -->
-                        <h3 class="text-subtitle-1 font-weight-bold mb-1">
+                        <h3 class="text-subtitle-1 font-weight-bold mb-2">
                           {{ tutor?.firstname || 'First' }} {{ tutor?.lastname || 'Last' }}
                         </h3>
-                        <p class="text-caption mb-3">
-                          {{ tutor?.expertise || 'Subject Area' }}
-                        </p>
-
+                    
                         <!-- Action Links -->
-                        <v-btn variant="text" color="primary" @click="viewTutor(tutor)">
-                          View More
-                        </v-btn>
+                        <!-- View More -->
                         <v-btn
                           variant="text"
                           color="primary"
-                          @click="openAppointment(tutor)"
-                          :disabled="tutor.id === currentUserId"
+                          @click="viewTutor(tutor)"
+                          style="text-transform: none"
                         >
-                          Set Appointment
+                          View More
                         </v-btn>
-                          <!-- Rating -->
-                          <div class="mt-3">
+
+                        <!-- Set Appointment / My Profile -->
+                        <div style="min-height: 40px" class="d-flex align-center justify-center">
+                          <v-btn
+                            v-if="tutor?.id !== currentUserId"
+                            variant="text"
+                            color="primary"
+                            @click="openAppointment(tutor)"
+                            style="text-transform: none"
+                          >
+                            Set an Appointment
+                          </v-btn>
+                          <span v-else class="text-caption text-grey" style="line-height: 36px">
+                            (My profile)
+                          </span>
+                        </div>
+
+                        <!-- Rating -->
+                        <div class="mt-3">
                           <v-icon color="amber" size="18">mdi-star</v-icon>
                           <span v-if="ratingsMap[tutor.id]">
                             <strong>{{ ratingsMap[tutor.id] }}</strong>
                           </span>
                           <span v-else class="text-caption text-grey">Not rated yet</span>
                         </div>
+                        <v-spacer></v-spacer>
                       </v-card>
                     </v-fade-transition>
                   </v-col>
                 </v-row>
-
-                <!-- Empty State if no tutors available -->
-                <div v-else class="text-center mt-10">
-                  <v-icon size="64" color="grey">mdi-account-search</v-icon>
-                  <p class="mt-2 text-subtitle-2">No mentors available yet.</p>
-                </div>
 
                 <!-- Empty State -->
                 <div v-else class="text-center mt-10">
@@ -524,79 +526,79 @@ const fetchRatings = async () => {
         </v-container>
         <!--for the view more -->
         <v-dialog v-model="profileDialog" max-width="600px">
-          <v-card>
-            <!-- Title -->
-            <v-card-title class="text-h6 font-weight-bold justify-center py-4">
-              Mentor Profile
-            </v-card-title>
+  <v-card>
+    <!-- Title -->
+    <v-card-title class="text-h6 font-weight-bold justify-center py-4">
+      Mentors' Profile
+    </v-card-title>
 
-            <!-- Avatar and Name -->
-            <v-card-text class="text-center pb-0">
-              <v-avatar size="100" class="mb-4">
-                <v-img :src="selectedTutor.avatar_url" cover>
-                  <template #error>
-                    <v-icon size="80" color="grey-darken-1">mdi-account</v-icon>
-                  </template>
-                </v-img>
-              </v-avatar>
+    <!-- Avatar and Name -->
+    <v-card-text class="text-center pb-0">
+      <v-avatar size="100" class="mb-4">
+        <v-img :src="selectedTutor.avatar_url" cover>
+          <template #error>
+            <v-icon size="80" color="grey-darken-1">mdi-account</v-icon>
+          </template>
+        </v-img>
+      </v-avatar>
 
-              <div class="text-h6 font-weight-bold mb-1">
-                {{ selectedTutor.firstname }} {{ selectedTutor.lastname }}
-              </div>
-              <div class="text-caption mb-3 grey--text">
-                {{ selectedTutor.expertise || 'Subject Area' }}
-              </div>
-            </v-card-text>
+      <div class="text-h6 font-weight-bold mb-1">
+        {{ selectedTutor.firstname }} {{ selectedTutor.lastname }}
+      </div>
+  
+    </v-card-text>
 
-            <v-divider class="my-2" />
+    <v-divider class="my-2" />
 
-            <!-- Tutor Details -->
-            <v-card-text>
-              <v-row dense>
-                <v-col cols="12" sm="6">
-                  <strong>Full Name:</strong><br />
-                  <span
-                    >{{ selectedTutor.firstname }} {{ selectedTutor.middleinitial }}
-                    {{ selectedTutor.lastname }}</span
-                  >
-                </v-col>
-                <v-col cols="12" sm="6">
-                  <strong>Age:</strong><br />
-                  <span>{{ selectedTutor.age || 'N/A' }}</span>
-                </v-col>
-                <v-col cols="12" sm="6">
-                  <strong>Expertise:</strong><br />
-                  <span>{{ selectedTutor.expertise || 'N/A' }}</span>
-                </v-col>
-                <v-col cols="12" sm="6">
-                  <strong>About:</strong><br />
-                  <span>{{ selectedTutor.about || 'N/A' }}</span>
-                </v-col>
-                <v-col cols="12" sm="6">
-                  <strong>School:</strong><br />
-                  <span>{{ selectedTutor.school || 'N/A' }}</span>
-                </v-col>
-                <v-col cols="12" sm="6">
-                  <strong>Course:</strong><br />
-                  <span>{{ selectedTutor.course || 'N/A' }}</span>
-                </v-col>
-                <v-col cols="12" sm="6">
-                  <strong>Year:</strong><br />
-                  <span>{{ selectedTutor.year || 'N/A' }}</span>
-                </v-col>
-                <v-col cols="12" sm="6">
-                  <strong>Public Tutor:</strong><br />
-                  <span>{{ selectedTutor.is_public_tutor ? 'Yes' : 'No' }}</span>
-                </v-col>
-              </v-row>
-            </v-card-text>
+    <!-- Details -->
+    <v-card-text>
+      <v-row dense>
+        <!-- Display First Name and Last Name -->
+        <v-col cols="12" sm="6">
+          <strong>Age:</strong><br />
+          <span>{{ selectedTutor.age }}</span>
+        </v-col>
 
-            <!-- Actions -->
-            <v-card-actions class="justify-center pb-4">
-              <v-btn color="primary" @click="profileDialog = false">Close</v-btn>
-            </v-card-actions>
-          </v-card>
-        </v-dialog>
+        <!-- Display School -->
+        <v-col cols="12" sm="6">
+          <strong>School/University:</strong><br />
+          <span>{{ selectedTutor.school || 'N/A' }}</span>
+        </v-col>
+
+        <!-- Display Course -->
+        <v-col cols="12" sm="6">
+          <strong>Course/Degree:</strong><br />
+          <span>{{ selectedTutor.course || 'N/A' }}</span>
+        </v-col>
+
+        <!-- Display Year -->
+        <v-col cols="12" sm="6">
+          <strong>Year:</strong><br />
+          <span>{{ selectedTutor.year || 'N/A' }}</span>
+        </v-col>
+
+        <!-- Display Expertise -->
+        <v-col cols="12" sm="6">
+          <strong>Expertise:</strong><br />
+          <span>{{ selectedTutor.expertise || 'N/A' }}</span>
+        </v-col>
+
+        <!-- Display About -->
+        <v-col cols="12" sm="6">
+          <strong>About me:</strong><br />
+          <span>{{ selectedTutor.about || 'N/A' }}</span>
+        </v-col>
+      </v-row>
+    </v-card-text>
+
+    <!-- Actions -->
+    <v-card-actions class="justify-center pb-4">
+      <v-btn color="primary" @click="profileDialog = false">Close</v-btn>
+    </v-card-actions>
+  </v-card>
+</v-dialog>
+
+
 
         <!--set appointment-->
         <v-dialog v-model="appointmentDialog" max-width="500px">
@@ -605,7 +607,7 @@ const fetchRatings = async () => {
             <v-card-text>
               <p v-if="selectedTutor">
                 Booking with:
-                <strong>{{ selectedTutor.firstname }} {{ selectedTutor.lastname }}</strong>
+                <strong>{{ selectedTutor.first_name }} {{ selectedTutor.last_name }}</strong>
               </p>
               <v-text-field v-model="selectedDate" label="Date" type="date" dense />
               <v-text-field v-model="selectedTime" label="Time" type="time" dense />
