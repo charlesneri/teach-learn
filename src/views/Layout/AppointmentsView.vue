@@ -354,22 +354,7 @@ const submitRating = async () => {
 
 //for rating rule
 const canRateAppointment = (appointment) => {
-  if (currentUserId.value === appointment.student?.id) {
-    // Check if the user has already rated the appointment
-    return !hasRatedAppointment(appointment.id)
-  }
-  return false // Only the student who booked the appointment can rate
-}
-
-//for the rate button
-const handleRateClick = (appointment) => {
-  if (canRateAppointment(appointment)) {
-    openRatingDialog(appointment)
-  } else {
-    snackbarMsg.value = 'You cannot rate this session. Only the person who booked it can rate.'
-    snackbarColor.value = 'red'
-    snackbar.value = true
-  }
+  return currentUserId.value === appointment.student?.id && !hasRatedAppointment(appointment.id)
 }
 
 //for delete function
@@ -504,9 +489,13 @@ const hasRatedAppointment = (appointmentId) => {
 const formatAppointmentDateTime = (dateStr, timeStr) => {
   if (!dateStr || !timeStr) return ''
   const date = new Date(`${dateStr}T${timeStr}`)
-  const options = { 
-    weekday: 'short', year: 'numeric', month: 'short', 
-    day: 'numeric', hour: '2-digit', minute: '2-digit' 
+  const options = {
+    weekday: 'short',
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
   }
   return date.toLocaleString(undefined, options)
 }
@@ -753,14 +742,18 @@ const formatAppointmentDateTime = (dateStr, timeStr) => {
 
                         <div class="text-center">
                           <span class="text-caption text-grey">Appointment between</span><br />
+
                           <span class="font-weight-bold text-primary text-lg">
+                            <span class="role-label">Client:</span>
                             {{ appointment.student?.firstname }} {{ appointment.student?.lastname }}
                           </span>
                           <br />
-                          <span class="text-caption text-grey">and</span><br />
+
                           <span class="font-weight-bold text-secondary text-lg">
+                            <span class="role-label">Mentor:</span>
                             {{ appointment.mentor?.firstname }} {{ appointment.mentor?.lastname }}
                           </span>
+
                           <br />
                           <!--display time and date-->
                           <span class="text-caption text-grey mt-2">
@@ -775,19 +768,18 @@ const formatAppointmentDateTime = (dateStr, timeStr) => {
                       </div>
                     </v-list-item-title>
 
-                    <v-list-item-subtitle class="appointment-subtitle">
-                      <div v-if="getRatingForAppointment(appointment.id)" class="text-center mt-2">
+                    <v-list-item-subtitle class="appointment-subtitle text-center mt-2">
+                      <div v-if="getRatingForAppointment(appointment.id)">
                         <v-rating
                           v-model="userRatingsMap[appointment.id]"
                           readonly
                           color="amber"
-                          background-color="grey lighten-1"
-                          dense
+                          background-color="grey lighten-2"
+                          density="compact"
                           half-increments
-                          size="20"
+                          size="22"
+                          class="mx-auto"
                         />
-
-                        <small class="text-grey">You rated this session</small>
                       </div>
                     </v-list-item-subtitle>
 
@@ -813,21 +805,11 @@ const formatAppointmentDateTime = (dateStr, timeStr) => {
                         Delete
                       </v-btn>
                       <v-btn
+                        v-if="canRateAppointment(appointment)"
                         size="small"
                         color="amber"
                         variant="text"
-                        @click="
-                          () => {
-                            if (canRateAppointment(appointment)) {
-                              handleRateClick(appointment)
-                            } else {
-                              snackbarMsg =
-                                'You cannot rate this session. Only the person who booked it can rate.'
-                              snackbarColor = 'red'
-                              snackbar = true
-                            }
-                          }
-                        "
+                        @click="handleRateClick(appointment)"
                       >
                         Rate
                       </v-btn>
@@ -1032,6 +1014,7 @@ h1 {
   flex-direction: column;
   gap: 24px;
 }
+
 
 /* Appointment Item */
 .appointment-item {
@@ -1272,8 +1255,16 @@ h1 {
   transition: transform 0.3s ease;
 }
 /*for chip*/
-v-chip--label.green {
+.v-chip--label.green {
   box-shadow: 0 0 8px #4caf50;
+}
+.role-label {
+  font-size: 15px;
+  display: inline-block;
+  font-weight: 700;
+  color: #e53935;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
 
 /* Mobile Responsiveness */
