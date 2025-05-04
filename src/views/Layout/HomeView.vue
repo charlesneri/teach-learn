@@ -34,6 +34,7 @@ const checkMobile = () => {
   isMobile.value = window.innerWidth <= 768
 }
 
+
 // === Snackbar ===
 const snackbar = ref(false)
 const snackbarMsg = ref('')

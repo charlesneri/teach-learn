@@ -8,6 +8,7 @@ import { supabase } from '@/utils/supabase'
 /* === Router === */
 const router = useRouter()
 
+
 /* === Theme === */
 const theme = useTheme()
 const currentTheme = ref(localStorage.getItem('theme') || 'light')
@@ -22,6 +23,7 @@ watch(currentTheme, (val) => {
   theme.global.name.value = val
   localStorage.setItem('theme', val)
 })
+
 
 /* === Responsive Drawer & Mobile === */
 const drawer = ref(false)

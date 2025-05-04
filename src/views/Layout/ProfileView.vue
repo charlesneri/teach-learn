@@ -27,6 +27,15 @@ const snackbarMsg = ref('')
 const isEditing = ref(false)
 const loading = ref(false)
 const imageLoading = ref(false)
+const showFullImage = ref(false)
+const fullImageUrl = ref('')
+
+//for viewing profile
+const viewFullImage = (url) => {
+  if (!url) return
+  fullImageUrl.value = url
+  showFullImage.value = true
+}
 
 // PROFILE STATES
 const profile = ref({
@@ -490,14 +499,19 @@ onBeforeUnmount(() => {
             color: currentTheme === 'dark' ? '#ffffff' : '#000000',
           }"
         >
-        <v-avatar size="100" class="mb-3">
-  <v-img v-if="profileImage" :src="profileImage" cover>
+      <v-avatar size="100" class="mb-3" v-if="profileImage">
+  <v-img
+    :src="profileImage"
+    cover
+    @click="viewFullImage(profileImage)"
+    style="cursor: pointer"
+  >
     <template #error>
       <v-icon size="80" color="grey-darken-1">mdi-account</v-icon>
     </template>
   </v-img>
-  <v-icon v-else size="80" color="grey-darken-1">mdi-account</v-icon>
 </v-avatar>
+
 <h3>{{ currentUserProfile.firstname }} {{ currentUserProfile.lastname }}</h3>
 
         </v-sheet>
@@ -640,15 +654,18 @@ onBeforeUnmount(() => {
 
               <!-- Profile Avatar -->
               <div class="d-flex flex-column align-center mb-4">
-                <v-avatar :size="$vuetify.display.smAndDown ? 100 : 120" class="bg-grey-lighten-2">
-                  <v-img v-if="profileImage" :src="profileImage" cover>
-                    <template #error>
-                      <v-icon size="80" color="grey-darken-1">mdi-account</v-icon>
-                    </template>
-                  </v-img>
-                  <v-icon v-else size="80" color="grey-darken-1">mdi-account</v-icon>
-                  
-                </v-avatar>
+                <v-avatar size="100" class="mb-3" v-if="profileImage">
+  <v-img
+    :src="profileImage"
+    cover
+    @click="viewFullImage(profileImage)"
+    style="cursor: pointer"
+  >
+    <template #error>
+      <v-icon size="80" color="grey-darken-1">mdi-account</v-icon>
+    </template>
+  </v-img>
+</v-avatar>
                 <h3>{{ currentUserProfile.firstname }} {{ currentUserProfile.lastname }}</h3>
 
 
@@ -897,6 +914,15 @@ onBeforeUnmount(() => {
             </v-sheet>
           </v-col>
         </v-row>
+        <!--for dialog for image viewing-->
+        <v-dialog v-model="showFullImage" max-width="600">
+  <v-card class="pa-2" rounded="lg">
+    <v-img :src="fullImageUrl" aspect-ratio="1" class="rounded-lg" cover />
+    <v-card-actions class="justify-end">
+      <v-btn color="primary" @click="showFullImage = false">Close</v-btn>
+    </v-card-actions>
+  </v-card>
+</v-dialog>
       </v-container>
     </v-main>
   </v-app>

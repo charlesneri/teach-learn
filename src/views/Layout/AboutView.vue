@@ -7,6 +7,8 @@ import { supabase } from '@/utils/supabase'
 const router = useRouter()
 const theme = useTheme()
 
+
+
 // THEME
 const currentTheme = ref(localStorage.getItem('theme') || 'light')
 watch(currentTheme, (val) => {
@@ -18,6 +20,8 @@ const toggleTheme = () => {
   theme.global.name.value = currentTheme.value
   localStorage.setItem('theme', currentTheme.value)
 }
+
+
 
 // PROFILE IMAGE
 const profileImage = ref('')

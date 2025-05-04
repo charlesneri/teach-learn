@@ -16,6 +16,8 @@ const toggleTheme = () => {
   theme.global.name.value = currentTheme.value
   localStorage.setItem('theme', currentTheme.value)
 }
+const showFullImage = ref(false)
+const fullImageUrl = ref('')
 
 // Router & UI
 const router = useRouter()
