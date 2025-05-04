@@ -89,7 +89,7 @@ const onLogin = async () => {
   formAction.value.formSuccessMessage = 'Successfully Logged In!'
   formAction.value.formProcess = false
   setTimeout(() => {
-    router.replace('/home')  // Redirect to the home page or dashboard
+    router.replace('/home') // Redirect to the home page or dashboard
   }, 1500)
 }
 
@@ -130,13 +130,11 @@ const onFormSubmit = () => {
 
           <!-- Login Card -->
           <v-row>
-            <v-col cols="12" sm="10" md="6" lg="4" class="mx-auto">
+            <v-col cols="12" sm="8" md="6" lg="4" class="mx-auto">
               <transition name="slide-fade">
                 <v-card
-                  :style="{ backgroundColor: theme === 'light' ? '#fefcf9' : '#222222' }"
                   class="mx-auto rounded-xl pb-5 hover-card"
-                  width="500"
-                  style="font-size: 85%; font-weight: 200"
+                  style="font-size: 85%; font-weight: 200; width: 100%"
                 >
                   <template v-slot:title>
                     <v-img
@@ -306,6 +304,13 @@ body.dark .active-click {
 body.dark .active-click:hover {
   color: #ffffff;
 }
+img {
+  max-width: 100%;
+  height: auto;
+}
+body {
+  font-size: clamp(14px, 2vw, 16px);
+}
 
 @media (max-width: 600px) {
   .wrapper {
@@ -325,7 +330,12 @@ body.dark .active-click:hover {
     font-size: 14px;
     padding: 10px 20px;
   }
-
- 
+  .v-card {
+    max-width: 400px;
+  }
+  .wrapper {
+    padding: 1rem;
+    padding-top: 3rem;
+  }
 }
 </style>

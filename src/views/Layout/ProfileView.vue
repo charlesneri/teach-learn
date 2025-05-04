@@ -499,16 +499,17 @@ onBeforeUnmount(() => {
             color: currentTheme === 'dark' ? '#ffffff' : '#000000',
           }"
         >
-      <v-avatar size="100" class="mb-3" v-if="profileImage">
-  <v-img
-    :src="profileImage"
-    cover  style="cursor: pointer"
+        <v-avatar size="100" class="mb-3">
+  <component
+    :is="profileImage ? 'v-img' : 'v-icon'"
+    v-bind="profileImage ? { src: profileImage, cover: true, style: 'cursor: pointer' } : { size: '80', color: 'grey-darken-1' }"
+    @click="profileImage && viewFullImage(profileImage)"
   >
-    <template #error>
-      <v-icon size="80" color="grey-darken-1">mdi-account</v-icon>
-    </template>
-  </v-img>
+    <template v-if="!profileImage">mdi-account</template>
+  </component>
 </v-avatar>
+
+
 
 <h3>{{ currentUserProfile.firstname }} {{ currentUserProfile.lastname }}</h3>
 
@@ -655,17 +656,14 @@ onBeforeUnmount(() => {
 
               <!-- Profile Avatar -->
               <div class="d-flex flex-column align-center mb-4">
-                <v-avatar size="100" class="mb-3" v-if="profileImage">
-  <v-img
-    :src="profileImage"
-    cover
-    @click="viewFullImage(profileImage)"
-    style="cursor: pointer"
+                <v-avatar size="100" class="mb-3">
+  <component
+    :is="profileImage ? 'v-img' : 'v-icon'"
+    v-bind="profileImage ? { src: profileImage, cover: true, style: 'cursor: pointer' } : { size: '80', color: 'grey-darken-1' }"
+    @click="profileImage && viewFullImage(profileImage)"
   >
-    <template #error>
-      <v-icon size="80" color="grey-darken-1">mdi-account</v-icon>
-    </template>
-  </v-img>
+    <template v-if="!profileImage">mdi-account</template>
+  </component>
 </v-avatar>
                 <h3>{{ currentUserProfile.firstname }} {{ currentUserProfile.lastname }}</h3>
 
