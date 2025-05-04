@@ -243,8 +243,7 @@ const openAppointmentDetails = async (appointment) => {
 
   // Get mentor's average rating
   const result = await getAverageRatingForMentor(appointment.mentor?.id)
-mentorAverageRating.value = result 
-
+  mentorAverageRating.value = result
 
   // Determine which profile to show based on who is logged in
   const isCurrentUserStudent = currentUserId.value === appointment.student?.id
@@ -445,10 +444,9 @@ const getAverageRatingForMentor = async (mentorId) => {
   const average = (total / data.length).toFixed(1)
   return {
     average,
-    count: data.length
+    count: data.length,
   }
 }
-
 
 //for edit appointments
 const editDialog = ref(false)
@@ -631,7 +629,10 @@ const formatAppointmentDateTime = (dateStr, timeStr) => {
         }"
       >
         <div class="search-wrapper">
-          <v-avatar color="#fff" size="50" class="logo me-6">
+          <v-avatar  :style="{
+                backgroundColor: currentTheme === 'dark' ? '#1565c0' : '#ffffff',
+                color: currentTheme === 'dark' ? '#ffffff' : '#000000',
+              }" size="50" class="logo me-6">
             <v-img src="image/Teach&Learn.png" alt="Logo" />
           </v-avatar>
         </div>
@@ -658,8 +659,9 @@ const formatAppointmentDateTime = (dateStr, timeStr) => {
       <v-container fluid class="py-2 px-2">
         <v-row justify="center">
           <v-col cols="12" sm="11" md="8">
+            <transition name="slide-fade-scale">
             <v-sheet
-              class="pa-3 pa-sm-4 text-center"
+              class="pa-3 pa-sm-4 text-center mt-5"
               elevation="1"
               rounded="lg"
               style="max-width: 1200px; min-height: 90vh"
@@ -670,6 +672,7 @@ const formatAppointmentDateTime = (dateStr, timeStr) => {
             >
               <!-- Title -->
               <h1 class="mb-3">Appointments</h1>
+           
 
               <!-- Search & Sort -->
               <v-row class="mb-3" dense>
@@ -731,7 +734,7 @@ const formatAppointmentDateTime = (dateStr, timeStr) => {
                           color="green"
                           size="small"
                           label
-                          class="mb-2  "
+                          class="mb-2"
                         >
                           NEW
                         </v-chip>
@@ -749,12 +752,12 @@ const formatAppointmentDateTime = (dateStr, timeStr) => {
                           <span class="text-caption text-grey">Appointment between</span><br />
 
                           <span class="role-label">
-                            <span >Client:</span>
+                            <span>Client:</span>
                             {{ appointment.student?.firstname }} {{ appointment.student?.lastname }}
                           </span>
                           <br />
 
-                          <span class="role-label ">
+                          <span class="role-label">
                             <span>Mentor:</span>
                             {{ appointment.mentor?.firstname }} {{ appointment.mentor?.lastname }}
                           </span>
@@ -923,6 +926,8 @@ const formatAppointmentDateTime = (dateStr, timeStr) => {
                 No appointments found. Try searching or adjusting the sort option.
               </v-alert>
             </v-sheet>
+            </transition>
+
           </v-col>
         </v-row>
       </v-container>
@@ -1020,7 +1025,6 @@ h1 {
   gap: 24px;
 }
 
-
 /* Appointment Item */
 .appointment-item {
   background-color: #ffffff;
@@ -1093,17 +1097,37 @@ h1 {
 }
 
 /* Fade Slide Up Animation for Dialog */
-.fade-slide-up-enter-active,
-.fade-slide-up-leave-active {
-  transition:
-    opacity 0.4s ease,
-    transform 0.4s ease;
+/* Enhanced Slide + Fade + Scale on Enter */
+.slide-fade-scale-enter-active {
+  animation: slideFadeScaleIn 0.6s ease-out;
 }
-.fade-slide-up-enter-from,
-.fade-slide-up-leave-to {
-  opacity: 0;
-  transform: translateY(20px);
+.slide-fade-scale-leave-active {
+  animation: slideFadeScaleOut 0.4s ease-in forwards;
 }
+@keyframes slideFadeScaleIn {
+  0% {
+    opacity: 0;
+    transform: translateY(40px) scale(0.98);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+@keyframes slideFadeScaleOut {
+  0% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(20px) scale(0.98);
+  }
+}
+
+
+
+
 
 /* Responsive for Mobile */
 @media (max-width: 600px) {
@@ -1266,7 +1290,6 @@ h1 {
 .role-label {
   font-size: 15px;
   display: inline-block;
- ;
   text-transform: uppercase;
   letter-spacing: 0.5px;
 }

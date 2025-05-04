@@ -274,7 +274,10 @@ onBeforeUnmount(() => {
       >
         <div class="search-wrapper">
        
-          <v-avatar color="#fff" size="50" class="logo me-6">
+          <v-avatar  :style="{
+                backgroundColor: currentTheme === 'dark' ? '#1565c0' : '#ffffff',
+                color: currentTheme === 'dark' ? '#ffffff' : '#000000',
+              }" size="50" class="logo me-6">
             <v-img src="image/Teach&Learn.png" alt="Logo" />
           </v-avatar>
         </div>
@@ -304,7 +307,7 @@ onBeforeUnmount(() => {
           <v-col cols="12" sm="10" md="10" lg="10">
             <v-sheet
             :style="{
-        backgroundColor: currentTheme === 'dark' ? '#424242' : '#fefcf9',
+        backgroundColor: currentTheme === 'dark' ? '#424242' : '',
         color: currentTheme === 'dark' ? '#ffffff' : '#000000',
       }"              class="border-sheet pa-6"
              elevation="2"
@@ -335,7 +338,7 @@ onBeforeUnmount(() => {
                 <!-- Step 1 -->
                 <v-col cols="12" sm="6" md="4" class="mb-4 d-flex" >
                   <v-card class="pa-4 flex-grow-1 fade-in" variant="outlined" rounded="lg"  :style="{
-                    backgroundColor: currentTheme === 'dark' ? '#424242' : '#fefcf9',
+                    backgroundColor: currentTheme === 'dark' ? '#424242' : '',
                     color: currentTheme === 'dark' ? '#ffffff' : '#000000',
                   }">
                     <v-icon size="32" class="mb-2" color="primary " >mdi-account-plus</v-icon>
@@ -351,7 +354,7 @@ onBeforeUnmount(() => {
                 <!-- Step 2 -->
                 <v-col cols="12" sm="6" md="4" class="mb-4 d-flex">
                   <v-card class="pa-4 flex-grow-1 fade-in" variant="outlined" rounded="lg" :style="{
-                    backgroundColor: currentTheme === 'dark' ? '#424242' : '#fefcf9',
+                    backgroundColor: currentTheme === 'dark' ? '#424242' : '',
                     color: currentTheme === 'dark' ? '#ffffff' : '#000000',
                   }">
                     <v-icon size="32" class="mb-2 white-font" color="primary">mdi-magnify</v-icon>
@@ -367,7 +370,7 @@ onBeforeUnmount(() => {
                 <!-- Step 3 -->
                 <v-col cols="12" sm="6" md="4" class="mb-4 d-flex">
                   <v-card class="pa-4 flex-grow-1 fade-in" variant="outlined" rounded="lg" :style="{
-                    backgroundColor: currentTheme === 'dark' ? '#424242' : '#fefcf9',
+                    backgroundColor: currentTheme === 'dark' ? '#424242' : '',
                     color: currentTheme === 'dark' ? '#ffffff' : '#000000',
                   }">
                     <v-icon size="32" class="mb-2 white-font" color="primary " >mdi-calendar-clock</v-icon>
@@ -383,7 +386,7 @@ onBeforeUnmount(() => {
                 <!-- Step 4 -->
                 <v-col cols="12" sm="6" md="4" class="mb-4 d-flex">
                   <v-card class="pa-4 flex-grow-1 fade-in" variant="outlined" rounded="lg" :style="{
-                    backgroundColor: currentTheme === 'dark' ? '#424242' : '#fefcf9',
+                    backgroundColor: currentTheme === 'dark' ? '#424242' : '',
                     color: currentTheme === 'dark' ? '#ffffff' : '#000000',
                   }">
                     <v-icon size="32" class="mb-2" color="primary">mdi-school</v-icon>
@@ -399,7 +402,7 @@ onBeforeUnmount(() => {
                 <!-- Step 5 -->
                 <v-col cols="12" sm="6" md="4" class="mb-4 d-flex">
                   <v-card class="pa-4 flex-grow-1 fade-in" variant="outlined" rounded="lg" :style="{
-                    backgroundColor: currentTheme === 'dark' ? '#424242' : '#fefcf9',
+                    backgroundColor: currentTheme === 'dark' ? '#424242' : '',
                     color: currentTheme === 'dark' ? '#ffffff' : '#000000',
                   }">
                     <v-icon size="32" class="mb-2" color="primary">mdi-star-check</v-icon>
@@ -415,9 +418,16 @@ onBeforeUnmount(() => {
 
               <!-- CTA Button -->
               <div class="text-center mt-6">
-                <v-btn color="primary" size="large" elevation="1" class="text-none" to="/home">
-                  Get Started Now
-                </v-btn>
+                <v-btn
+  color="primary"
+  size="large"
+  elevation="2"
+  class="animated-btn text-none"
+  to="/home"
+>
+  Get Started Now
+</v-btn>
+
               </div>
             </v-sheet>
           </v-col>
@@ -496,6 +506,24 @@ h1 {
 .fade-slide-up-enter-active {
   animation: fadeSlideUp 0.6s ease;
 }
+/*for get started  */
+
+.animated-btn {
+  transition: all 0.3s ease;
+  transform: scale(1);
+  box-shadow: 0 4px 8px rgba(21, 101, 192, 0.3);
+}
+
+.animated-btn:hover {
+  transform: scale(1.05);
+  box-shadow: 0 8px 16px rgba(21, 101, 192, 0.5);
+}
+
+.animated-btn:active {
+  transform: scale(0.98);
+  box-shadow: 0 2px 6px rgba(21, 101, 192, 0.2);
+}
+
 @keyframes fadeSlideUp {
   0% {
     opacity: 0;

@@ -304,7 +304,10 @@ onBeforeUnmount(() => {
       <v-btn icon class="ms-5" @click="toggleDrawer">
         <v-icon>mdi-menu</v-icon>
       </v-btn>
-      <v-avatar color="#fff" size="50" class="ms-auto me-4">
+      <v-avatar  :style="{
+                backgroundColor: currentTheme === 'dark' ? '#1565c0' : '#ffffff',
+                color: currentTheme === 'dark' ? '#ffffff' : '#000000',
+              }" size="50" class="ms-auto me-4">
         <v-img src="image/Teach&Learn.png" alt="Logo" />
       </v-avatar>
     </v-app-bar>
@@ -331,7 +334,7 @@ onBeforeUnmount(() => {
         <v-row justify="center">
           <v-col cols="12" sm="11" md="8">
             <v-sheet
-              class="pa-3 pa-sm-4 text-center"
+              class="pa-3 pa-sm-4 text-center mt-5"
               elevation="1"
               rounded="lg"
               style="max-width: 1200px; min-height: 90vh"

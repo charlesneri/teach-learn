@@ -594,7 +594,10 @@ onBeforeUnmount(() => {
       >
         <div class="logo-wrapper">
        
-          <v-avatar color="#fff" size="50" class="logo me-6">
+          <v-avatar  :style="{
+                backgroundColor: currentTheme === 'dark' ? '#1565c0' : '#ffffff',
+                color: currentTheme === 'dark' ? '#ffffff' : '#000000',
+              }" size="50" class="logo me-6">
             <v-img src="image/Teach&Learn.png" alt="Logo" />
           </v-avatar>
         </div>
@@ -700,42 +703,42 @@ onBeforeUnmount(() => {
                 />
               </div>
 
-              <!-- button for apply as tutor or cancel -->
-              <div class="d-flex justify-center mb-3">
-               <v-btn
-  :color="profile.is_public_tutor ? 'red' : 'primary'"
-  @click="dialog = true"
-  :loading="loading"
->
-  {{ profile.is_public_tutor ? 'Cancel Apply' : 'Apply as Tutor?' }}
-</v-btn>
+                            <!-- button for apply as tutor or cancel -->
+                            <div class="d-flex justify-center mb-3">
+                            <v-btn
+                :color="profile.is_public_tutor ? 'red' : 'primary'"
+                @click="dialog = true"
+                :loading="loading"
+              >
+                {{ profile.is_public_tutor ? 'Cancel Apply' : 'Apply as Tutor?' }}
+              </v-btn>
 
-</div>
-           
-              <!-- Confirm Dialog: Apply as Tutor -->
-            <!-- Confirm Dialog: Apply as Tutor -->
-<v-dialog v-model="dialog" max-width="500" persistent transition="fade-transition">
-  <v-card>
-    <v-card-title class="text-h6">
-      <v-icon class="me-2">mdi-alert-circle-outline</v-icon> Confirm Application
-    </v-card-title>
-    <v-card-text>
-      Your personal information will be public. Do you still wish to proceed?
-    </v-card-text>
-    <v-card-actions class="justify-end">
-      <v-btn
-        color="grey"
-        variant="outlined"
-        @click="dialog = false"
-        :disabled="loading"
-        >No</v-btn
-      >
-      <v-btn color="green" @click="applyAsTutor" :loading="loading">
-        Yes, Apply
-      </v-btn>
-    </v-card-actions>
-  </v-card>
-</v-dialog>
+              </div>
+                        
+                        
+                          <!-- Confirm Dialog: Apply as Tutor -->
+              <v-dialog v-model="dialog" max-width="500" persistent transition="fade-transition">
+                <v-card>
+                  <v-card-title class="text-h6">
+                    <v-icon class="me-2">mdi-alert-circle-outline</v-icon> Confirm Application
+                  </v-card-title>
+                  <v-card-text>
+                    Your personal information will be public. Do you still wish to proceed?
+                  </v-card-text>
+                  <v-card-actions class="justify-end">
+                    <v-btn
+                      color="grey"
+                      variant="outlined"
+                      @click="dialog = false"
+                      :disabled="loading"
+                      >No</v-btn
+                    >
+                    <v-btn color="green" @click="applyAsTutor" :loading="loading">
+                      Yes, Apply
+                    </v-btn>
+                  </v-card-actions>
+                </v-card>
+              </v-dialog>
 
               <!-- Confirm Dialog: Remove Profile Image -->
               <v-dialog v-model="confirmRemove" max-width="400" persistent>

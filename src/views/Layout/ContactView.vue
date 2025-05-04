@@ -224,7 +224,7 @@ const sendMessage = async () => {
         app
         :scrim="isMobile"
         :style="{
-          backgroundColor: currentTheme === 'dark' ? '#424242' : '',
+          backgroundColor: currentTheme === 'dark' ? '#424242' : '#ffffff',
           color: currentTheme === 'dark' ? '#ffffff' : '#000000',
         }"
       >
@@ -335,7 +335,10 @@ const sendMessage = async () => {
         }"
       >
         <div class="search-wrapper">
-          <v-avatar color="#fff" size="50" class="logo me-6">
+          <v-avatar  :style="{
+                backgroundColor: currentTheme === 'dark' ? '#1565c0' : '#ffffff',
+                color: currentTheme === 'dark' ? '#ffffff' : '#000000',
+              }" size="50" class="logo me-6">
             <v-img src="image/Teach&Learn.png" alt="Logo" />
           </v-avatar>
         </div>
@@ -366,7 +369,7 @@ const sendMessage = async () => {
 
             <v-sheet
               :style="{
-                backgroundColor: currentTheme === 'dark' ? '#424242' : '#fefcf9',
+                backgroundColor: currentTheme === 'dark' ? '#424242' : '',
                 color: currentTheme === 'dark' ? '#ffffff' : '#000000',
               }"
               class="pa-6 pa-sm-8 text-center"

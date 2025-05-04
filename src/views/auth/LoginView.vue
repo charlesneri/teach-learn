@@ -208,10 +208,9 @@ const onFormSubmit = () => {
   align-items: center;
   justify-content: center;
   transition: background 0.3s ease;
-  padding: 32px;
 }
 
-/* Card transition animation */
+/* Transition animation */
 .slide-fade-enter-active {
   transition: all 0.6s ease;
 }
@@ -222,7 +221,9 @@ const onFormSubmit = () => {
 
 /* Hover effect for the card */
 .hover-card {
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  transition:
+    transform 0.3s ease,
+    box-shadow 0.3s ease;
 }
 .hover-card:hover {
   transform: scale(1.05);
@@ -248,38 +249,57 @@ const onFormSubmit = () => {
   color: white;
   font-weight: bold;
   letter-spacing: 1px;
+  max-width: 160px;
   font-size: 16px;
   padding: 12px 24px;
   border-radius: 50px;
   text-transform: uppercase;
   box-shadow: 0 4px 12px rgba(33, 150, 243, 0.3);
+  display: flex;
+  justify-content: center;
+  align-items: center;
   transition: all 0.3s ease;
 }
 .signup-btn:hover {
   transform: scale(1.05);
-  background-color: #0d47a1;
   box-shadow: 0 6px 18px rgba(33, 150, 243, 0.6);
+  background-color: #0d47a1;
 }
 .signup-btn:active {
   transform: scale(1.02);
   background-color: #0b3c73;
+  box-shadow: 0 4px 12px rgba(33, 150, 243, 0.4);
 }
 .signup-btn:focus {
   outline: none;
   box-shadow: 0 0 8px rgba(33, 150, 243, 0.8);
 }
 
+/* Dark mode card */
+.bg-grey-darken-4 {
+  background-color: #121212 !important;
+}
+.text-white {
+  color: white !important;
+}
+
 /* Remove underline on link */
+
+/* Base link style */
 .active-click {
   text-decoration: none;
   transition: color 0.3s ease;
 }
+
+/* Light mode: default + hover */
 body:not(.dark) .active-click {
   color: #0d47a1;
 }
 body:not(.dark) .active-click:hover {
   color: #002171;
 }
+
+/* Dark mode: default + hover */
 body.dark .active-click {
   color: #90caf9;
 }
@@ -287,17 +307,11 @@ body.dark .active-click:hover {
   color: #ffffff;
 }
 
-/* Responsive Styles */
-@media (max-width: 960px) {
+@media (max-width: 600px) {
   .wrapper {
-    padding: 2rem 1rem;
+    padding: 0 1rem;
     align-items: flex-start;
-    justify-content: center;
-  }
-
-  .hover-card {
-    width: 100% !important;
-    max-width: 100% !important;
+    padding-top: 3rem;
   }
 
   .theme-toggle-btn {
@@ -310,15 +324,8 @@ body.dark .active-click:hover {
   .signup-btn {
     font-size: 14px;
     padding: 10px 20px;
-    width: 100%;
   }
 
-  .v-img {
-    max-width: 100px;
-  }
-
-  .v-card-text {
-    padding: 16px;
-  }
+ 
 }
 </style>

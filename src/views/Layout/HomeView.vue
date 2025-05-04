@@ -268,7 +268,7 @@ const fetchRatings = async () => {
         app
         :scrim="isMobile"
         :style="{
-          backgroundColor: currentTheme === 'dark' ? '#424242' : '#fefcf9',
+          backgroundColor: currentTheme === 'dark' ? '#424242' : '#ffffff',
           color: currentTheme === 'dark' ? '#ffffff' : '#000000',
         }"
       >
@@ -281,7 +281,7 @@ const fetchRatings = async () => {
           class="pa-4 text-center"
           rounded="lg"
           :style="{
-            backgroundColor: currentTheme === 'dark' ? ' #424242' : '#fefcf9',
+            backgroundColor: currentTheme === 'dark' ? ' #424242' : '#ffffff',
             color: currentTheme === 'dark' ? '#ffffff' : '#000000',
           }"
         >
@@ -402,7 +402,10 @@ const fetchRatings = async () => {
           <v-btn icon @click="toggleSearch">
             <v-icon>{{ showSearch ? 'mdi-close' : 'mdi-magnify' }}</v-icon>
           </v-btn>
-          <v-avatar color="#fff" size="50" class="logo me-6">
+          <v-avatar   :style="{
+                backgroundColor: currentTheme === 'dark' ? '#1565c0' : '#ffffff',
+                color: currentTheme === 'dark' ? '#ffffff' : '#000000',
+              }" size="50" class="logo me-6">
             <v-img src="image/Teach&Learn.png" alt="Logo" />
           </v-avatar>
         </div>
@@ -437,7 +440,7 @@ const fetchRatings = async () => {
                 class="pa-6 ma-auto"
                 style="min-height: 100vh; height: auto"
                 :style="{
-                  backgroundColor: currentTheme === 'dark' ? '#424242' : '#fefcf9',
+                  backgroundColor: currentTheme === 'dark' ? '#424242' : '#ffffff',
                   color: currentTheme === 'dark' ? '#ffffff' : '#000000',
                 }"
               >
