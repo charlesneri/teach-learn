@@ -260,22 +260,6 @@ const sendMessage = async () => {
             </div>
           </v-list-item>
 
-          <v-list-item :to="'/about'" tag="RouterLink" @click="isMobile && (drawer = false)">
-            <div class="d-flex align-center" style="gap: 8px; width: 100%">
-              <v-icon size="30" style="margin-left: 15px">mdi-information-outline</v-icon>
-              <span v-if="!mini" class="icon-mdi">About Us</span>
-            </div>
-          </v-list-item>
-
-          <v-list-item :to="'/contact'" tag="RouterLink" @click="isMobile && (drawer = false)">
-            <div class="d-flex align-center" style="gap: 8px; width: 100%">
-              <v-icon size="30" style="margin-left: 15px">mdi-phone-outline</v-icon>
-              <span v-if="!mini" class="icon-mdi">Contact Us</span>
-            </div>
-          </v-list-item>
-
-          <v-divider class="my-2" />
-
           <v-list-item :to="'/profile'" tag="RouterLink" @click="isMobile && (drawer = false)">
             <div class="d-flex align-center" style="gap: 8px; width: 100%">
               <v-icon size="30" style="margin-left: 15px">mdi-account-outline</v-icon>
@@ -297,11 +281,25 @@ const sendMessage = async () => {
           >
             <div class="d-flex align-center" style="gap: 8px; width: 100%">
               <v-icon size="30" style="margin-left: 15px"> mdi-delete-outline</v-icon>
-              <span v-if="!mini" class="icon-mdi">Delete History</span>
+              <span v-if="!mini" class="icon-mdi">Deleted Appointments</span>
             </div>
           </v-list-item>
 
           <v-divider class="my-2" />
+          
+          <v-list-item :to="'/about'" tag="RouterLink" @click="isMobile && (drawer = false)">
+            <div class="d-flex align-center" style="gap: 8px; width: 100%">
+              <v-icon size="30" style="margin-left: 15px">mdi-information-outline</v-icon>
+              <span v-if="!mini" class="icon-mdi">About Us</span>
+            </div>
+          </v-list-item>
+
+          <v-list-item :to="'/contact'" tag="RouterLink" @click="isMobile && (drawer = false)">
+            <div class="d-flex align-center" style="gap: 8px; width: 100%">
+              <v-icon size="30" style="margin-left: 15px">mdi-phone-outline</v-icon>
+              <span v-if="!mini" class="icon-mdi">Contact Us</span>
+            </div>
+          </v-list-item>
           <v-list-item @click="handleLogoutClick">
             <div class="d-flex align-center" style="gap: 8px; width: 100%">
               <v-icon size="30" style="margin-left: 15px">mdi-logout</v-icon>

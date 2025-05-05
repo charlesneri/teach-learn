@@ -470,7 +470,7 @@ onMounted(() => {
   const storedProfile = localStorage.getItem('userProfile')
   if (storedProfile) {
     profile.value = JSON.parse(storedProfile)
-    profileImage.value = profile.value.avatar_url || '' // ✅ THIS LINE is missing in your code
+    profileImage.value = profile.value.avatar_url || '' 
   } else {
     getUserProfile()
   }
@@ -548,22 +548,7 @@ onMounted(() => {
             </div>
           </v-list-item>
 
-          <v-list-item :to="'/about'" tag="RouterLink" @click="isMobile && (drawer = false)">
-            <div class="d-flex align-center" style="gap: 8px; width: 100%">
-              <v-icon size="30" style="margin-left: 15px">mdi-information-outline</v-icon>
-              <span v-if="!mini" class="icon-mdi">About Us</span>
-            </div>
-          </v-list-item>
-
-          <v-list-item :to="'/contact'" tag="RouterLink" @click="isMobile && (drawer = false)">
-            <div class="d-flex align-center" style="gap: 8px; width: 100%">
-              <v-icon size="30" style="margin-left: 15px">mdi-phone-outline</v-icon>
-              <span v-if="!mini" class="icon-mdi">Contact Us</span>
-            </div>
-          </v-list-item>
-
-          <v-divider class="my-2" />
-
+    
           <v-list-item :to="'/profile'" tag="RouterLink" @click="isMobile && (drawer = false)">
             <div class="d-flex align-center" style="gap: 8px; width: 100%">
               <v-icon size="30" style="margin-left: 15px">mdi-account-outline</v-icon>
@@ -585,11 +570,24 @@ onMounted(() => {
           >
             <div class="d-flex align-center" style="gap: 8px; width: 100%">
               <v-icon size="30" style="margin-left: 15px"> mdi-delete-outline</v-icon>
-              <span v-if="!mini" class="icon-mdi">Delete History</span>
+              <span v-if="!mini" class="icon-mdi">Deleted Appointments</span>
             </div>
           </v-list-item>
 
           <v-divider class="my-2" />
+          <v-list-item :to="'/about'" tag="RouterLink" @click="isMobile && (drawer = false)">
+            <div class="d-flex align-center" style="gap: 8px; width: 100%">
+              <v-icon size="30" style="margin-left: 15px">mdi-information-outline</v-icon>
+              <span v-if="!mini" class="icon-mdi">About Us</span>
+            </div>
+          </v-list-item>
+
+          <v-list-item :to="'/contact'" tag="RouterLink" @click="isMobile && (drawer = false)">
+            <div class="d-flex align-center" style="gap: 8px; width: 100%">
+              <v-icon size="30" style="margin-left: 15px">mdi-phone-outline</v-icon>
+              <span v-if="!mini" class="icon-mdi">Contact Us</span>
+            </div>
+          </v-list-item>
           <v-list-item @click="handleLogoutClick">
             <div class="d-flex align-center" style="gap: 8px; width: 100%">
               <v-icon size="30" style="margin-left: 15px">mdi-logout</v-icon>
@@ -649,7 +647,7 @@ onMounted(() => {
     >
       <v-container fluid class="py-4 px-3 px-sm-6">
         <v-row justify="center">
-          <v-col cols="12" sm="10" md="8" lg="6" xl="5">
+          <v-col cols="12" sm="10" md="8" lg="10" xl="5">
             <v-sheet
               :class="currentTheme === 'dark' ? 'bg-grey-darken-3 text-white' : 'bg-white'"
               class="fade-slide-up pa-4 pa-sm-6 text-sm-center"

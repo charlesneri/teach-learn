@@ -243,21 +243,6 @@ onBeforeUnmount(() => {
             </div>
           </v-list-item>
 
-          <v-list-item :to="'/about'" tag="RouterLink" @click="isMobile && (drawer = false)">
-            <div class="d-flex align-center" style="gap: 8px; width: 100%">
-              <v-icon size="30" style="margin-left: 15px">mdi-information-outline</v-icon>
-              <span v-if="!mini">About Us</span>
-            </div>
-          </v-list-item>
-
-          <v-list-item :to="'/contact'" tag="RouterLink" @click="isMobile && (drawer = false)">
-            <div class="d-flex align-center" style="gap: 8px; width: 100%">
-              <v-icon size="30" style="margin-left: 15px">mdi-phone-outline</v-icon>
-              <span v-if="!mini">Contact Us</span>
-            </div>
-          </v-list-item>
-
-          <v-divider class="my-2" />
 
           <v-list-item :to="'/profile'" tag="RouterLink" @click="isMobile && (drawer = false)">
             <div class="d-flex align-center" style="gap: 8px; width: 100%">
@@ -276,11 +261,24 @@ onBeforeUnmount(() => {
           <v-list-item @click="isMobile && (drawer = false)">
             <div class="d-flex align-center" style="gap: 8px; width: 100%">
               <v-icon size="30" style="margin-left: 15px">mdi-delete-outline</v-icon>
-              <span v-if="!mini">Delete History</span>
+              <span v-if="!mini">Deleted Appointments</span>
             </div>
           </v-list-item>
 
           <v-divider class="my-2" />
+          <v-list-item :to="'/about'" tag="RouterLink" @click="isMobile && (drawer = false)">
+            <div class="d-flex align-center" style="gap: 8px; width: 100%">
+              <v-icon size="30" style="margin-left: 15px">mdi-information-outline</v-icon>
+              <span v-if="!mini">About Us</span>
+            </div>
+          </v-list-item>
+
+          <v-list-item :to="'/contact'" tag="RouterLink" @click="isMobile && (drawer = false)">
+            <div class="d-flex align-center" style="gap: 8px; width: 100%">
+              <v-icon size="30" style="margin-left: 15px">mdi-phone-outline</v-icon>
+              <span v-if="!mini">Contact Us</span>
+            </div>
+          </v-list-item>
           <v-list-item @click="handleLogoutClick">
             <div class="d-flex align-center" style="gap: 8px; width: 100%">
               <v-icon size="30" style="margin-left: 15px">mdi-logout</v-icon>
@@ -343,7 +341,7 @@ onBeforeUnmount(() => {
                 color: currentTheme === 'dark' ? '#ffffff' : '#000000',
               }"
             >
-              <h1 class="mb-3">Deleted History</h1>
+              <h1 class="mb-3">Deleted Appointments</h1>
 
               <div v-if="deletedAppointments.length > 0" class="Delete-container">
                 <v-list class="Delete-list">
