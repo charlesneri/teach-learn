@@ -945,6 +945,7 @@ onMounted(() => {
 </template>
 
 <style scoped>
+
 .fade-slide-up {
   animation: fadeSlideUp 1.6s ease-in both;
 }
@@ -1014,14 +1015,28 @@ onMounted(() => {
 }
 .field-label,
 .edu-label {
-  font-size: clamp(0.9rem, 2vw, 1.2rem);
+  font-size: clamp(0.85rem, 2.5vw, 1rem);
+  font-weight: 600;
+  line-height: 1.3;
 }
 /* Displayed values when not editing */
 .profile-value,
 .edu-value {
-  font-size: clamp(0.85rem, 2vw, 1rem);
+  font-size: clamp(0.85rem, 2.5vw, 1rem);
+  word-break: break-word; /* ensures long emails or words wrap */
+  line-height: 1.4;
 }
-
+.text-start {
+  word-break: break-word;
+  overflow-wrap: break-word;
+  white-space: normal;
+}
+.v-sheet,
+.v-card {
+  max-width: 100%;
+  padding-left: clamp(1rem, 4vw, 2rem);
+  padding-right: clamp(1rem, 4vw, 2rem);
+}
 /*for educ background*/
 
 .edu-input input {
@@ -1037,6 +1052,10 @@ onMounted(() => {
 
 /* Responsive */
 @media (max-width: 600px) {
+  .v-sheet,
+  .v-card {
+    padding: 1rem !important;
+  }
   .d-flex.flex-wrap.justify-center.gap-2 .v-btn {
     width: 100%;
     justify-content: center;
@@ -1102,6 +1121,16 @@ onMounted(() => {
 .v-textarea textarea {
   font-size: clamp(0.85rem, 2vw, 1rem);
   padding: 10px;
+}
+.responsive-heading,
+  .responsive-title,
+  .edu-label,
+  .edu-value,
+  .profile-value {
+    font-size: 0.9rem !important;
+  }
+  .v-textarea textarea {
+  font-size: clamp(0.85rem, 2vw, 1rem);
 }
 
 
