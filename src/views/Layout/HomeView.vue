@@ -256,6 +256,12 @@ const fetchRatings = async () => {
 
   ratingsMap.value = result
 }
+const getDialogWidth = computed(() => {
+  if (window.innerWidth < 500) return '95%'       // mobile
+  if (window.innerWidth < 768) return '80%'       // tablet
+  return '600px'                                   // default desktop
+})
+
 </script>
 <template>
   <v-app id="inspire">
@@ -565,7 +571,7 @@ const fetchRatings = async () => {
           </v-row>
         </v-container>
         <!--for the view more -->
-        <v-dialog v-model="profileDialog" max-width="600px">
+        <v-dialog v-model="profileDialog" :max-width="getDialogWidth">
           <v-card>
             <!-- Title -->
             <v-card-title class="text-h6 font-weight-bold justify-center py-4">
@@ -662,6 +668,16 @@ const fetchRatings = async () => {
 </template>
 
 <style scoped>
+
+:root {
+  --font-xs: clamp(0.75rem, 0.9vw, 0.875rem);
+  --font-sm: clamp(0.875rem, 1vw, 1rem);
+  --font-md: clamp(1rem, 1.5vw, 1.25rem);
+  --font-lg: clamp(1.25rem, 2vw, 1.5rem);
+}
+.text-caption {
+  font-size: var(--font-xs);
+}
 /* Layout Wrappers */
 .floating-wrapper {
   display: flex;
@@ -710,18 +726,18 @@ h1 {
   letter-spacing: 2px;
 }
 .user-name {
+  font-size: clamp(1rem, 1.5vw, 1.25rem);
   font-family: 'Roboto', sans-serif;
   letter-spacing: 1px;
-  font-size: 20px;
 }
+
 .icon-mdi {
-  font-family: 'Roboto', sans-serif;
-  font-size: 14px;
+  font-size: clamp(0.8rem, 1.2vw, 1rem);
 }
 .link-text {
   color: rgb(90, 90, 220);
   font-family: 'Inter', 'Roboto', sans-serif;
-  font-size: 13px;
+  font-size: clamp(0.8rem, 1.2vw, 0.95rem);
   cursor: pointer;
 }
 .link-text:hover,
@@ -888,14 +904,54 @@ h1 {
 
 /* Responsive Styles for mobile */
 @media (max-width: 600px) {
+  .v-card .v-btn {
+    width: 100% !important;
+    font-size: 13px !important;
+    padding: 6px 12px !important;
+    margin: 6px 0 !important;
+    justify-content: center !important;
+  }
+
+  .v-card .text-caption {
+    font-size: 12px !important;
+    text-align: center;
+  }
+
+  .v-card .d-flex.align-center.justify-center {
+    flex-direction: column !important;
+    align-items: center !important;
+  }
+  .mentor-card .v-btn {
+    width: 100%;
+    font-size: 13px !important;
+    padding: 6px 12px !important;
+    margin: 4px 0 !important;
+    justify-content: center;
+  }
+
+  .mentor-card .text-caption {
+    text-align: center;
+    font-size: 12px !important;
+    display: block;
+  }
+
   .v-dialog__content {
-    padding: 8px !important;
+    padding: 12px !important;
+  }
+  .v-card-title,
+  .v-card-text {
+    font-size: clamp(0.9rem, 2.5vw, 1.1rem);
+    text-align: center;
   }
   .v-card-text,
   .v-card-actions {
     padding: 12px !important;
     flex-direction: column;
     gap: 10px;
+  }
+  .v-text-field input,
+  .v-textarea textarea {
+    font-size: clamp(0.9rem, 2.5vw, 1rem);
   }
   .v-navigation-drawer {
     width: 100% !important;
@@ -924,16 +980,22 @@ h1 {
   }
 
   h1 {
-    font-size: 1.8rem;
-    letter-spacing: 0.2rem;
-  }
+  font-size: clamp(1.8rem, 3vw, 2.5rem);
+  font-weight: 700;
+  color: #1565c0;
+  text-align: center;
+  margin-bottom: 20px;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+}
+
 
   /*mobile responsive search matching apppear*/
   .mentor-card {
-    width: 100% !important;
-    max-width: 100% !important;
+    flex-direction: column !important;
+    align-items: stretch !important;
+    text-align: center;
   }
-
   .profile-container {
     justify-content: center;
     padding: 0 16px;
@@ -942,6 +1004,18 @@ h1 {
 
   .d-flex.flex-wrap.justify-center {
     width: 100%;
+  }
+}
+@media (max-width: 500px) {
+  .v-text-field,
+  .v-textarea {
+    width: 100% !important;
+  }
+}
+@media (min-width: 601px) and (max-width: 960px) {
+  .mentor-card .v-btn {
+    font-size: 14px;
+    padding: 8px 12px;
   }
 }
 </style>

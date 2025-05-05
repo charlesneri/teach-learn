@@ -438,13 +438,13 @@ onBeforeUnmount(() => {
 </template>
 <style scoped>
 h1 {
-  font-size: 2.5rem; 
+  font-size: clamp(1.8rem, 4vw, 2.8rem); /* adjusts smoothly from mobile to desktop */
   font-weight: 700;
-  color: #1565c0; 
-  text-align: center; 
-  margin-bottom: 20px; 
-  text-transform: uppercase; 
-  letter-spacing: 2px; 
+  color: #1565c0;
+  text-align: center;
+  margin-bottom: 20px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
 }
 
 /* Remove underline on link */
