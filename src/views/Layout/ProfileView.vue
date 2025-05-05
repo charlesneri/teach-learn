@@ -238,15 +238,24 @@ const onImageSelected = async (event) => {
     if (error || !user) throw new Error('User not authenticated')
 
     // DELETE the existing image if it exists
-    if (profileImage.value && profileImage.value.includes('avatars/')) {
-      const oldUrl = new URL(profileImage.value)
-      const oldPath = decodeURIComponent(
-        oldUrl.pathname.replace('/storage/v1/object/public/avatars/', ''),
-      )
+    if (profileImage.value.includes('avatars/')) {
+  try {
+    const oldUrl = new URL(profileImage.value)
+    const oldPath = decodeURIComponent(
+      oldUrl.pathname.replace('/storage/v1/object/public/avatars/', '')
+    )
 
-      const { error: deleteOldError } = await supabase.storage.from('avatars').remove([oldPath])
-      if (deleteOldError) console.warn('Could not delete old image:', deleteOldError.message)
+    const { error: deleteOldError } = await supabase.storage.from('avatars').remove([oldPath])
+    if (deleteOldError) {
+      console.warn('Failed to delete old image:', deleteOldError.message)
+    } else {
+      console.log('Old image deleted from bucket:', oldPath)
     }
+  } catch (err) {
+    console.error('Error parsing old image URL:', err)
+  }
+}
+
 
     // Upload new image
     const fileExt = file.name.split('.').pop()
@@ -301,14 +310,19 @@ const removeProfileImage = async () => {
     } = await supabase.auth.getUser()
     if (!user) throw new Error('User not authenticated')
 
-    const fileUrl = new URL(profileImage.value)
-    const filePath = decodeURIComponent(
-      fileUrl.pathname.replace('/storage/v1/object/public/avatars/', ''),
-    )
+    // ✅ Only delete if image is from your Supabase bucket
+    if (profileImage.value.includes('avatars/')) {
+      const fileUrl = new URL(profileImage.value)
+      const filePath = decodeURIComponent(
+        fileUrl.pathname.replace('/storage/v1/object/public/avatars/', '')
+      )
 
-    const { error: deleteError } = await supabase.storage.from('avatars').remove([filePath])
-    if (deleteError) throw deleteError
+      const { error: deleteError } = await supabase.storage.from('avatars').remove([filePath])
+      if (deleteError) throw deleteError
+      console.log('Old image deleted:', filePath)
+    }
 
+    // ✅ Update profile in Supabase
     const { error: updateError } = await supabase
       .from('profiles')
       .update({ avatar_url: '' })
@@ -317,17 +331,21 @@ const removeProfileImage = async () => {
 
     profileImage.value = ''
     profile.value.avatar_url = ''
-
     localStorage.setItem('userProfile', JSON.stringify(profile.value))
 
     snackbarMsg.value = 'Profile picture removed!'
+    snackbarColor.value = 'green'
     snackbar.value = true
   } catch (error) {
     console.error('Error removing profile image:', error)
+    snackbarMsg.value = 'Failed to remove profile image.'
+    snackbarColor.value = 'red'
+    snackbar.value = true
   } finally {
     imageLoading.value = false
   }
 }
+
 // LOGOUT
 /*const onLogout = async () => {
   formActionDefault.formProcess = true
