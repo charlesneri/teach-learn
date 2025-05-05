@@ -32,6 +32,7 @@ const loading = ref(false)
 const imageLoading = ref(false)
 const showFullImage = ref(false)
 const fullImageUrl = ref('')
+const confirmCancelPublicTutor = ref(false)
 
 //for viewing profile
 const viewFullImage = (url) => {
@@ -106,7 +107,7 @@ const getUserProfile = async () => {
     const { data: profileData, error: profileError } = await supabase
       .from('profiles')
       .select(
-        'firstname, lastname, is_public_tutor, middleinitial, age, expertise, about, school, course, year, phone, avatar_url'
+        'firstname, lastname, is_public_tutor, middleinitial, age, expertise, about, school, course, year, phone, avatar_url',
       )
       .eq('id', user.id)
       .single()
@@ -130,11 +131,7 @@ const getUserProfile = async () => {
       email: user.email, // get from auth
       avatar_url: profileData.avatar_url || '',
       is_public_tutor: profileData.is_public_tutor || false,
-      education: [
-        profileData.school || '',
-        profileData.course || '',
-        profileData.year || '',
-      ],
+      education: [profileData.school || '', profileData.course || '', profileData.year || ''],
     }
 
     profile.value = fullProfile
@@ -142,12 +139,10 @@ const getUserProfile = async () => {
     localStorage.setItem('userProfile', JSON.stringify(fullProfile))
 
     console.log('Fetched Profile:', fullProfile)
-
   } catch (error) {
     console.error('Unexpected error fetching profile:', error)
   }
 }
-
 
 //save profile function
 const validateProfile = () => {
@@ -239,23 +234,22 @@ const onImageSelected = async (event) => {
 
     // DELETE the existing image if it exists
     if (profileImage.value.includes('avatars/')) {
-  try {
-    const oldUrl = new URL(profileImage.value)
-    const oldPath = decodeURIComponent(
-      oldUrl.pathname.replace('/storage/v1/object/public/avatars/', '')
-    )
+      try {
+        const oldUrl = new URL(profileImage.value)
+        const oldPath = decodeURIComponent(
+          oldUrl.pathname.replace('/storage/v1/object/public/avatars/', ''),
+        )
 
-    const { error: deleteOldError } = await supabase.storage.from('avatars').remove([oldPath])
-    if (deleteOldError) {
-      console.warn('Failed to delete old image:', deleteOldError.message)
-    } else {
-      console.log('Old image deleted from bucket:', oldPath)
+        const { error: deleteOldError } = await supabase.storage.from('avatars').remove([oldPath])
+        if (deleteOldError) {
+          console.warn('Failed to delete old image:', deleteOldError.message)
+        } else {
+          console.log('Old image deleted from bucket:', oldPath)
+        }
+      } catch (err) {
+        console.error('Error parsing old image URL:', err)
+      }
     }
-  } catch (err) {
-    console.error('Error parsing old image URL:', err)
-  }
-}
-
 
     // Upload new image
     const fileExt = file.name.split('.').pop()
@@ -314,7 +308,7 @@ const removeProfileImage = async () => {
     if (profileImage.value.includes('avatars/')) {
       const fileUrl = new URL(profileImage.value)
       const filePath = decodeURIComponent(
-        fileUrl.pathname.replace('/storage/v1/object/public/avatars/', '')
+        fileUrl.pathname.replace('/storage/v1/object/public/avatars/', ''),
       )
 
       const { error: deleteError } = await supabase.storage.from('avatars').remove([filePath])
@@ -463,7 +457,6 @@ const fetchCurrentUser = async () => {
 const handleLogoutClick = async () => {
   const { error } = await supabase.auth.signOut()
 
-  
   // Clear localStorage
   localStorage.removeItem('userProfile')
   localStorage.removeItem('is_public_tutor')
@@ -506,7 +499,7 @@ onMounted(async () => {
   await fetchCurrentUser() // For sidebar display
   checkMobile()
   window.addEventListener('resize', checkMobile)
-  
+
   // Optional: Update theme after mount
   theme.global.name.value = currentTheme.value
 })
@@ -735,7 +728,9 @@ onMounted(async () => {
               <div class="d-flex justify-center mb-3">
                 <v-btn
                   :color="profile.is_public_tutor ? 'red' : 'primary'"
-                  @click="dialog = true"
+                  @click="
+                    profile.is_public_tutor ? (confirmCancelPublicTutor = true) : (dialog = true)
+                  "
                   :loading="loading"
                 >
                   {{ profile.is_public_tutor ? 'Cancel Apply' : 'Apply as Tutor?' }}
@@ -761,6 +756,45 @@ onMounted(async () => {
                     >
                     <v-btn color="green" @click="applyAsTutor" :loading="loading">
                       Yes, Apply
+                    </v-btn>
+                  </v-card-actions>
+                </v-card>
+              </v-dialog>
+
+              <v-dialog
+                v-model="confirmCancelPublicTutor"
+                max-width="500"
+                persistent
+                transition="fade-transition"
+              >
+                <v-card>
+                  <v-card-title class="text-h6">
+                    <v-icon class="me-2">mdi-alert-circle-outline</v-icon> Confirm Visibility Change
+                  </v-card-title>
+                  <v-card-text>
+                    By canceling, your profile will be hidden from the public. Do you want to
+                    continue?
+                  </v-card-text>
+                  <v-card-actions class="justify-end">
+                    <v-btn
+                      color="grey"
+                      variant="outlined"
+                      @click="confirmCancelPublicTutor = false"
+                      :disabled="loading"
+                    >
+                      No
+                    </v-btn>
+                    <v-btn
+                      color="red"
+                      @click="
+                        () => {
+                          applyAsTutor()
+                          confirmCancelPublicTutor = false
+                        }
+                      "
+                      :loading="loading"
+                    >
+                      Yes, Hide Profile
                     </v-btn>
                   </v-card-actions>
                 </v-card>
