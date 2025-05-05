@@ -263,7 +263,6 @@ const onSubmit = async () => {
                   <v-text-field
                     v-model="formData.year"
                     label="Year Level"
-                    type="number"
                     :rules="[requiredValidator]"
                     variant="filled"
                     :color="theme === 'dark' ? 'white' : 'primary'"

@@ -95,55 +95,59 @@ const getUserProfile = async () => {
       data: { user },
       error: userError,
     } = await supabase.auth.getUser()
+
     if (userError || !user?.id) {
       console.error('Error fetching user:', userError)
       return
     }
 
-    const { data, error } = await supabase
+    console.log('Current Auth User ID:', user.id)
+
+    const { data: profileData, error: profileError } = await supabase
       .from('profiles')
       .select(
-        'firstname, lastname, is_public_tutor, middleinitial, age, expertise, about, school, course, year, phone, avatar_url',
+        'firstname, lastname, is_public_tutor, middleinitial, age, expertise, about, school, course, year, phone, avatar_url'
       )
       .eq('id', user.id)
       .single()
 
-    if (error) {
-      console.error('Error fetching profile:', error)
+    if (profileError) {
+      console.error('Error fetching profile:', profileError)
       return
     }
 
-    const email = user.email
-
-    const profileData = {
-      firstname: data.firstname || '',
-      lastname: data.lastname || '',
-      middleInitial: data.middleinitial || '',
-      age: data.age || '',
-      expertise: data.expertise || '',
-      about: data.about || '',
-      school: data.school || '',
-      course: data.course || '',
-      year: data.year || '',
-      phone: data.phone || '',
-      email: email,
-      is_public_tutor: data.is_public_tutor || false, // Get public tutor status
-      education: [data.school || '', data.course || '', data.year || ''],
-      avatar_url: data.avatar_url || '',
+    const fullProfile = {
+      firstname: profileData.firstname || '',
+      lastname: profileData.lastname || '',
+      middleInitial: profileData.middleinitial || '',
+      age: profileData.age || '',
+      expertise: profileData.expertise || '',
+      about: profileData.about || '',
+      school: profileData.school || '',
+      course: profileData.course || '',
+      year: profileData.year || '',
+      phone: profileData.phone || '',
+      email: user.email, // get from auth
+      avatar_url: profileData.avatar_url || '',
+      is_public_tutor: profileData.is_public_tutor || false,
+      education: [
+        profileData.school || '',
+        profileData.course || '',
+        profileData.year || '',
+      ],
     }
 
-    // Store the fetched profile data in localStorage
-    localStorage.setItem('userProfile', JSON.stringify(profileData))
+    profile.value = fullProfile
+    profileImage.value = fullProfile.avatar_url
+    localStorage.setItem('userProfile', JSON.stringify(fullProfile))
 
-    profile.value = profileData
+    console.log('Fetched Profile:', fullProfile)
 
-    profileImage.value = data.avatar_url || ''
-
-    console.log('Populated profile data:', profile.value.firstname, profile.value.lastname)
   } catch (error) {
-    console.error('Error fetching user profile:', error)
+    console.error('Unexpected error fetching profile:', error)
   }
 }
+
 
 //save profile function
 const validateProfile = () => {
@@ -233,17 +237,27 @@ const onImageSelected = async (event) => {
     } = await supabase.auth.getUser()
     if (error || !user) throw new Error('User not authenticated')
 
+    // DELETE the existing image if it exists
+    if (profileImage.value && profileImage.value.includes('avatars/')) {
+      const oldUrl = new URL(profileImage.value)
+      const oldPath = decodeURIComponent(
+        oldUrl.pathname.replace('/storage/v1/object/public/avatars/', ''),
+      )
+
+      const { error: deleteOldError } = await supabase.storage.from('avatars').remove([oldPath])
+      if (deleteOldError) console.warn('Could not delete old image:', deleteOldError.message)
+    }
+
+    // Upload new image
     const fileExt = file.name.split('.').pop()
     const fileName = `${user.id}_${Date.now()}.${fileExt}`
 
-    // Upload the image to Supabase Storage
     const { error: uploadError } = await supabase.storage.from('avatars').upload(fileName, file, {
       cacheControl: '3600',
       upsert: true,
     })
     if (uploadError) throw uploadError
 
-    // Get public URL
     const { data: publicData, error: publicUrlError } = await supabase.storage
       .from('avatars')
       .getPublicUrl(fileName)
@@ -251,21 +265,19 @@ const onImageSelected = async (event) => {
 
     const profileImageUrl = publicData.publicUrl
 
-    // Update Supabase DB
+    // Update DB
     const { error: updateError } = await supabase
       .from('profiles')
       .update({ avatar_url: profileImageUrl })
       .eq('id', user.id)
     if (updateError) throw updateError
 
-    //  Update local state and sync to profile
     profileImage.value = profileImageUrl
-    profile.value.avatar_url = profileImageUrl // <-- THIS LINE FIXES YOUR ISSUE
-
-    // Save to localStorage
+    profile.value.avatar_url = profileImageUrl
     localStorage.setItem('userProfile', JSON.stringify(profile.value))
 
     snackbarMsg.value = 'Profile picture updated!'
+    snackbarColor.value = 'green'
     snackbar.value = true
   } catch (error) {
     console.error('Error uploading profile image:', error)
@@ -291,7 +303,7 @@ const removeProfileImage = async () => {
 
     const fileUrl = new URL(profileImage.value)
     const filePath = decodeURIComponent(
-      fileUrl.pathname.replace('/storage/v1/object/public/avatars/', '')
+      fileUrl.pathname.replace('/storage/v1/object/public/avatars/', ''),
     )
 
     const { error: deleteError } = await supabase.storage.from('avatars').remove([filePath])
@@ -433,6 +445,10 @@ const fetchCurrentUser = async () => {
 const handleLogoutClick = async () => {
   const { error } = await supabase.auth.signOut()
 
+  
+  // Clear localStorage
+  localStorage.removeItem('userProfile')
+  localStorage.removeItem('is_public_tutor')
   if (error) {
     snackbarMsg.value = 'An error occurred. Please try again.'
     snackbarColor.value = 'red'
@@ -466,27 +482,16 @@ const handleLogoutClick = async () => {
     router.push('/')
   }, 1000)
 }
-onMounted(() => {
-  const storedProfile = localStorage.getItem('userProfile')
-  if (storedProfile) {
-    profile.value = JSON.parse(storedProfile)
-    profileImage.value = profile.value.avatar_url || '' 
-  } else {
-    getUserProfile()
-  }
-
-  const storedPublicTutorStatus = localStorage.getItem('is_public_tutor')
-  if (storedPublicTutorStatus !== null) {
-    profile.value.is_public_tutor = JSON.parse(storedPublicTutorStatus)
-  }
-
-  theme.global.name.value = currentTheme.value
-  checkAuth()
-  fetchCurrentUser()
+onMounted(async () => {
+  await checkAuth() // Make sure the user is logged in
+  await getUserProfile() // Always get the latest info from Supabase
+  await fetchCurrentUser() // For sidebar display
   checkMobile()
   window.addEventListener('resize', checkMobile)
+  
+  // Optional: Update theme after mount
+  theme.global.name.value = currentTheme.value
 })
-
 </script>
 
 <template>
@@ -519,18 +524,13 @@ onMounted(() => {
             color: currentTheme === 'dark' ? '#ffffff' : '#000000',
           }"
         >
-          <v-avatar :size="display.smAndDown ? 80 : 100" class="mb-3">
-            <component
-              :is="profileImage ? 'v-img' : 'v-icon'"
-              v-bind="
-                profileImage
-                  ? { src: profileImage, cover: true, style: 'cursor: pointer' }
-                  : { size: '80', color: 'grey-darken-1' }
-              "
-              @click="profileImage && viewFullImage(profileImage)"
-            >
-              <template v-if="!profileImage">mdi-account</template>
-            </component>
+          <v-avatar
+            :size="display.smAndDown ? 80 : 100"
+            class="mb-3"
+            @click="profileImage && viewFullImage(profileImage)"
+          >
+            <v-img v-if="profileImage" :src="profileImage" cover style="cursor: pointer" />
+            <v-icon v-else size="60" color="grey-darken-1">mdi-account</v-icon>
           </v-avatar>
 
           <h3 class="responsive-title">
@@ -548,7 +548,6 @@ onMounted(() => {
             </div>
           </v-list-item>
 
-    
           <v-list-item :to="'/profile'" tag="RouterLink" @click="isMobile && (drawer = false)">
             <div class="d-flex align-center" style="gap: 8px; width: 100%">
               <v-icon size="30" style="margin-left: 15px">mdi-account-outline</v-icon>
@@ -611,19 +610,17 @@ onMounted(() => {
       <v-btn icon class="ms-5" @click="toggleDrawer">
         <v-icon>mdi-menu</v-icon>
       </v-btn>
-    
+
       <!--logo-->
-        <v-avatar
-          class="logo responsive-logo ml-auto me-5"
-          :style="{
-            backgroundColor: currentTheme === 'dark' ? '#1565c0' : '#ffffff',
-            color: currentTheme === 'dark' ? '#ffffff' : '#000000',
-          }"
-        >
-          <v-img src="image/Teach&Learn.png" alt="Logo" />
-        </v-avatar>
-     
-   
+      <v-avatar
+        class="logo responsive-logo ml-auto me-5"
+        :style="{
+          backgroundColor: currentTheme === 'dark' ? '#1565c0' : '#ffffff',
+          color: currentTheme === 'dark' ? '#ffffff' : '#000000',
+        }"
+      >
+        <v-img src="image/Teach&Learn.png" alt="Logo" />
+      </v-avatar>
     </v-app-bar>
 
     <v-snackbar
@@ -946,7 +943,6 @@ onMounted(() => {
   overflow: hidden;
 }
 
-
 .fade-slide-up {
   animation: fadeSlideUp 1.6s ease-in both;
 }
@@ -1055,7 +1051,6 @@ onMounted(() => {
     justify-content: center;
   }
 
- 
   .v-btn {
     font-size: 0.85rem;
   }
@@ -1153,6 +1148,5 @@ onMounted(() => {
   .edu-value {
     font-size: 0.85rem;
   }
- 
 }
 </style>
