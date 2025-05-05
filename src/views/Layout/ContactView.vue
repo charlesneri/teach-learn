@@ -8,7 +8,6 @@ import { supabase } from '@/utils/supabase'
 /* === Router === */
 const router = useRouter()
 
-
 /* === Theme === */
 const theme = useTheme()
 const currentTheme = ref(localStorage.getItem('theme') || 'light')
@@ -23,7 +22,6 @@ watch(currentTheme, (val) => {
   theme.global.name.value = val
   localStorage.setItem('theme', val)
 })
-
 
 /* === Responsive Drawer & Mobile === */
 const drawer = ref(false)
@@ -335,10 +333,14 @@ const sendMessage = async () => {
         }"
       >
         <div class="search-wrapper">
-          <v-avatar  :style="{
-                backgroundColor: currentTheme === 'dark' ? '#1565c0' : '#ffffff',
-                color: currentTheme === 'dark' ? '#ffffff' : '#000000',
-              }" size="50" class="logo me-6">
+          <v-avatar
+            :style="{
+              backgroundColor: currentTheme === 'dark' ? '#1565c0' : '#ffffff',
+              color: currentTheme === 'dark' ? '#ffffff' : '#000000',
+            }"
+            size="50"
+            class="logo me-6"
+          >
             <v-img src="image/Teach&Learn.png" alt="Logo" />
           </v-avatar>
         </div>
@@ -383,7 +385,7 @@ const sendMessage = async () => {
                   cols="12"
                   sm="6"
                   md="4"
-                  class="mb-6 px-3"
+                  class="mb-6 px-3 d-flex"
                   v-for="(contact, index) in contacts"
                   :key="index"
                 >
@@ -558,6 +560,13 @@ body[data-theme='dark'] h1 {
 }
 .fade-slide-up-move {
   transition: transform 0.3s ease;
+}
+
+.contact-card {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  height: 100%;
 }
 
 /* Responsive */
