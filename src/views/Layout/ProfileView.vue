@@ -314,8 +314,8 @@ const cancelEdit = () => {
   isEditing.value = false
 }
 const getEducationPlaceholder = (index) => {
-  if (index === 0) return 'School or university';
-  if (index === 1) return 'Course or degree';
+  if (index === 0) return 'School';
+  if (index === 1) return 'Program/degree';
   if (index === 2) return 'Year level';
   return '';
 };
@@ -381,6 +381,10 @@ const toggleDrawer = () => {
 const checkMobile = () => {
   isMobile.value = window.innerWidth <= 768
 }
+
+onBeforeUnmount(() => {
+  window.removeEventListener('resize', checkMobile)
+})
 
 /* === User Profile === */
 const currentUserId = ref(null)
@@ -464,9 +468,6 @@ onMounted(() => {
   fetchCurrentUser(); // Fetch the current user profile
 });
 
-onBeforeUnmount(() => {
-  window.removeEventListener('resize', checkMobile)
-})
 </script>
 
 <template>
@@ -764,128 +765,132 @@ onBeforeUnmount(() => {
 
               <v-divider class="my-4" />
 
-              <v-card
-  variant="outlined"
-  class="pa-6"
-  rounded="xl"
-  :class="currentTheme === 'dark' ? 'bg-grey-darken-4 text-white' : 'bg-grey-lighten-5'"
->
+                          <v-card
+              variant="outlined"
+              class="pa-6"
+              rounded="xl"
+              :class="currentTheme === 'dark' ? 'bg-grey-darken-4 text-white' : 'bg-grey-lighten-5'"
+            >
 
-  <!-- PERSONAL INFORMATION SECTION -->
-  <v-sheet
-    class="pa-4 mb-6 text-start"
-    elevation="1"
-    rounded="lg"
-    :class="currentTheme === 'dark' ? 'bg-grey-darken-3' : 'bg-white'"
-  >
-    <v-card-title class="text-h6 mb-2 d-flex align-start text-start">
-      <v-icon class="me-2" color="primary">mdi-account</v-icon>
-      Personal Information
-    </v-card-title>
-    <v-divider class="mb-4" />
+              <!-- PERSONAL INFORMATION SECTION -->
+              <v-sheet
+                class="pa-4 mb-6 text-start"
+                elevation="1"
+                rounded="lg"
+                :class="currentTheme === 'dark' ? 'bg-grey-darken-3' : 'bg-white'"
+              >
+              <v-card-title class=" mb-2 d-flex align-start text-start responsive-heading">
+              <v-icon class="me-2" color="primary">mdi-account</v-icon>
+              Personal Information
+            </v-card-title>
+                <v-divider class="mb-4" />
 
-    <v-row
-      v-for="(fieldKey, label) in fieldMappings"
-      :key="fieldKey"
-      class="pb-2 text-start"
-      dense
-    >
-      <v-col cols="12" sm="6" class="font-weight-medium text-start">{{ label }}:</v-col>
-      <v-col cols="12" sm="6" class="text-start">
-        <div v-if="!isEditing" class="py-1">{{ profile[fieldKey] }}</div>
-        <v-text-field
-          v-else
-          v-model="profile[fieldKey]"
-          :placeholder="`Enter your ${label}`"
-          density="compact"
-          hide-details
-          variant="outlined"
-          :type="fieldKey === 'age' ? 'number' : 'text'"
-          class="text-start"
-        />
-      </v-col>
-    </v-row>
-  </v-sheet>
+                <v-row
+                  v-for="(fieldKey, label) in fieldMappings"
+                  :key="fieldKey"
+                  class="pb-2 text-start"
+                  dense
+                >
+                  <v-col cols="12" sm="6" class="field-label  text-start">{{ label }}:</v-col>
+                  <v-col cols="12" sm="6" class="text-start">
+                    <div v-if="!isEditing" class="py-1 profile-value">{{ profile[fieldKey] }}</div>
 
-  <!-- ABOUT ME SECTION -->
-  <v-sheet
-    class="pa-4 mb-6 text-start"
-    elevation="1"
-    rounded="lg"
-    :class="currentTheme === 'dark' ? 'bg-grey-darken-3' : 'bg-white'"
-  >
-    <v-card-title class="text-h6 mb-2 d-flex align-start text-start">
-      <v-icon class="me-2" color="primary">mdi-text-box-outline</v-icon>
-      About Me
-    </v-card-title>
-    <v-divider class="mb-4" />
+                    <v-text-field
+                      v-else
+                      v-model="profile[fieldKey]"
+                      :placeholder="`Enter your ${label}`"
+                      density="compact"
+                      hide-details
+                      variant="outlined"
+                      :type="fieldKey === 'age' ? 'number' : 'text'"
+                      class="text-start"
+                    />
+                  </v-col>
+                </v-row>
+              </v-sheet>
 
-    <v-row>
-      <v-col cols="12" class="text-start">
-        <div v-if="!isEditing" class="py-1">{{ profile.about }}</div>
-        <v-textarea
-          v-else
-          v-model="profile.about"
-          auto-grow
-          density="compact"
-          hide-details
-          variant="outlined"
-          placeholder="Write something about yourself"
-          class="text-start"
-        />
-      </v-col>
-    </v-row>
-  </v-sheet>
+              <!-- ABOUT ME SECTION -->
+              <v-sheet
+                class="pa-4 mb-6 text-start"
+                elevation="1"
+                rounded="lg"
+                :class="currentTheme === 'dark' ? 'bg-grey-darken-3' : 'bg-white'"
+              >
+                <v-card-title class="responsive-heading mb-2 d-flex align-start text-start">
+                  <v-icon class="me-2" color="primary">mdi-text-box-outline</v-icon>
+                  About Me
+                </v-card-title>
+                <v-divider class="mb-4" />
 
-  <!-- EDUCATIONAL BACKGROUND SECTION -->
- 
-<v-sheet
-  class="pa-4 text-start"
-  elevation="1"
-  rounded="lg"
-  :class="currentTheme === 'dark' ? 'bg-grey-darken-3' : 'bg-white'"
->
-  <v-card-title class="text-h6 mb-2 d-flex align-start text-start">
-    <v-icon class="me-2" color="primary">mdi-school-outline</v-icon>
-    Educational Background
-  </v-card-title>
-  <v-divider class="mb-4" />
+                <v-row>
+                  <v-col cols="12" class="text-start">
+                    <div v-if="!isEditing" class="py-1">{{ profile.about }}</div>
+                    <v-textarea
+                      v-else
+                      v-model="profile.about"
+                      auto-grow
+                      density="compact"
+                      hide-details
+                      variant="outlined"
+                      placeholder="Write something about yourself"
+                      class="text-start"
+                    />
+                  </v-col>
+                </v-row>
+              </v-sheet>
 
-  <v-row>
-    <v-col cols="12" class="text-start">
-      <!-- View Mode -->
-      <div v-if="!isEditing">
-        <div
-          v-for="(item, index) in profile.education"
-          :key="index"
-          class="py-1"
-        >
-          <div class="text-subtitle-2 font-weight-medium">
-            {{ getEducationPlaceholder(index) }}:
-          </div>
-          <div>{{ item }}</div>
+              <!-- EDUCATIONAL BACKGROUND SECTION -->
+            
+            <v-sheet
+              class="pa-4 text-start"
+              elevation="1"
+              rounded="lg"
+              :class="currentTheme === 'dark' ? 'bg-grey-darken-3' : 'bg-white'"
+            >
+              <v-card-title class="responsive-heading mb-2 d-flex align-start text-start">
+                <v-icon class="me-2" color="primary">mdi-school-outline</v-icon>
+                Educational Background
+              </v-card-title>
+              <v-divider class="mb-4" />
+
+              <v-row>
+  <v-col cols="12" class="text-start">
+    <!-- View Mode -->
+    <div v-if="!isEditing">
+      <div
+        v-for="(item, index) in profile.education"
+        :key="index"
+        class="py-1"
+      >
+        <div class="edu-label">
+          {{ getEducationPlaceholder(index) }}:
+        </div>
+        <div class="edu-value">
+          {{ item }}
         </div>
       </div>
+    </div>
 
-      <!-- Edit Mode -->
-      <div v-else>
-        <v-text-field
-          v-for="(item, index) in profile.education"
-          :key="index"
-          v-model="profile.education[index]"
-          :label="getEducationPlaceholder(index)"
-          density="compact"
-          hide-details
-          variant="outlined"
-          class="mb-3 text-start"
-        />
-      </div>
-    </v-col>
-  </v-row>
-</v-sheet>
+    <!-- Edit Mode -->
+    <div v-else>
+      <v-text-field
+        v-for="(item, index) in profile.education"
+        :key="index"
+        v-model="profile.education[index]"
+        :label="getEducationPlaceholder(index)"
+        density="compact"
+        hide-details
+        variant="outlined"
+        class="mb-3 text-start edu-input"
+      />
+    </div>
+  </v-col>
+</v-row>
+
+            </v-sheet>
 
 
-</v-card>
+            </v-card>
 
 
               <v-divider class="my-4" />
@@ -1001,6 +1006,39 @@ onBeforeUnmount(() => {
   font-size: 1.5rem;
 }
 
+.responsive-heading {
+  font-size: 1.5rem;
+  font-weight: 600;
+  letter-spacing: 1px;
+}
+.field-label,.edu-label {
+  font-size: 1.2rem;
+  font-family: 'Inter', sans-serif;
+  font-weight: 600; /* Now it will actually change! */
+  letter-spacing: 1px;
+}
+/* Displayed values when not editing */
+.profile-value,.edu-value {
+  font-size: 1rem;
+  letter-spacing: 1px;
+}
+
+/*for educ background*/
+
+
+
+
+.edu-input input {
+  font-size: 0.95rem;
+  font-family: 'Segoe UI', sans-serif;
+  padding: 10px;
+}
+
+.edu-input .v-label {
+  font-size: 0.85rem;
+  font-weight: 500;
+}
+
 /* Responsive */
 @media (max-width: 600px) {
   .v-dialog__content {
@@ -1025,6 +1063,26 @@ onBeforeUnmount(() => {
   }
   .responsive-title {
     font-size: 1rem;
+  }
+  .responsive-heading {
+    font-size: 1rem;
+  }
+  .field-label {
+    font-size: .85rem;
+    font-weight: 600;
+  }
+  .edu-label,
+  .edu-value {
+    font-size: 0.85rem;
+  }
+
+  .edu-input input {
+    font-size: 0.85rem;
+    padding: 8px;
+  }
+
+  .edu-input .v-label {
+    font-size: 0.75rem;
   }
 
 }
