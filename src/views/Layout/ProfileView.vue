@@ -7,7 +7,6 @@ import { useDisplay } from 'vuetify'
 
 const display = useDisplay()
 
-
 // THEME
 const theme = useTheme()
 const currentTheme = ref(localStorage.getItem('theme') || 'light')
@@ -237,14 +236,14 @@ const onImageSelected = async (event) => {
     const fileExt = file.name.split('.').pop()
     const fileName = `${user.id}_${Date.now()}.${fileExt}`
 
-    // Upload the image to the Supabase Storage bucket
+    // Upload the image to Supabase Storage
     const { error: uploadError } = await supabase.storage.from('avatars').upload(fileName, file, {
       cacheControl: '3600',
       upsert: true,
     })
     if (uploadError) throw uploadError
 
-    // Get the public URL of the uploaded image
+    // Get public URL
     const { data: publicData, error: publicUrlError } = await supabase.storage
       .from('avatars')
       .getPublicUrl(fileName)
@@ -252,15 +251,19 @@ const onImageSelected = async (event) => {
 
     const profileImageUrl = publicData.publicUrl
 
-    // Update the user's profile image URL in the profiles table
+    // Update Supabase DB
     const { error: updateError } = await supabase
       .from('profiles')
       .update({ avatar_url: profileImageUrl })
       .eq('id', user.id)
     if (updateError) throw updateError
 
-    // Save the profile image URL in the profile state and update UI
+    //  Update local state and sync to profile
     profileImage.value = profileImageUrl
+    profile.value.avatar_url = profileImageUrl // <-- THIS LINE FIXES YOUR ISSUE
+
+    // Save to localStorage
+    localStorage.setItem('userProfile', JSON.stringify(profile.value))
 
     snackbarMsg.value = 'Profile picture updated!'
     snackbar.value = true
@@ -274,7 +277,6 @@ const onImageSelected = async (event) => {
 const confirmRemoveImage = () => {
   confirmRemove.value = true
 }
-
 const removeProfileImage = async () => {
   if (!profileImage.value) return
 
@@ -289,7 +291,7 @@ const removeProfileImage = async () => {
 
     const fileUrl = new URL(profileImage.value)
     const filePath = decodeURIComponent(
-      fileUrl.pathname.replace('/storage/v1/object/public/avatars/', ''),
+      fileUrl.pathname.replace('/storage/v1/object/public/avatars/', '')
     )
 
     const { error: deleteError } = await supabase.storage.from('avatars').remove([filePath])
@@ -302,6 +304,9 @@ const removeProfileImage = async () => {
     if (updateError) throw updateError
 
     profileImage.value = ''
+    profile.value.avatar_url = ''
+
+    localStorage.setItem('userProfile', JSON.stringify(profile.value))
 
     snackbarMsg.value = 'Profile picture removed!'
     snackbar.value = true
@@ -311,7 +316,6 @@ const removeProfileImage = async () => {
     imageLoading.value = false
   }
 }
-
 // LOGOUT
 /*const onLogout = async () => {
   formActionDefault.formProcess = true
@@ -341,8 +345,6 @@ const getEducationPlaceholder = (index) => {
   if (index === 2) return 'Year level'
   return ''
 }
-
-
 
 //functional for public profile
 // Apply as Tutor
@@ -464,11 +466,11 @@ const handleLogoutClick = async () => {
     router.push('/')
   }, 1000)
 }
-
 onMounted(() => {
   const storedProfile = localStorage.getItem('userProfile')
   if (storedProfile) {
     profile.value = JSON.parse(storedProfile)
+    profileImage.value = profile.value.avatar_url || '' // ✅ THIS LINE is missing in your code
   } else {
     getUserProfile()
   }
@@ -611,26 +613,19 @@ onMounted(() => {
       <v-btn icon class="ms-5" @click="toggleDrawer">
         <v-icon>mdi-menu</v-icon>
       </v-btn>
-      <v-container
-        class="d-flex align-center pa-0"
-        :class="{
-          'transition-all': !isMobile,
-          'no-transition': isMobile,
-        }"
-      >
-        <div class="logo-wrapper">
-          <v-avatar
-            :style="{
-              backgroundColor: currentTheme === 'dark' ? '#1565c0' : '#ffffff',
-              color: currentTheme === 'dark' ? '#ffffff' : '#000000',
-            }"
-            size="50"
-            class="logo me-6"
-          >
-            <v-img src="image/Teach&Learn.png" alt="Logo" />
-          </v-avatar>
-        </div>
-      </v-container>
+    
+      
+        <v-avatar
+          class="logo responsive-logo ml-auto me-5"
+          :style="{
+            backgroundColor: currentTheme === 'dark' ? '#1565c0' : '#ffffff',
+            color: currentTheme === 'dark' ? '#ffffff' : '#000000',
+          }"
+        >
+          <v-img src="image/Teach&Learn.png" alt="Logo" />
+        </v-avatar>
+     
+   
     </v-app-bar>
 
     <v-snackbar
@@ -652,8 +647,7 @@ onMounted(() => {
         color: currentTheme === 'dark' ? '#ffffff' : '#000000',
       }"
     >
-    <v-container fluid class="py-4 px-3 px-sm-6">
-
+      <v-container fluid class="py-4 px-3 px-sm-6">
         <v-row justify="center">
           <v-col cols="12" sm="10" md="8" lg="6" xl="5">
             <v-sheet
@@ -813,7 +807,7 @@ onMounted(() => {
                     <v-col cols="12" sm="6" class="field-label text-start">
                       {{ field.label }}:
                     </v-col>
-                        <v-col cols="12" sm="6" class="text-start">
+                    <v-col cols="12" sm="6" class="text-start">
                       <div v-if="!isEditing" class="py-1 profile-value">
                         {{ profile[field.key] }}
                       </div>
@@ -945,6 +939,27 @@ onMounted(() => {
 </template>
 
 <style scoped>
+/* Responsive logo avatar size */
+.responsive-logo {
+  width: clamp(36px, 6vw, 60px);
+  height: clamp(36px, 6vw, 60px);
+}
+.logo-wrapper {
+  position: absolute;
+  top: 50%;
+  right: clamp(8px, 2vw, 16px);
+  transform: translateY(-50%);
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: clamp(6px, 1.5vw, 12px);
+  z-index: 10;
+  flex-wrap: nowrap;
+}
+.responsive-logo {
+  width: 60px;
+  height: 60px;
+}
 
 .fade-slide-up {
   animation: fadeSlideUp 1.6s ease-in both;
@@ -973,7 +988,6 @@ onMounted(() => {
   width: 50px;
   height: 50px;
 }
-
 
 /* Animations */
 .fade-slide-up-enter-active {
@@ -1004,8 +1018,6 @@ onMounted(() => {
 .fade-slide-up-move {
   transition: transform 0.3s ease;
 }
-
-
 
 .responsive-title {
   font-size: clamp(1rem, 2.5vw, 1.8rem);
@@ -1072,7 +1084,6 @@ onMounted(() => {
   .v-dialog__content {
     padding: 8px !important;
   }
- 
 
   .v-dialog {
     max-width: 100% !important;
@@ -1117,12 +1128,12 @@ onMounted(() => {
     padding: 8px;
   }
   .edu-input input,
-.v-text-field input,
-.v-textarea textarea {
-  font-size: clamp(0.85rem, 2vw, 1rem);
-  padding: 10px;
-}
-.responsive-heading,
+  .v-text-field input,
+  .v-textarea textarea {
+    font-size: clamp(0.85rem, 2vw, 1rem);
+    padding: 10px;
+  }
+  .responsive-heading,
   .responsive-title,
   .edu-label,
   .edu-value,
@@ -1130,18 +1141,25 @@ onMounted(() => {
     font-size: 0.9rem !important;
   }
   .v-textarea textarea {
-  font-size: clamp(0.85rem, 2vw, 1rem);
-}
-
+    font-size: clamp(0.85rem, 2vw, 1rem);
+  }
 
   .edu-input .v-label {
     font-size: 0.75rem;
+  }
+  .responsive-logo {
+    width: 40px;
+    height: 40px;
   }
 }
 
 @media (max-width: 960px) {
   .responsive-title {
     font-size: 1.2rem;
+  }
+  .responsive-logo {
+    width: 50px;
+    height: 50px;
   }
 }
 
@@ -1157,6 +1175,9 @@ onMounted(() => {
   .edu-value {
     font-size: 0.85rem;
   }
+  .responsive-logo {
+    width: 36px;
+    height: 36px;
+  }
 }
-
 </style>
