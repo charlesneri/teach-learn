@@ -1148,8 +1148,8 @@ onMounted(() => {
     font-size: 0.75rem;
   }
   .responsive-logo {
-    width: 40px;
-    height: 40px;
+    width: 30px;
+    height: 30px;
   }
 }
 
@@ -1158,8 +1158,8 @@ onMounted(() => {
     font-size: 1.2rem;
   }
   .responsive-logo {
-    width: 50px;
-    height: 50px;
+    width: 40px;
+    height: 40px;
   }
 }
 
@@ -1176,8 +1176,8 @@ onMounted(() => {
     font-size: 0.85rem;
   }
   .responsive-logo {
-    width: 36px;
-    height: 36px;
+    width: 25px;
+    height: 25px;
   }
 }
 </style>
