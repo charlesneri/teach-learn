@@ -614,7 +614,7 @@ onMounted(() => {
         <v-icon>mdi-menu</v-icon>
       </v-btn>
     
-      
+      <!--logo-->
         <v-avatar
           class="logo responsive-logo ml-auto me-5"
           :style="{
@@ -940,26 +940,14 @@ onMounted(() => {
 
 <style scoped>
 /* Responsive logo avatar size */
+
 .responsive-logo {
-  width: clamp(36px, 6vw, 60px);
-  height: clamp(36px, 6vw, 60px);
+  width: 50px !important;
+  height: 50px !important;
+  border-radius: 50%;
+  overflow: hidden;
 }
-.logo-wrapper {
-  position: absolute;
-  top: 50%;
-  right: clamp(8px, 2vw, 16px);
-  transform: translateY(-50%);
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  gap: clamp(6px, 1.5vw, 12px);
-  z-index: 10;
-  flex-wrap: nowrap;
-}
-.responsive-logo {
-  width: 60px;
-  height: 60px;
-}
+
 
 .fade-slide-up {
   animation: fadeSlideUp 1.6s ease-in both;
@@ -983,10 +971,6 @@ onMounted(() => {
   width: 240px;
   max-width: none;
   transition: width 0.3s ease;
-}
-.logo {
-  width: 50px;
-  height: 50px;
 }
 
 /* Animations */
@@ -1073,11 +1057,7 @@ onMounted(() => {
     justify-content: center;
   }
 
-  .v-avatar {
-    width: 80px !important;
-    height: 80px !important;
-  }
-
+ 
   .v-btn {
     font-size: 0.85rem;
   }
@@ -1148,8 +1128,8 @@ onMounted(() => {
     font-size: 0.75rem;
   }
   .responsive-logo {
-    width: 40px;
-    height: 40px;
+    width: 30px;
+    height: 30px;
   }
 }
 
@@ -1158,8 +1138,8 @@ onMounted(() => {
     font-size: 1.2rem;
   }
   .responsive-logo {
-    width: 50px;
-    height: 50px;
+    width: 40px;
+    height: 40px;
   }
 }
 
@@ -1175,9 +1155,6 @@ onMounted(() => {
   .edu-value {
     font-size: 0.85rem;
   }
-  .responsive-logo {
-    width: 36px;
-    height: 36px;
-  }
+ 
 }
 </style>
