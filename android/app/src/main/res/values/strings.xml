@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">teachandlearn</string>
+    <string name="title_activity_main">teachandlearn</string>
+    <string name="package_name">com.teachandlearn</string>
+    <string name="custom_url_scheme">com.teachandlearn</string>
+</resources>

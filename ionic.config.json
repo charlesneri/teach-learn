@@ -1,0 +1,7 @@
+{
+  "name": "teachandlearn",
+  "integrations": {
+    "capacitor": {}
+  },
+  "type": "custom"
+}
